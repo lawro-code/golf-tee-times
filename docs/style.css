@@ -198,35 +198,40 @@ h1 {
 
 .filter select,
 button#reset-filters {
-  font: 500 0.9rem/1.2 var(--sans);
-  padding: 0.45rem 1.85rem 0.45rem 0.7rem;
+  font: 500 0.88rem/1.2 var(--sans);
+  padding: 0.55rem 2.2rem 0.55rem 1rem;
   border: 1px solid var(--hairline-strong);
-  border-radius: 2px;
+  border-radius: 999px;
   background: var(--surface);
   color: var(--ink);
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%230c3a26' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23013d22' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 0.6rem center;
+  background-position: right 0.85rem center;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 28, 18, 0.04);
 }
+
+.filter select:hover { border-color: var(--green); box-shadow: 0 2px 6px rgba(0, 28, 18, 0.08); }
 
 .filter select:focus,
 button#reset-filters:focus {
   outline: none;
   border-color: var(--green);
-  box-shadow: 0 0 0 2px rgba(12, 58, 38, 0.1);
+  box-shadow: 0 0 0 3px rgba(1, 61, 34, 0.15);
 }
 
 button#reset-filters {
-  padding: 0.45rem 0.9rem;
+  padding: 0.55rem 1.25rem;
   background-image: none;
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--green);
+  border-color: var(--green);
+  background: transparent;
   align-self: end;
   height: fit-content;
 }
@@ -234,6 +239,7 @@ button#reset-filters {
 button#reset-filters:hover {
   background: var(--green);
   color: var(--bg);
+  border-color: var(--green);
 }
 
 /* ---------- results ---------- */
@@ -647,11 +653,12 @@ main {
   font: 500 0.78rem/1.2 var(--sans);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.5rem 0.95rem;
+  padding: 0.55rem 1.1rem;
   color: var(--ink-soft);
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 999px;
   transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 28, 18, 0.04);
 }
 
 .lb-tab:hover { border-color: var(--green); color: var(--green); }
@@ -667,12 +674,20 @@ button.secondary {
   font: 600 0.8rem/1.2 var(--sans);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.65rem 1.2rem;
-  border-radius: 2px;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.15s;
+  box-shadow: 0 2px 6px rgba(0, 28, 18, 0.1);
 }
+
+button.primary:hover:not([disabled]) {
+  box-shadow: 0 4px 12px rgba(0, 28, 18, 0.18);
+  transform: translateY(-1px);
+}
+
+button.secondary { box-shadow: none; }
 
 button.primary {
   background: var(--green-deep);
@@ -760,18 +775,24 @@ button.secondary:hover { border-color: var(--green); color: var(--green); }
 .form-field input,
 .form-field select {
   font: 500 0.95rem/1.2 var(--sans);
-  padding: 0.55rem 0.7rem;
+  padding: 0.65rem 0.9rem;
   border: 1px solid var(--hairline-strong);
-  border-radius: 2px;
+  border-radius: 10px;
   background: #ffffff;
   color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-field input:hover,
+.form-field select:hover {
+  border-color: var(--green);
 }
 
 .form-field input:focus,
 .form-field select:focus {
   outline: none;
   border-color: var(--green);
-  box-shadow: 0 0 0 2px rgba(12, 58, 38, 0.1);
+  box-shadow: 0 0 0 3px rgba(1, 61, 34, 0.15);
 }
 
 .form-actions {
