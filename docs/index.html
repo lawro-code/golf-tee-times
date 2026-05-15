@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golf Tee Times near Bondi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Golf Tee Times near Bondi</h1>
+    <p class="subtitle">Sydney public courses on MiClub, refreshed twice daily.</p>
+    <p class="last-updated" id="last-updated">Loading…</p>
+  </header>
+
+  <section class="filters" aria-label="Filters">
+    <div class="filter">
+      <label for="filter-day">Day</label>
+      <select id="filter-day"><option value="">Any</option></select>
+    </div>
+    <div class="filter">
+      <label for="filter-time">Time</label>
+      <select id="filter-time">
+        <option value="">Any</option>
+        <option value="morning">Morning (before 12)</option>
+        <option value="afternoon">Afternoon (12–4)</option>
+        <option value="twilight">Twilight (after 4)</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label for="filter-price">Max $</label>
+      <select id="filter-price">
+        <option value="">Any</option>
+        <option value="25">≤ $25</option>
+        <option value="35">≤ $35</option>
+        <option value="50">≤ $50</option>
+        <option value="75">≤ $75</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label for="filter-course">Course</label>
+      <select id="filter-course"><option value="">Any</option></select>
+    </div>
+    <div class="filter">
+      <label for="filter-holes">Holes</label>
+      <select id="filter-holes">
+        <option value="">Any</option>
+        <option value="9">9-hole</option>
+        <option value="18">18-hole</option>
+      </select>
+    </div>
+    <button id="reset-filters" type="button">Reset</button>
+  </section>
+
+  <main id="results" aria-live="polite">
+    <p class="loading">Loading tee times…</p>
+  </main>
+
+  <footer>
+    <p>Not affiliated with any club. Click a slot to book on the club's MiClub page.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

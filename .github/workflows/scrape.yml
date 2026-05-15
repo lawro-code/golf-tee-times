@@ -1,0 +1,44 @@
+name: Scrape tee times
+
+on:
+  schedule:
+    # 8am and 8pm Sydney AEST (UTC+10). In AEDT (Oct-Apr, UTC+11) fires at 9am/9pm Sydney.
+    - cron: '0 22,10 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: Install deps
+        run: pip install -r scraper/requirements.txt
+
+      - name: Run scraper
+        run: python scraper/scrape.py
+
+      - name: Commit results
+        run: |
+          git config user.name "tee-time-bot"
+          git config user.email "actions@github.com"
+          git add docs/data/teetimes.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update tee times ($(date -u +'%Y-%m-%d %H:%MZ'))"
+            git push
+          fi

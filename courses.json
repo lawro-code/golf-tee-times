@@ -1,0 +1,99 @@
+{
+  "courses": [
+    {
+      "name": "Woollahra Golf Club",
+      "slug": "woollahra",
+      "host": "woollahra.miclub.com.au",
+      "feeGroupId": "3050666",
+      "region": "Eastern Suburbs",
+      "drive_minutes_from_bondi": 10,
+      "holes": 9,
+      "notes": "Weekend public play is 9 holes only. Twilight pricing kicks in around 4pm."
+    },
+    {
+      "name": "Eastlake Golf Club",
+      "slug": "eastlake",
+      "host": "www.eastlakegolfclub.com.au",
+      "feeGroupId": "3784606",
+      "region": "Eastern Suburbs",
+      "drive_minutes_from_bondi": 15,
+      "holes": 18
+    },
+    {
+      "name": "The Coast Golf Club",
+      "slug": "the-coast",
+      "host": "www.coastgolf.com.au",
+      "feeGroupId": "1508176600",
+      "region": "Eastern Suburbs",
+      "drive_minutes_from_bondi": 25,
+      "holes": 18,
+      "notes": "Little Bay, ocean cliff course."
+    },
+    {
+      "name": "Northbridge Golf Club",
+      "slug": "northbridge",
+      "host": "northbridge.miclub.com.au",
+      "feeGroupId": "132857",
+      "region": "North Shore",
+      "drive_minutes_from_bondi": 30,
+      "holes": 18
+    },
+    {
+      "name": "Long Reef Golf Club",
+      "slug": "long-reef",
+      "host": "longreef.miclub.com.au",
+      "feeGroupId": "3752188",
+      "region": "Northern Beaches",
+      "drive_minutes_from_bondi": 45,
+      "holes": 18
+    },
+    {
+      "name": "Bexley Golf Club",
+      "slug": "bexley",
+      "host": "bexley.miclub.com.au",
+      "feeGroupId": "5315151",
+      "region": "St George",
+      "drive_minutes_from_bondi": 30,
+      "holes": 18
+    },
+    {
+      "name": "Beverley Park Golf Club",
+      "slug": "beverley-park",
+      "host": "beverleypark.miclub.com.au",
+      "feeGroupId": "5268234",
+      "region": "St George",
+      "drive_minutes_from_bondi": 30,
+      "holes": 18
+    },
+    {
+      "name": "Brighton Lakes Recreation Club",
+      "slug": "brighton-lakes",
+      "host": "brightonlakes.miclub.com.au",
+      "feeGroupId": "4328836",
+      "region": "South West",
+      "drive_minutes_from_bondi": 45,
+      "holes": 18,
+      "notes": "Moorebank — longest drive on the list."
+    },
+    {
+      "name": "Strathfield Golf Club",
+      "slug": "strathfield",
+      "host": "www.strathfieldgolf.com.au",
+      "feeGroupId": "1514453417",
+      "region": "Inner West",
+      "drive_minutes_from_bondi": 25,
+      "holes": 18,
+      "notes": "Members club — may have limited public availability."
+    },
+    {
+      "name": "Castle Cove Country Club",
+      "slug": "castle-cove",
+      "host": "www.castlecovegolf.com.au",
+      "feeGroupId": "868752",
+      "region": "North Shore",
+      "drive_minutes_from_bondi": 35,
+      "holes": 18,
+      "notes": "Members club — may have limited public availability."
+    }
+  ]
+}
