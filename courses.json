@@ -8,6 +8,7 @@
       "region": "Eastern Suburbs",
       "drive_minutes_from_bondi": 10,
       "holes": 9,
+      "par": 34,
       "notes": "Weekend public play is 9 holes only. Twilight pricing kicks in around 4pm."
     },
     {
@@ -17,7 +18,8 @@
       "feeGroupId": "3784606",
       "region": "Eastern Suburbs",
       "drive_minutes_from_bondi": 15,
-      "holes": 18
+      "holes": 18,
+      "par": 72
     },
     {
       "name": "The Coast Golf Club",
@@ -27,6 +29,7 @@
       "region": "Eastern Suburbs",
       "drive_minutes_from_bondi": 25,
       "holes": 18,
+      "par": 71,
       "notes": "Little Bay, ocean cliff course."
     },
     {
@@ -36,7 +39,9 @@
       "feeGroupId": "132857",
       "region": "North Shore",
       "drive_minutes_from_bondi": 30,
-      "holes": 18
+      "holes": 18,
+      "par": 64,
+      "notes": "Short, hilly course — par 64."
     },
     {
       "name": "Long Reef Golf Club",
@@ -45,7 +50,8 @@
       "feeGroupId": "3752188",
       "region": "Northern Beaches",
       "drive_minutes_from_bondi": 45,
-      "holes": 18
+      "holes": 18,
+      "par": 72
     },
     {
       "name": "Bexley Golf Club",
@@ -54,7 +60,8 @@
       "feeGroupId": "5315151",
       "region": "St George",
       "drive_minutes_from_bondi": 30,
-      "holes": 18
+      "holes": 18,
+      "par": 64
     },
     {
       "name": "Beverley Park Golf Club",
@@ -63,7 +70,8 @@
       "feeGroupId": "5268234",
       "region": "St George",
       "drive_minutes_from_bondi": 30,
-      "holes": 18
+      "holes": 18,
+      "par": 70
     },
     {
       "name": "Brighton Lakes Recreation Club",
@@ -73,6 +81,7 @@
       "region": "South West",
       "drive_minutes_from_bondi": 45,
       "holes": 18,
+      "par": 72,
       "notes": "Moorebank — longest drive on the list."
     },
     {
@@ -83,6 +92,7 @@
       "region": "Inner West",
       "drive_minutes_from_bondi": 25,
       "holes": 18,
+      "par": 71,
       "notes": "Members club — may have limited public availability."
     },
     {
@@ -93,6 +103,7 @@
       "region": "North Shore",
       "drive_minutes_from_bondi": 35,
       "holes": 18,
+      "par": 64,
       "notes": "Members club — may have limited public availability."
     },
     {
@@ -103,6 +114,7 @@
       "region": "South West",
       "drive_minutes_from_bondi": 45,
       "holes": 18,
+      "par": 71,
       "address": "70 Ashford Ave, Milperra NSW"
     }
   ]

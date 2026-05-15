@@ -10,8 +10,45 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-flag" viewBox="0 0 24 24">
+        <path d="M5 21 V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+        <path d="M5 4 L19 7.5 L5 11 Z" fill="currentColor"/>
+        <circle cx="5" cy="21" r="1.4" fill="currentColor"/>
+      </symbol>
+      <symbol id="i-laurel-l" viewBox="0 0 40 60">
+        <path d="M30 5 Q10 20 30 55" stroke="currentColor" stroke-width="1" fill="none"/>
+        <path d="M28 12 Q18 14 22 22" fill="currentColor"/>
+        <path d="M26 22 Q16 24 20 32" fill="currentColor"/>
+        <path d="M26 32 Q16 34 22 42" fill="currentColor"/>
+        <path d="M28 42 Q20 46 26 52" fill="currentColor"/>
+      </symbol>
+      <symbol id="i-laurel-r" viewBox="0 0 40 60">
+        <path d="M10 5 Q30 20 10 55" stroke="currentColor" stroke-width="1" fill="none"/>
+        <path d="M12 12 Q22 14 18 22" fill="currentColor"/>
+        <path d="M14 22 Q24 24 20 32" fill="currentColor"/>
+        <path d="M14 32 Q24 34 18 42" fill="currentColor"/>
+        <path d="M12 42 Q20 46 14 52" fill="currentColor"/>
+      </symbol>
+      <symbol id="i-ball" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="currentColor"/>
+        <circle cx="9" cy="9" r="0.9" fill="rgba(0,0,0,0.18)"/>
+        <circle cx="13" cy="8" r="0.9" fill="rgba(0,0,0,0.18)"/>
+        <circle cx="11" cy="13" r="0.9" fill="rgba(0,0,0,0.18)"/>
+        <circle cx="15" cy="12" r="0.9" fill="rgba(0,0,0,0.18)"/>
+        <circle cx="9" cy="14" r="0.9" fill="rgba(0,0,0,0.18)"/>
+      </symbol>
+    </defs>
+  </svg>
+
   <header class="masthead">
     <div class="rule rule-top"></div>
+    <a href="#" class="crest" aria-label="Home">
+      <span class="crest-ring">
+        <svg class="crest-flag"><use href="#i-flag"/></svg>
+      </span>
+    </a>
     <p class="eyebrow">Sydney · Public Courses</p>
     <h1>The Tee Sheet</h1>
     <p class="tagline">Available tee times within an hour of Bondi.</p>
@@ -19,63 +56,147 @@
     <div class="rule rule-bottom"></div>
   </header>
 
-  <section class="filters" aria-label="Refine">
-    <div class="filter">
-      <label for="filter-day">Day</label>
-      <select id="filter-day"><option value="">Any</option></select>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="tee-times" role="tab" aria-selected="true">Tee Times</button>
+    <button class="tab" data-tab="leaderboard" role="tab" aria-selected="false">The Leaderboard</button>
+  </nav>
+
+  <section id="panel-tee-times" class="panel active">
+    <div class="filters" aria-label="Refine">
+      <div class="filter">
+        <label for="filter-day">Day</label>
+        <select id="filter-day"><option value="">Any</option></select>
+      </div>
+      <div class="filter">
+        <label for="filter-time">Time</label>
+        <select id="filter-time">
+          <option value="">Any</option>
+          <option value="morning">Morning</option>
+          <option value="afternoon">Afternoon</option>
+          <option value="twilight">Twilight</option>
+        </select>
+      </div>
+      <div class="filter">
+        <label for="filter-price">Max $</label>
+        <select id="filter-price">
+          <option value="">Any</option>
+          <option value="25">≤ $25</option>
+          <option value="35">≤ $35</option>
+          <option value="50">≤ $50</option>
+          <option value="75">≤ $75</option>
+        </select>
+      </div>
+      <div class="filter">
+        <label for="filter-course">Course</label>
+        <select id="filter-course"><option value="">Any</option></select>
+      </div>
+      <div class="filter">
+        <label for="filter-holes">Holes</label>
+        <select id="filter-holes">
+          <option value="">Any</option>
+          <option value="9">9</option>
+          <option value="18">18</option>
+        </select>
+      </div>
+      <div class="filter">
+        <label for="filter-players">Players</label>
+        <select id="filter-players">
+          <option value="">Any</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="4">4 (4-ball)</option>
+        </select>
+      </div>
+      <button id="reset-filters" type="button">Reset</button>
     </div>
-    <div class="filter">
-      <label for="filter-time">Time</label>
-      <select id="filter-time">
-        <option value="">Any</option>
-        <option value="morning">Morning</option>
-        <option value="afternoon">Afternoon</option>
-        <option value="twilight">Twilight</option>
-      </select>
-    </div>
-    <div class="filter">
-      <label for="filter-price">Max $</label>
-      <select id="filter-price">
-        <option value="">Any</option>
-        <option value="25">≤ $25</option>
-        <option value="35">≤ $35</option>
-        <option value="50">≤ $50</option>
-        <option value="75">≤ $75</option>
-      </select>
-    </div>
-    <div class="filter">
-      <label for="filter-course">Course</label>
-      <select id="filter-course"><option value="">Any</option></select>
-    </div>
-    <div class="filter">
-      <label for="filter-holes">Holes</label>
-      <select id="filter-holes">
-        <option value="">Any</option>
-        <option value="9">9</option>
-        <option value="18">18</option>
-      </select>
-    </div>
-    <div class="filter">
-      <label for="filter-players">Players</label>
-      <select id="filter-players">
-        <option value="">Any</option>
-        <option value="1">1+</option>
-        <option value="2">2+</option>
-        <option value="3">3+</option>
-        <option value="4">4 (4-ball)</option>
-      </select>
-    </div>
-    <button id="reset-filters" type="button">Reset</button>
+
+    <main id="results" aria-live="polite">
+      <p class="loading">Loading…</p>
+    </main>
   </section>
 
-  <main id="results" aria-live="polite">
-    <p class="loading">Loading…</p>
-  </main>
+  <section id="panel-leaderboard" class="panel">
+    <div class="leaderboard-intro">
+      <p class="eyebrow">Friends · Rounds Played</p>
+      <h2 class="section-title">The Leaderboard</h2>
+      <p class="section-sub">Add your round, see who's flying and who's hacking it up.</p>
+    </div>
+
+    <div class="round-of-week" id="round-of-week" hidden>
+      <div class="row-eyebrow">
+        <svg class="laurel"><use href="#i-laurel-l"/></svg>
+        <p class="eyebrow gold">Round of the Week</p>
+        <svg class="laurel"><use href="#i-laurel-r"/></svg>
+      </div>
+      <div class="row-callout" id="row-callout"></div>
+    </div>
+
+    <div class="lb-actions">
+      <div class="lb-tabs" role="tablist">
+        <button class="lb-tab active" data-view="recent" role="tab" aria-selected="true">Recent Rounds</button>
+        <button class="lb-tab" data-view="best" role="tab" aria-selected="false">Best Scores</button>
+        <button class="lb-tab" data-view="players" role="tab" aria-selected="false">By Player</button>
+      </div>
+      <button id="open-submit" class="primary with-icon" type="button">
+        <svg class="btn-icon" aria-hidden="true"><use href="#i-flag"/></svg>
+        Submit a Round
+      </button>
+    </div>
+
+    <form id="submit-form" class="submit-form" hidden>
+      <h3 class="form-title">Add your round</h3>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="f-name">Name</label>
+          <input id="f-name" type="text" maxlength="40" required placeholder="Your name">
+        </div>
+        <div class="form-field">
+          <label for="f-course">Course</label>
+          <select id="f-course" required></select>
+        </div>
+        <div class="form-field">
+          <label for="f-date">Played on</label>
+          <input id="f-date" type="date" required>
+        </div>
+        <div class="form-field">
+          <label for="f-holes">Holes</label>
+          <select id="f-holes" required>
+            <option value="18">18</option>
+            <option value="9">9</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="f-score">Gross score</label>
+          <input id="f-score" type="number" min="25" max="200" required inputmode="numeric">
+        </div>
+        <div class="form-field">
+          <label for="f-handicap">Handicap <span class="hint">(optional)</span></label>
+          <input id="f-handicap" type="number" min="0" max="54" step="0.1" inputmode="decimal" placeholder="e.g. 14.2">
+        </div>
+        <div class="form-field form-field-wide">
+          <label for="f-notes">Notes <span class="hint">(optional, 280 chars)</span></label>
+          <input id="f-notes" type="text" maxlength="280" placeholder="e.g. won the long drive, broke my putter on 14th">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-submit" class="secondary">Cancel</button>
+        <button type="submit" class="primary">Save round</button>
+      </div>
+      <p class="form-message" id="form-message"></p>
+    </form>
+
+    <div id="leaderboard-content">
+      <p class="loading">Loading leaderboard…</p>
+    </div>
+  </section>
 
   <footer>
     <p>An independent aggregator. Not affiliated with any club. Bookings handled by each course directly.</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
+  <script src="leaderboard.js"></script>
 </body>
 </html>

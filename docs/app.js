@@ -196,7 +196,9 @@ function render() {
   const sortedDates = [...byDate.keys()].sort();
   for (const date of sortedDates) {
     const dayDiv = el('section', 'day-group');
-    dayDiv.appendChild(el('h2', 'day-heading', formatDayHeadingLong(date)));
+    const heading = el('h2', 'day-heading');
+    heading.innerHTML = `<svg class="day-flag" aria-hidden="true"><use href="#i-flag"/></svg><span>${formatDayHeadingLong(date)}</span>`;
+    dayDiv.appendChild(heading);
 
     const courseEntries = [...byDate.get(date).values()].sort((a, b) =>
       (a.course.drive_minutes_from_bondi || 999) - (b.course.drive_minutes_from_bondi || 999)
@@ -236,7 +238,24 @@ function bindFilters() {
   });
 }
 
+function bindTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      tabs.forEach(t => {
+        t.classList.toggle('active', t === tab);
+        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      panels.forEach(p => p.classList.toggle('active', p.id === `panel-${target}`));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+}
+
 async function init() {
+  bindTabs();
   try {
     const resp = await fetch(`${DATA_URL}?t=${Date.now()}`);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -250,6 +269,9 @@ async function init() {
   populateFilters();
   bindFilters();
   render();
+
+  window.GOLF_COURSES = state.data.courses;
+  window.dispatchEvent(new CustomEvent('golf-courses-ready', { detail: state.data.courses }));
 }
 
 init();
