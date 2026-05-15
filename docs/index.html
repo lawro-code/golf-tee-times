@@ -3,17 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Golf Tee Times near Bondi</title>
+  <title>Tee Times — Sydney</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Golf Tee Times near Bondi</h1>
-    <p class="subtitle">Sydney public courses on MiClub, refreshed twice daily.</p>
-    <p class="last-updated" id="last-updated">Loading…</p>
+  <header class="masthead">
+    <div class="rule rule-top"></div>
+    <p class="eyebrow">Sydney · Public Courses</p>
+    <h1>The Tee Sheet</h1>
+    <p class="tagline">Available tee times within an hour of Bondi.</p>
+    <p class="last-updated" id="last-updated">&nbsp;</p>
+    <div class="rule rule-bottom"></div>
   </header>
 
-  <section class="filters" aria-label="Filters">
+  <section class="filters" aria-label="Refine">
     <div class="filter">
       <label for="filter-day">Day</label>
       <select id="filter-day"><option value="">Any</option></select>
@@ -22,9 +28,9 @@
       <label for="filter-time">Time</label>
       <select id="filter-time">
         <option value="">Any</option>
-        <option value="morning">Morning (before 12)</option>
-        <option value="afternoon">Afternoon (12–4)</option>
-        <option value="twilight">Twilight (after 4)</option>
+        <option value="morning">Morning</option>
+        <option value="afternoon">Afternoon</option>
+        <option value="twilight">Twilight</option>
       </select>
     </div>
     <div class="filter">
@@ -45,19 +51,29 @@
       <label for="filter-holes">Holes</label>
       <select id="filter-holes">
         <option value="">Any</option>
-        <option value="9">9-hole</option>
-        <option value="18">18-hole</option>
+        <option value="9">9</option>
+        <option value="18">18</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label for="filter-players">Players</label>
+      <select id="filter-players">
+        <option value="">Any</option>
+        <option value="1">1+</option>
+        <option value="2">2+</option>
+        <option value="3">3+</option>
+        <option value="4">4 (4-ball)</option>
       </select>
     </div>
     <button id="reset-filters" type="button">Reset</button>
   </section>
 
   <main id="results" aria-live="polite">
-    <p class="loading">Loading tee times…</p>
+    <p class="loading">Loading…</p>
   </main>
 
   <footer>
-    <p>Not affiliated with any club. Click a slot to book on the club's MiClub page.</p>
+    <p>An independent aggregator. Not affiliated with any club. Bookings handled by each course directly.</p>
   </footer>
 
   <script src="app.js"></script>

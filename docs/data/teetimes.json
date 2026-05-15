@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-15T11:58:36+10:00",
+  "generated_at": "2026-05-15T12:11:15+10:00",
   "lookahead_days": 5,
   "courses": [
     {
@@ -12,34 +12,6 @@
       "host": "woollahra.miclub.com.au",
       "error": null,
       "slots": [
-        {
-          "date": "2026-05-15",
-          "time": "11:58",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 35.0
-            }
-          ],
-          "booking_type": "Public Play & Friday Open",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
-          "time": "12:06",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 35.0
-            }
-          ],
-          "booking_type": "Public Play & Friday Open",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-05-15"
-        },
         {
           "date": "2026-05-15",
           "time": "12:22",
@@ -4289,7 +4261,7 @@
         {
           "date": "2026-05-16",
           "time": "15:07",
-          "spots_available": 1,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -5970,34 +5942,6 @@
       "slots": [
         {
           "date": "2026-05-15",
-          "time": "12:00",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Adult (Weekend)",
-              "amount": 68.0
-            }
-          ],
-          "booking_type": "1st Tee",
-          "booking_url": "https://northbridge.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=132857&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
-          "time": "12:10",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Adult (Weekend)",
-              "amount": 68.0
-            }
-          ],
-          "booking_type": "1st Tee",
-          "booking_url": "https://northbridge.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=132857&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
           "time": "12:20",
           "spots_available": 2,
           "total_spots": 4,
@@ -6055,7 +5999,7 @@
         {
           "date": "2026-05-15",
           "time": "13:00",
-          "spots_available": 4,
+          "spots_available": 3,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -9214,24 +9158,6 @@
       "slots": [
         {
           "date": "2026-05-15",
-          "time": "11:58",
-          "spots_available": 3,
-          "total_spots": 4,
-          "price_tiers": [],
-          "booking_type": "1st Tee | Social Golf",
-          "booking_url": "https://bexley.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=5315151&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
-          "time": "12:07",
-          "spots_available": 3,
-          "total_spots": 4,
-          "price_tiers": [],
-          "booking_type": "1st Tee | Social Golf",
-          "booking_url": "https://bexley.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=5315151&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
           "time": "12:16",
           "spots_available": 4,
           "total_spots": 4,
@@ -11858,20 +11784,6 @@
       "slots": [
         {
           "date": "2026-05-15",
-          "time": "15:18",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Twilight - Unlimited Golf from 3PM-Sunset(Non-Refundable)",
-              "amount": 22.0
-            }
-          ],
-          "booking_type": "Social Players 1st Tee",
-          "booking_url": "https://beverleypark.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=5268234&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
           "time": "15:26",
           "spots_available": 3,
           "total_spots": 4,
@@ -13957,7 +13869,7 @@
         {
           "date": "2026-05-19",
           "time": "14:59",
-          "spots_available": 4,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -16008,34 +15920,6 @@
       "slots": [
         {
           "date": "2026-05-15",
-          "time": "12:01",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek",
-              "amount": 36.0
-            }
-          ],
-          "booking_type": "Monday, Friday, Sunday",
-          "booking_url": "https://www.castlecovegolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=868752&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
-          "time": "12:08",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek",
-              "amount": 36.0
-            }
-          ],
-          "booking_type": "Monday, Friday, Sunday",
-          "booking_url": "https://www.castlecovegolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=868752&selectedDate=2026-05-15"
-        },
-        {
-          "date": "2026-05-15",
           "time": "12:15",
           "spots_available": 4,
           "total_spots": 4,
@@ -17055,6 +16939,1404 @@
           ],
           "booking_type": "Public Bookings",
           "booking_url": "https://www.castlecovegolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=868752&selectedDate=2026-05-19"
+        }
+      ]
+    },
+    {
+      "slug": "bankstown",
+      "name": "Bankstown Golf Club",
+      "region": "South West",
+      "drive_minutes_from_bondi": 45,
+      "holes": 18,
+      "notes": "",
+      "host": "bankstown.miclub.com.au",
+      "error": null,
+      "slots": [
+        {
+          "date": "2026-05-15",
+          "time": "12:40",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "13:10",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "13:30",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "14:10",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "14:20",
+          "spots_available": 3,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "14:30",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "14:40",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "14:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "15:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "15:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "15:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "15:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "15:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "15:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "16:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "16:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "16:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "16:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "16:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-15",
+          "time": "16:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-15"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "14:55",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "15:05",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "15:15",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "15:25",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "15:35",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "15:45",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "15:55",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "16:05",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "16:15",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "16:25",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-16",
+          "time": "16:35",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-16"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "14:10",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "14:20",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "14:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "14:40",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "14:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "15:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "15:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "15:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "15:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "15:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "15:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "16:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "16:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "16:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "16:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "16:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-17",
+          "time": "16:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend",
+              "amount": 40.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-17"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "11:40",
+          "spots_available": 2,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "12:00",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "12:10",
+          "spots_available": 2,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "12:40",
+          "spots_available": 2,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "13:00",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "13:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "13:30",
+          "spots_available": 3,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "13:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "13:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "14:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "14:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "14:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "14:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "14:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "15:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "15:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "15:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "15:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "15:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "15:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "16:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "16:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "16:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "16:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "16:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-18",
+          "time": "16:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-18"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "12:30",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "12:50",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "13:10",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "13:20",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "13:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "13:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "13:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "14:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "14:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "14:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "14:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "14:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "14:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "15:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "15:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "15:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "15:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "15:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "15:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "16:00",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "16:10",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "16:20",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "16:30",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "16:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
+        },
+        {
+          "date": "2026-05-19",
+          "time": "16:50",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Midweek",
+              "amount": 35.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-05-19"
         }
       ]
     }

@@ -94,6 +94,16 @@
       "drive_minutes_from_bondi": 35,
       "holes": 18,
       "notes": "Members club — may have limited public availability."
+    },
+    {
+      "name": "Bankstown Golf Club",
+      "slug": "bankstown",
+      "host": "bankstown.miclub.com.au",
+      "feeGroupId": "1509794765",
+      "region": "South West",
+      "drive_minutes_from_bondi": 45,
+      "holes": 18,
+      "address": "70 Ashford Ave, Milperra NSW"
     }
   ]
 }
