@@ -196,6 +196,7 @@ function renderView() {
 }
 
 function buildTable(headers, rows) {
+  const wrap = el('div', 'lb-table-wrap');
   const table = el('table', 'lb-table');
   const thead = el('thead');
   const trh = el('tr');
@@ -217,7 +218,8 @@ function buildTable(headers, rows) {
     tbody.appendChild(tr);
   }
   table.appendChild(tbody);
-  return table;
+  wrap.appendChild(table);
+  return wrap;
 }
 
 function renderRecent() {
