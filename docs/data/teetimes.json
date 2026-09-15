@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-16T00:32:11+10:00",
+  "generated_at": "2026-09-16T09:48:21+10:00",
   "lookahead_days": 5,
   "courses": [
     {
@@ -14,162 +14,8 @@
       "slots": [
         {
           "date": "2026-09-16",
-          "time": "06:38",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "06:54",
-          "spots_available": 3,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "07:02",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "07:10",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "07:58",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "08:06",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "08:14",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "08:30",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "08:46",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "09:26",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
           "time": "09:50",
           "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "10:14",
-          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -197,20 +43,6 @@
         {
           "date": "2026-09-16",
           "time": "11:02",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "11:10",
           "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
@@ -281,21 +113,7 @@
         {
           "date": "2026-09-16",
           "time": "12:30",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:38",
-          "spots_available": 2,
+          "spots_available": 3,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -309,21 +127,7 @@
         {
           "date": "2026-09-16",
           "time": "12:54",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Comp",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:02",
-          "spots_available": 2,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -351,7 +155,7 @@
         {
           "date": "2026-09-16",
           "time": "13:18",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -477,7 +281,7 @@
         {
           "date": "2026-09-16",
           "time": "14:30",
-          "spots_available": 4,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -603,7 +407,7 @@
         {
           "date": "2026-09-16",
           "time": "16:06",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -621,7 +425,7 @@
         {
           "date": "2026-09-16",
           "time": "16:14",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -1054,34 +858,6 @@
         },
         {
           "date": "2026-09-17",
-          "time": "12:12",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-17"
-        },
-        {
-          "date": "2026-09-17",
-          "time": "12:20",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-17"
-        },
-        {
-          "date": "2026-09-17",
           "time": "12:36",
           "spots_available": 1,
           "total_spots": 4,
@@ -1111,7 +887,7 @@
         {
           "date": "2026-09-17",
           "time": "14:35",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -1699,7 +1475,7 @@
         {
           "date": "2026-09-18",
           "time": "07:58",
-          "spots_available": 1,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -1812,20 +1588,6 @@
           "date": "2026-09-18",
           "time": "11:10",
           "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play & Friday Open",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-18"
-        },
-        {
-          "date": "2026-09-18",
-          "time": "11:18",
-          "spots_available": 4,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -2092,20 +1854,6 @@
           "date": "2026-09-18",
           "time": "15:46",
           "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek 2024",
-              "amount": 39.0
-            }
-          ],
-          "booking_type": "Public Play",
-          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-18"
-        },
-        {
-          "date": "2026-09-18",
-          "time": "15:54",
-          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -2424,6 +2172,20 @@
         },
         {
           "date": "2026-09-19",
+          "time": "15:00",
+          "spots_available": 2,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend 2024",
+              "amount": 41.0
+            }
+          ],
+          "booking_type": "Public Play",
+          "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-09-19"
+        },
+        {
+          "date": "2026-09-19",
           "time": "15:16",
           "spots_available": 1,
           "total_spots": 4,
@@ -2439,7 +2201,7 @@
         {
           "date": "2026-09-19",
           "time": "15:24",
-          "spots_available": 4,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -2453,7 +2215,7 @@
         {
           "date": "2026-09-19",
           "time": "15:32",
-          "spots_available": 4,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -2509,7 +2271,7 @@
         {
           "date": "2026-09-19",
           "time": "16:04",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -3862,20 +3624,6 @@
       "slots": [
         {
           "date": "2026-09-17",
-          "time": "11:47",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Thursday 11:00am-1:00pm (Standard Time)",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1st Tee PM",
-          "booking_url": "https://www.coastgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1508176600&selectedDate=2026-09-17"
-        },
-        {
-          "date": "2026-09-17",
           "time": "12:19",
           "spots_available": 2,
           "total_spots": 4,
@@ -3933,7 +3681,7 @@
         {
           "date": "2026-09-17",
           "time": "12:59",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -4801,7 +4549,7 @@
         {
           "date": "2026-09-19",
           "time": "15:04",
-          "spots_available": 3,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -5115,20 +4863,6 @@
             {
               "label": "Sunday 1:00pm-2:00pm (Standard Time)",
               "amount": 75.0
-            }
-          ],
-          "booking_type": "1st Tee Social",
-          "booking_url": "https://www.coastgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1508176600&selectedDate=2026-09-20"
-        },
-        {
-          "date": "2026-09-20",
-          "time": "14:14",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Sunday After 2:00pm Twilight (Standard Time)",
-              "amount": 55.0
             }
           ],
           "booking_type": "1st Tee Social",
@@ -5543,7 +5277,7 @@
         {
           "date": "2026-09-16",
           "time": "12:40",
-          "spots_available": 4,
+          "spots_available": 3,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -5841,7 +5575,7 @@
         {
           "date": "2026-09-16",
           "time": "15:50",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -7082,6 +6816,24 @@
         },
         {
           "date": "2026-09-19",
+          "time": "12:40",
+          "spots_available": 4,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Adult (Weekend)",
+              "amount": 68.0
+            },
+            {
+              "label": "Junior (U18 Only) - Proof of Age Required on Arrival",
+              "amount": 37.0
+            }
+          ],
+          "booking_type": "Social Play",
+          "booking_url": "https://northbridge.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=132857&selectedDate=2026-09-19"
+        },
+        {
+          "date": "2026-09-19",
           "time": "12:50",
           "spots_available": 1,
           "total_spots": 4,
@@ -7382,24 +7134,6 @@
           "date": "2026-09-20",
           "time": "13:20",
           "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Adult (Weekend)",
-              "amount": 68.0
-            },
-            {
-              "label": "Junior (U18 Only) - Proof of Age Required on Arrival",
-              "amount": 37.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://northbridge.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=132857&selectedDate=2026-09-20"
-        },
-        {
-          "date": "2026-09-20",
-          "time": "13:50",
-          "spots_available": 4,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -7811,7 +7545,7 @@
         {
           "date": "2026-09-16",
           "time": "14:31",
-          "spots_available": 4,
+          "spots_available": 3,
           "total_spots": 4,
           "price_tiers": [],
           "booking_type": "1st Tee | Social Golf",
@@ -9602,6 +9336,15 @@
         },
         {
           "date": "2026-09-18",
+          "time": "08:30",
+          "spots_available": 2,
+          "total_spots": 4,
+          "price_tiers": [],
+          "booking_type": "1st Tee | Open Competition",
+          "booking_url": "https://bexley.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=5315151&selectedDate=2026-09-18"
+        },
+        {
+          "date": "2026-09-18",
           "time": "08:37",
           "spots_available": 3,
           "total_spots": 4,
@@ -10621,20 +10364,6 @@
         },
         {
           "date": "2026-09-19",
-          "time": "12:56",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Adult (Sat-Sun + Public Holidays)",
-              "amount": 45.0
-            }
-          ],
-          "booking_type": "1st Tee | Social Golf",
-          "booking_url": "https://bexley.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=5315151&selectedDate=2026-09-19"
-        },
-        {
-          "date": "2026-09-19",
           "time": "13:04",
           "spots_available": 4,
           "total_spots": 4,
@@ -11250,7 +10979,7 @@
         {
           "date": "2026-09-16",
           "time": "12:54",
-          "spots_available": 4,
+          "spots_available": 3,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -11334,7 +11063,7 @@
         {
           "date": "2026-09-16",
           "time": "13:58",
-          "spots_available": 4,
+          "spots_available": 3,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -11530,7 +11259,7 @@
         {
           "date": "2026-09-16",
           "time": "15:50",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -11774,7 +11503,7 @@
         {
           "date": "2026-09-17",
           "time": "06:47",
-          "spots_available": 1,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -11834,7 +11563,7 @@
         {
           "date": "2026-09-17",
           "time": "11:18",
-          "spots_available": 4,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -11848,7 +11577,7 @@
         {
           "date": "2026-09-17",
           "time": "11:26",
-          "spots_available": 4,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -13524,370 +13253,6 @@
       "error": null,
       "slots": [
         {
-          "date": "2026-09-16",
-          "time": "06:37",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "06:51",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "10:30",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "10:38",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "10:54",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "11:10",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "11:18",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "11:26",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "11:42",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "11:50",
-          "spots_available": 3,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "11:58",
-          "spots_available": 3,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:06",
-          "spots_available": 3,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:14",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:22",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:30",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:38",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:46",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "12:54",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:02",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:10",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:18",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:26",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:34",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:42",
-          "spots_available": 2,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:50",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "13:58",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Social 9 Holes Weekday - Online",
-              "amount": 30.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-09-16"
-        },
-        {
           "date": "2026-09-17",
           "time": "12:38",
           "spots_available": 1,
@@ -13974,7 +13339,7 @@
         {
           "date": "2026-09-17",
           "time": "13:50",
-          "spots_available": 3,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -14656,90 +14021,6 @@
       "error": null,
       "slots": [
         {
-          "date": "2026-09-16",
-          "time": "16:04",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Mid-Week-Green Fee",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1ST TEE SOCIAL PLAY",
-          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "16:12",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Mid-Week-Green Fee",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1ST TEE SOCIAL PLAY",
-          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "16:20",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Mid-Week-Green Fee",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1ST TEE SOCIAL PLAY",
-          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "16:28",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Mid-Week-Green Fee",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1ST TEE SOCIAL PLAY",
-          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "16:36",
-          "spots_available": 3,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Mid-Week-Green Fee",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1ST TEE SOCIAL PLAY",
-          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
-          "time": "16:44",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Mid-Week-Green Fee",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1ST TEE SOCIAL PLAY",
-          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-16"
-        },
-        {
           "date": "2026-09-17",
           "time": "13:32",
           "spots_available": 1,
@@ -14769,20 +14050,6 @@
         },
         {
           "date": "2026-09-17",
-          "time": "15:04",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Mid-Week-Green Fee",
-              "amount": 80.0
-            }
-          ],
-          "booking_type": "1ST TEE SOCIAL PLAY",
-          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-17"
-        },
-        {
-          "date": "2026-09-17",
           "time": "15:18",
           "spots_available": 2,
           "total_spots": 4,
@@ -14798,7 +14065,7 @@
         {
           "date": "2026-09-17",
           "time": "15:25",
-          "spots_available": 2,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -15007,6 +14274,20 @@
         },
         {
           "date": "2026-09-20",
+          "time": "13:25",
+          "spots_available": 1,
+          "total_spots": 4,
+          "price_tiers": [
+            {
+              "label": "Weekend-Green Fee",
+              "amount": 100.0
+            }
+          ],
+          "booking_type": "1ST TEE GREEN FEE PLAY ONLY",
+          "booking_url": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1514453417&selectedDate=2026-09-20"
+        },
+        {
+          "date": "2026-09-20",
           "time": "14:44",
           "spots_available": 1,
           "total_spots": 4,
@@ -15022,7 +14303,7 @@
         {
           "date": "2026-09-20",
           "time": "15:08",
-          "spots_available": 3,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -16011,20 +15292,6 @@
       "slots": [
         {
           "date": "2026-09-16",
-          "time": "13:00",
-          "spots_available": 1,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek",
-              "amount": 38.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
           "time": "13:20",
           "spots_available": 2,
           "total_spots": 4,
@@ -16165,22 +15432,8 @@
         },
         {
           "date": "2026-09-16",
-          "time": "15:10",
-          "spots_available": 4,
-          "total_spots": 4,
-          "price_tiers": [
-            {
-              "label": "Midweek",
-              "amount": 38.0
-            }
-          ],
-          "booking_type": "Social Play",
-          "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-09-16"
-        },
-        {
-          "date": "2026-09-16",
           "time": "15:20",
-          "spots_available": 4,
+          "spots_available": 2,
           "total_spots": 4,
           "price_tiers": [
             {
@@ -16334,7 +15587,7 @@
         {
           "date": "2026-09-17",
           "time": "12:50",
-          "spots_available": 3,
+          "spots_available": 1,
           "total_spots": 4,
           "price_tiers": [
             {
