@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://letsbundle.online/tees/contract/1.0.0/payload.schema.json",
+  "title": "Tees for the Boys — data contract v1.0.0",
+  "description": "The single shape shared by the scraper, Supabase and the iOS app. Key names, types and string formats match exactly what PostgREST returns for public.open_slots, public.courses and public.course_day_scrapes, so the same decoder works against a fixture file and against live Supabase.",
+  "type": "object",
+  "required": ["contract_version", "generated_at", "mode", "days", "courses", "slots", "course_days"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": { "const": "1.0.0" },
+    "generated_at": { "type": "string", "description": "ISO-8601 with offset, Australia/Sydney" },
+    "mode": { "enum": ["fast", "full"] },
+    "days": { "type": "integer", "minimum": 1, "maximum": 14 },
+    "courses": { "type": "array", "items": { "$ref": "#/$defs/course" } },
+    "slots": { "type": "array", "items": { "$ref": "#/$defs/slot" } },
+    "course_days": { "type": "array", "items": { "$ref": "#/$defs/course_day" } }
+  },
+  "$defs": {
+    "course": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "name", "region", "host", "fee_group_id", "holes", "par",
+                   "length_metres", "drive_minutes_from_bondi", "requires_registration",
+                   "address", "notes", "sort_order"],
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "region": { "type": "string" },
+        "host": { "type": "string", "minLength": 1 },
+        "fee_group_id": { "type": "string", "pattern": "^[0-9]+$" },
+        "holes": { "enum": [9, 18] },
+        "par": { "type": ["integer", "null"], "minimum": 27, "maximum": 80 },
+        "length_metres": {
+          "type": "null",
+          "description": "MiClub does not publish course length. Always null in v1. Do not invent values."
+        },
+        "drive_minutes_from_bondi": { "type": ["integer", "null"], "minimum": 0 },
+        "requires_registration": { "type": "boolean" },
+        "address": { "type": ["string", "null"] },
+        "notes": { "type": "string" },
+        "sort_order": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "course_slug", "course_name", "region", "drive_minutes_from_bondi",
+                   "par", "length_metres", "requires_registration", "tee_date", "tee_time",
+                   "tee_at", "spots_available", "total_spots", "holes", "price_min",
+                   "price_max", "price_tiers", "booking_type", "booking_url"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+:[0-9]{4}-[0-9]{2}-[0-9]{2}:[0-9]{4}:[a-z0-9-]+$",
+          "description": "course_slug:YYYY-MM-DD:HHMM:tee. Deterministic and stable across scrapes — this is what makes exactly-once push possible. The tee segment separates two-tee starts, where a 1st Tee and a 10th Tee group go out at the same minute and are two different bookings."
+        },
+        "course_slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "course_name": { "type": "string", "minLength": 1 },
+        "region": { "type": "string" },
+        "drive_minutes_from_bondi": { "type": ["integer", "null"], "minimum": 0 },
+        "par": { "type": ["integer", "null"] },
+        "length_metres": { "type": "null" },
+        "requires_registration": { "type": "boolean" },
+        "tee_date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "tee_time": {
+          "type": "string",
+          "pattern": "^[0-9]{2}:[0-9]{2}:[0-9]{2}$",
+          "description": "Local wall-clock time at the course, HH:MM:SS. Seconds are always 00 — the format matches what PostgREST returns for a Postgres time column."
+        },
+        "tee_at": {
+          "type": "string",
+          "description": "The same instant as (tee_date, tee_time) resolved in Australia/Sydney, ISO-8601 with offset. Clients must never recompute this."
+        },
+        "spots_available": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "total_spots": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "holes": { "enum": [9, 18], "description": "Holes for THIS booking, which is not always the course's hole count — three 18-hole courses also sell 9-hole tee times, stated only in the booking type or the fee label." },
+        "price_min": { "type": ["number", "null"], "minimum": 0, "description": "Null is common and not an error: 17% of live slots publish no price. A price filter must not silently drop them." },
+        "price_max": { "type": ["number", "null"], "minimum": 0 },
+        "price_tiers": { "type": "array", "items": { "$ref": "#/$defs/price_tier" } },
+        "booking_type": { "type": "string" },
+        "booking_url": { "type": "string", "pattern": "^https://" }
+      }
+    },
+    "price_tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "amount"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "amount": { "type": "number", "minimum": 0 }
+      }
+    },
+    "course_day": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["course_slug", "tee_date", "ok", "slot_count", "error",
+                   "last_attempt_at", "last_success_at"],
+      "properties": {
+        "course_slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "tee_date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "ok": { "type": "boolean" },
+        "slot_count": { "type": "integer", "minimum": 0 },
+        "error": { "type": ["string", "null"] },
+        "last_attempt_at": { "type": "string" },
+        "last_success_at": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

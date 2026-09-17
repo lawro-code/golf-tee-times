@@ -28,7 +28,21 @@ HOUSE RULES — these override any instinct to be helpful beyond your ticket.
 - Do not replace the Python scraper with Playwright or any headless browser.
   MiClub serves plain server-rendered HTML at a fixed URL. Requests +
   BeautifulSoup is correct and stays.
-- The repo is at ${REPO}. Read what exists before writing anything.
+- The repo is at ${REPO}. Read CONTRACT.md FIRST — it is the frozen Stage 0
+  contract and it answers most of what you are about to guess about. Then read
+  what already exists before writing anything.
+- Verify your work with the real commands and paste their output:
+    ./scripts/build.sh <YourScheme>          build your module
+    ./scripts/build.sh <YourScheme> test     build and run your module's tests
+    ./scripts/db_test.sh                     migrations + schema assertions
+    python3 contract/validate.py contract/fixtures/golden.json
+  NEVER run xcodegen directly — scripts/build.sh regenerates the project under
+  a lock, and concurrent generations corrupt it.
+- FROZEN, nobody edits during Stage 1: contract/**, ios/project.yml,
+  ios/TeesForTheBoys/Contract/**, supabase/migrations/000*_*.sql, CONTRACT.md.
+  If you need one changed, stop and report it as a blocker.
+- Your track is its own framework target, so anything another track needs from
+  you must be marked public. Swift language mode is 5 and warnings are errors.
 - Course roster is FROZEN at 15 courses. Do not add, remove or reorder courses
   in courses.json. A backlog of researched additions exists and is not yours.
 - Scrape cadence is settled: every 20 minutes for days 0-2 only, existing
@@ -43,7 +57,7 @@ const TRACKS = [
   {
     key: 'A-scraper',
     title: 'Scraper hardening',
-    owns: 'scraper/**, courses.json (read-only), .github/workflows/**',
+    owns: 'scraper/**, courses.json (read-only), .github/workflows/scrape*.yml',
     mandate: `Harden the existing Python scraper and point it at Supabase.
       - Write parsed slots to Supabase instead of committing docs/data/teetimes.json to git.
       - Implement the split cadence: days 0-2 every 20 minutes, days 3-5 on the existing
@@ -112,7 +126,7 @@ const TRACKS = [
   {
     key: 'D-design',
     title: 'Design system',
-    owns: 'ios/TeesForTheBoys/DesignSystem/**',
+    owns: 'ios/TeesForTheBoys/DesignSystem/**, ios/TeesForTheBoysTests/DesignSystem/**',
     mandate: `Port the existing website's visual system into SwiftUI tokens and components.
       - The source of truth is docs/style.css in the repo: the Augusta palette
         (cream #f2e6c2, royal green #013d22, gold #c9a04e, Masters red #c8102e,
@@ -126,7 +140,7 @@ const TRACKS = [
   {
     key: 'E-alerts',
     title: 'Alert matcher and push',
-    owns: 'supabase/functions/**, supabase/migrations/alerts_*.sql, ios/TeesForTheBoys/Push/**',
+    owns: 'supabase/functions/**, supabase/migrations/alerts_*.sql, ios/TeesForTheBoys/Push/**, ios/TeesForTheBoysTests/Push/**',
     mandate: `Build the watch matcher and the Apple Push path.
       - On each scrape, diff newly-seen slots against stored watches and queue matches.
       - Exactly-once semantics: a slot that stays open across twelve scrapes sends ONE

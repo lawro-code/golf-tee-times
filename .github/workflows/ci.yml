@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Contract and schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Frozen fixtures satisfy the contract
+        run: |
+          python3 contract/validate.py contract/fixtures/golden.json
+          python3 contract/validate.py contract/fixtures/minimal.json
+
+      - name: The minimal fixture is still reproducible from its generator
+        run: |
+          python3 contract/fixtures/make_minimal.py
+          git diff --exit-code contract/fixtures/minimal.json
+
+      - name: The course seed is still in step with courses.json
+        run: |
+          python3 scripts/gen_seed.py
+          git diff --exit-code supabase/migrations/0005_seed_courses.sql
+
+      - name: Migrations apply clean and the schema assertions hold
+        env:
+          PGBIN: /usr/lib/postgresql/16/bin
+        run: |
+          sudo systemctl stop postgresql || true
+          ./scripts/db_test.sh
+
+  ios:
+    name: iOS build and test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build and test every module
+        env:
+          TEES_SIM: iPhone 16
+        run: |
+          set -o pipefail
+          ./scripts/build.sh TeesForTheBoys
+          xcodebuild test \
+            -project ios/TeesForTheBoys.xcodeproj \
+            -scheme TeesForTheBoys \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath ios/.build/CI \
+            CODE_SIGNING_ALLOWED=NO
