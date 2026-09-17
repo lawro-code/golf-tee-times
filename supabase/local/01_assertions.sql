@@ -124,29 +124,117 @@ select private.assert(
   from public.open_slots where par = 71 and holes = 18;
 
 -- ------------------------------------------------------- exactly-once push
-insert into public.alert_deliveries (watch_id, user_id, slot_id)
-values ('33333333-3333-3333-3333-333333333333',
-        '11111111-1111-1111-1111-111111111111',
-        'the-coast:2099-01-03:0800:public-play');
+insert into public.alert_deliveries (watch_id, user_id, slot_id, slot_opened_at)
+select '33333333-3333-3333-3333-333333333333',
+       '11111111-1111-1111-1111-111111111111',
+       id, opened_at
+  from public.slots where id = 'the-coast:2099-01-03:0800:public-play';
 
 do $$
+declare opened timestamptz;
 begin
-  -- The same watch seeing the same slot on the next scrape must not queue a
+  select opened_at into opened from public.slots where id = 'the-coast:2099-01-03:0800:public-play';
+  -- The same watch seeing the same listing on the next scrape must not queue a
   -- second push. Twelve scrapes, one notification.
   begin
-    insert into public.alert_deliveries (watch_id, user_id, slot_id)
+    insert into public.alert_deliveries (watch_id, user_id, slot_id, slot_opened_at)
     values ('33333333-3333-3333-3333-333333333333',
             '11111111-1111-1111-1111-111111111111',
-            'the-coast:2099-01-03:0800:public-play');
-    raise exception 'ASSERTION FAILED: a duplicate (watch, slot) delivery was accepted';
+            'the-coast:2099-01-03:0800:public-play', opened);
+    raise exception 'ASSERTION FAILED: a duplicate (watch, slot, listing) delivery was accepted';
   exception when unique_violation then
-    raise notice '   ok  a repeat scrape cannot queue a second push for the same slot';
+    raise notice '   ok  a repeat scrape cannot queue a second push for the same listing';
   end;
 end $$;
 
 select private.assert(count(*) = 1, 'exactly one delivery row survives the duplicate attempt')
   from public.alert_deliveries
   where watch_id = '33333333-3333-3333-3333-333333333333';
+
+-- ------------------------------------------ a cancellation alerts again
+-- The case the app exists for. Somebody books the 8am, then cancels it. The
+-- club relists the same tee time and the watch must fire a second time — but
+-- only once for that new listing.
+do $$
+declare opened_before timestamptz; opened_after timestamptz; reopens smallint;
+begin
+  select opened_at into opened_before from public.slots where id = 'the-coast:2099-01-03:0800:public-play';
+
+  -- booked: a successful scrape stops listing it. The scraper says only this.
+  update public.slots set status = 'gone' where id = 'the-coast:2099-01-03:0800:public-play';
+  perform private.assert(
+    (select gone_at is not null from public.slots where id = 'the-coast:2099-01-03:0800:public-play'),
+    'going gone stamps gone_at without the writer having to remember');
+
+  -- cancelled: the club relists it. The scraper says only this.
+  update public.slots set status = 'open', spots_available = 1
+   where id = 'the-coast:2099-01-03:0800:public-play';
+
+  select opened_at, reopen_count into opened_after, reopens
+    from public.slots where id = 'the-coast:2099-01-03:0800:public-play';
+
+  perform private.assert(opened_after > opened_before,
+    'a relisted tee time starts a new listing');
+  perform private.assert(reopens = 1, 'the reopen is counted');
+  perform private.assert(
+    (select gone_at is null from public.slots where id = 'the-coast:2099-01-03:0800:public-play'),
+    'reopening clears gone_at instead of tripping a constraint');
+  perform private.assert(
+    (select count(*) = 1 from public.open_slots where id = 'the-coast:2099-01-03:0800:public-play'),
+    'a relisted tee time is bookable again');
+
+  -- ...and the watch may alert on the new listing.
+  insert into public.alert_deliveries (watch_id, user_id, slot_id, slot_opened_at)
+  values ('33333333-3333-3333-3333-333333333333',
+          '11111111-1111-1111-1111-111111111111',
+          'the-coast:2099-01-03:0800:public-play', opened_after);
+  raise notice '   ok  a cancelled-and-relisted tee time alerts a second time';
+
+  -- ...but only once for that listing.
+  begin
+    insert into public.alert_deliveries (watch_id, user_id, slot_id, slot_opened_at)
+    values ('33333333-3333-3333-3333-333333333333',
+            '11111111-1111-1111-1111-111111111111',
+            'the-coast:2099-01-03:0800:public-play', opened_after);
+    raise exception 'ASSERTION FAILED: the relisted tee time alerted twice';
+  exception when unique_violation then
+    raise notice '   ok  the relisted tee time alerts once, not once per scrape';
+  end;
+end $$;
+
+-- ------------------------------------- two people, one phone, both get alerts
+do $$
+begin
+  insert into public.push_tokens (user_id, token)
+  values ('11111111-1111-1111-1111-111111111111', 'device-token-abc');
+  -- Two mates sharing an iPhone is ordinary for this app. The second one to
+  -- sign in must still be able to register.
+  insert into public.push_tokens (user_id, token)
+  values ('22222222-2222-2222-2222-222222222222', 'device-token-abc');
+  raise notice '   ok  two users on one device can both register for push';
+end $$;
+
+select private.assert(count(*) = 2, 'one device token, one row per user')
+  from public.push_tokens where token = 'device-token-abc';
+
+-- --------------------------------------- clients hold SELECT and nothing else
+do $$
+declare extra text;
+begin
+  select string_agg(format('%s:%s:%s', table_name, grantee, privilege_type), ', ')
+    into extra
+  from information_schema.role_table_grants
+  where table_schema = 'public'
+    and grantee in ('anon', 'authenticated')
+    and privilege_type <> 'SELECT'
+    and table_name in ('courses', 'slots', 'course_day_scrapes', 'scrape_runs',
+                       'alert_deliveries', 'open_slots', 'course_freshness');
+  -- TRUNCATE is never checked against RLS, so a leftover grant would let any
+  -- signed-in client empty a table in one statement whatever the policies say.
+  perform private.assert(extra is null,
+    'read-only tables and views grant clients SELECT only' ||
+    coalesce(' (also held: ' || extra || ')', ''));
+end $$;
 
 -- ------------------------------------------------- constraints actually bite
 do $$

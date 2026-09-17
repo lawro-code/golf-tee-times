@@ -39,15 +39,30 @@ create index if not exists watches_live_idx        on public.watches (expires_at
 
 -- ---------------------------------------------------------------------------
 -- alert_deliveries — the exactly-once ledger.
--- The unique constraint IS the guarantee. A slot that stays open across twelve
--- scrapes inserts once and conflicts eleven times. Do not remove it, and do not
--- "fix" a duplicate-key error by deleting rows.
+--
+-- The unique constraint IS the guarantee, and what it is keyed on is the whole
+-- design. It is (watch, slot, the moment that listing opened), not (watch,
+-- slot):
+--
+--   A slot that stays open across twelve scrapes keeps one opened_at, so it
+--   inserts once and conflicts eleven times. One notification.
+--
+--   A slot that is booked and then cancelled gets a NEW opened_at from the
+--   slots_lifecycle trigger, so it alerts again. Cancellations are the reason
+--   this app exists; a ledger keyed on the slot forever would have silently
+--   swallowed every one of them after the first.
+--
+-- Do not remove the constraint, and do not "fix" a duplicate-key error by
+-- deleting rows — a duplicate key here means the system is working.
 -- ---------------------------------------------------------------------------
 create table if not exists public.alert_deliveries (
   id                 bigint generated always as identity primary key,
   watch_id           uuid not null references public.watches(id) on delete cascade,
   user_id            uuid not null references auth.users(id) on delete cascade,
   slot_id            text not null references public.slots(id) on delete cascade,
+  -- Copied from slots.opened_at at match time. Denormalised on purpose: the
+  -- ledger has to keep its meaning after the slot moves on.
+  slot_opened_at     timestamptz not null,
   matched_at         timestamptz not null default now(),
   sent_at            timestamptz,
   status             text not null default 'queued'
@@ -55,7 +70,7 @@ create table if not exists public.alert_deliveries (
   suppressed_reason  text,
   apns_id            text,
   error              text,
-  constraint alert_deliveries_exactly_once unique (watch_id, slot_id)
+  constraint alert_deliveries_exactly_once unique (watch_id, slot_id, slot_opened_at)
 );
 
 create index if not exists alert_deliveries_user_time_idx on public.alert_deliveries (user_id, matched_at desc);
@@ -63,19 +78,31 @@ create index if not exists alert_deliveries_queued_idx    on public.alert_delive
 create index if not exists alert_deliveries_slot_idx      on public.alert_deliveries (slot_id);
 
 -- ---------------------------------------------------------------------------
--- push_tokens — APNs device tokens. Token is the key: the same device
--- re-registering must not create a second row.
+-- push_tokens — APNs device tokens.
+--
+-- Keyed on (user_id, token), not on the token alone. Two people sharing one
+-- iPhone is an ordinary case for this app — it is a group of mates booking
+-- golf. With the token as sole key the second person to sign in cannot
+-- register at all: the row belongs to the first, RLS hides it from them, and
+-- their upsert fails on a primary key they are not allowed to see. Worse, the
+-- first person's alerts keep going to a phone the second person is holding.
+--
+-- The sender de-duplicates by token at send time instead, so one device still
+-- receives one push.
 -- ---------------------------------------------------------------------------
 create table if not exists public.push_tokens (
-  token        text primary key,
   user_id      uuid not null references auth.users(id) on delete cascade,
+  token        text not null,
   platform     text not null default 'ios' check (platform in ('ios')),
   environment  text not null default 'sandbox' check (environment in ('sandbox', 'production')),
   created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
+  updated_at   timestamptz not null default now(),
+  primary key (user_id, token)
 );
 
-create index if not exists push_tokens_user_idx on public.push_tokens (user_id);
+-- The primary key already indexes user_id as its leading column, which covers
+-- both the foreign key and "every device this user signed in on".
+create index if not exists push_tokens_token_idx on public.push_tokens (token);
 
 -- ---------------------------------------------------------------------------
 -- bookings — "did you book?" answered yes. Course name and tee time are

@@ -1,6 +1,6 @@
 -- Tees for the Boys — core schema.
 -- Stage 0. Frozen contract: see CONTRACT.md. Do not edit without bumping
--- CONTRACT_VERSION and updating contract/slot.schema.json in the same change.
+-- contract/VERSION and contract/payload.schema.json in the same change.
 
 create schema if not exists private;
 
@@ -35,9 +35,11 @@ comment on column public.courses.requires_registration is
   'True when the club requires a free public-member account before checkout.';
 
 -- ---------------------------------------------------------------------------
--- slots — one row per (course, date, time) that has ever been seen open.
--- id is deterministic: '{course_slug}:{YYYY-MM-DD}:{HHMM}'. Stability of this
--- id is what makes exactly-once push possible.
+-- slots — one row per (course, date, time, tee) that has ever been seen open.
+-- id is deterministic: '{course_slug}:{YYYY-MM-DD}:{HHMM}:{tee}'. The tee
+-- segment is not decoration — Warringah runs two-tee starts, and keying on
+-- time alone collapsed 141 of its 289 tee times. Stability of this id is what
+-- makes exactly-once push possible.
 -- ---------------------------------------------------------------------------
 create table if not exists public.slots (
   id                text primary key,
@@ -60,6 +62,12 @@ create table if not exists public.slots (
   status            text not null default 'open' check (status in ('open', 'gone')),
   first_seen_at     timestamptz not null default now(),
   last_seen_at      timestamptz not null default now(),
+  -- When THIS listing opened. A tee time that is booked and then cancelled is
+  -- the same slot reopening, and it gets a new opened_at. That is what lets a
+  -- cancellation alert a second time without twelve scrapes of one unchanged
+  -- listing alerting twelve times. See the slots_lifecycle trigger below.
+  opened_at         timestamptz not null default now(),
+  reopen_count      smallint not null default 0 check (reopen_count >= 0),
   gone_at           timestamptz,
   -- booking_type is part of the key because two-tee starts are real: at
   -- Warringah a 1st Tee and a 10th Tee group go out at the same minute and are
@@ -67,7 +75,10 @@ create table if not exists public.slots (
   constraint slots_natural_key unique (course_slug, tee_date, tee_time, booking_type),
   constraint slots_spots_sane  check (spots_available <= total_spots),
   constraint slots_price_order check (price_min is null or price_max is null or price_min <= price_max),
-  constraint slots_gone_stamp  check ((status = 'gone') = (gone_at is not null)),
+  -- Being gone implies a timestamp; the reverse is NOT required, because a
+  -- reopened slot keeps its last gone_at as history. A biconditional here made
+  -- the obvious upsert ("set status = 'open'") fail on a constraint violation.
+  constraint slots_gone_stamp  check (status <> 'gone' or gone_at is not null),
   constraint slots_tiers_array check (jsonb_typeof(price_tiers) = 'array')
 );
 
@@ -75,6 +86,42 @@ comment on column public.slots.id is
   'Deterministic: course_slug:YYYY-MM-DD:HHMM:tee. Stable across scrapes.';
 comment on column public.slots.status is
   '''gone'' means a successful scrape of that course/day no longer listed it. Rows are never deleted.';
+
+-- Slot lifecycle, handled once here so no writer has to remember it.
+--
+-- The scraper's upsert says only what it saw: status 'open' with the spots it
+-- found, or status 'gone' for a slot a successful scrape stopped listing.
+-- Everything else — stamping gone_at, clearing it on the way back, starting a
+-- new opened_at for a relisted tee time — happens below.
+create or replace function private.slots_lifecycle()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'UPDATE' then
+    if new.status = 'open' and old.status = 'gone' then
+      -- The cancellation case. A new listing of the same tee time.
+      new.opened_at    := now();
+      new.reopen_count := old.reopen_count + 1;
+      new.gone_at      := null;
+    elsif new.status = 'gone' and old.status = 'open' then
+      new.gone_at := coalesce(new.gone_at, now());
+    elsif new.status = 'open' then
+      -- Still open. opened_at belongs to the listing, not to the scrape.
+      new.opened_at    := old.opened_at;
+      new.reopen_count := old.reopen_count;
+    end if;
+  elsif new.status = 'gone' then
+    new.gone_at := coalesce(new.gone_at, now());
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists slots_lifecycle on public.slots;
+create trigger slots_lifecycle
+  before insert or update on public.slots
+  for each row execute function private.slots_lifecycle();
 
 create index if not exists slots_open_tee_at_idx  on public.slots (tee_at) where status = 'open';
 create index if not exists slots_course_date_idx  on public.slots (course_slug, tee_date);

@@ -67,10 +67,16 @@ const TRACKS = [
       - Fix the AEST/AEDT drift. The current cron comment admits it fires an hour late
         for half the year.
       - Validate output against the Stage 0 schema before writing. Add --validate.
-      - Capture par and holes per course into the data written to Supabase. Course LENGTH
-        in metres is NOT currently stored anywhere and is not on the MiClub timesheet —
-        add the column and leave it null; do not invent values or scrape club websites
-        for it without a ticket saying so.`,
+      - Capture par and holes per course into the data written to Supabase. Note that
+        a booking's hole count is NOT always the course's — read CONTRACT.md on that
+        before you assume it is. The length_metres column already exists in the frozen
+        schema and stays null: MiClub does not publish course length. Do not populate
+        it, do not invent values, and do not scrape club websites for it.
+      - Emit PER-DAY scrape status, not just per-course. Today scrape_course() only
+        reports an error when ALL days failed, so a course reached on three days out of
+        five reads as completely healthy and the stale-data banner stays silent. The
+        contract already has the fields for this (see course_days in CONTRACT.md);
+        the scraper has to fill them honestly.`,
   },
   {
     key: 'B-data',

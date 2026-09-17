@@ -20,7 +20,7 @@ contract/fixtures/*.json        (regenerate, do not hand-edit)
 Three commands. Paste their output at a gate; do not describe it.
 
 ```bash
-./scripts/db_test.sh                              # migrations + 35 schema assertions
+./scripts/db_test.sh                              # migrations + 46 schema assertions
 python3 contract/validate.py contract/fixtures/golden.json
 ./scripts/build.sh <Scheme> [test]                # your module only
 ```
@@ -116,7 +116,30 @@ returning 500 has none either. The app must not render those the same way.
 
 `public.course_freshness` aggregates this for the stale-data banner.
 
-### 6. `length_metres` is null and stays null
+### 6. A cancelled tee time is a new listing, and it alerts again
+
+Somebody books the 8am at The Coast; two days later they cancel and the club
+relists it. That cancellation is the reason this app exists, so it has to reach
+the person watching for it.
+
+The naive ledger — one push per `(watch, slot)` forever — swallows every
+cancellation after the first, because the slot id is deliberately stable. So
+`slots` carries `opened_at`, bumped by the `slots_lifecycle` trigger whenever a
+gone slot comes back, and the ledger is keyed on
+`(watch_id, slot_id, slot_opened_at)`:
+
+| What happens | Result |
+|---|---|
+| One listing seen across twelve scrapes | One push — same `opened_at` |
+| Booked, then cancelled, then relisted | A second push — new `opened_at` |
+| Relisted slot seen across twelve more scrapes | Still just that one push |
+
+The trigger means a writer never has to remember any of this. The scraper says
+only what it saw — `status = 'open'` with the spots it found, or
+`status = 'gone'` for a slot a successful scrape stopped listing — and
+`opened_at`, `reopen_count` and `gone_at` look after themselves.
+
+### 7. `length_metres` is null and stays null
 
 MiClub does not publish course length. The column and the field exist so adding
 it later is not a contract break. **Do not invent values and do not scrape club
@@ -224,6 +247,13 @@ It never touches a hosted project.
 
 ## Gotchas already paid for
 
+- **Two builds must never share a DerivedData directory.** Three concurrent
+  builds into one cold directory failed 3 of 3 — "Could not resolve package
+  dependencies", "database is locked", "the Xcode build system has crashed".
+  `scripts/build.sh` gives every invocation its own, seeded from a sibling's
+  resolved packages so it is still warm. Set `TEES_WORKER` to your ticket id to
+  keep yours between runs, and `./scripts/build.sh --gc` reclaims old ones
+  (they run 175-450MB each).
 - An **empty directory inside the .app** makes `simctl install` fail with
   "Missing bundle ID". Do not add folder references for directories that might
   be empty.

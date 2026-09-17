@@ -28,3 +28,19 @@ open docs/index.html
 ## Manual refresh in production
 
 GitHub repo → Actions → "Scrape tee times" → Run workflow.
+
+## Building the app
+
+This repo is now two things: the tee-time scraper and website that have always
+been here, and a native iOS app being built on top of them.
+
+- **[BUILD-PLAN.md](BUILD-PLAN.md)** — what is being built and in what order.
+- **[CONTRACT.md](CONTRACT.md)** — the frozen data contract every part agrees
+  on, and the commands that check it. Read this first if you are changing
+  anything.
+
+```bash
+./scripts/db_test.sh                                   # schema, on a throwaway local Postgres
+python3 contract/validate.py contract/fixtures/golden.json
+./scripts/build.sh TeesForTheBoys                      # the iOS app
+```
