@@ -33,6 +33,38 @@
       "notes": "Little Bay, ocean cliff course."
     },
     {
+      "name": "Strathfield Golf Club",
+      "slug": "strathfield",
+      "host": "www.strathfieldgolf.com.au",
+      "feeGroupId": "1514453417",
+      "region": "Inner West",
+      "drive_minutes_from_bondi": 25,
+      "holes": 18,
+      "par": 71,
+      "notes": "Members club — may have limited public availability."
+    },
+    {
+      "name": "North Ryde Golf Club",
+      "slug": "north-ryde",
+      "host": "northryde.miclub.com.au",
+      "feeGroupId": "5351785",
+      "region": "North Shore",
+      "drive_minutes_from_bondi": 28,
+      "holes": 18,
+      "par": 69
+    },
+    {
+      "name": "Wakehurst Golf Club",
+      "slug": "wakehurst",
+      "host": "wakehurst.miclub.com.au",
+      "feeGroupId": "1510657214",
+      "region": "Northern Beaches",
+      "drive_minutes_from_bondi": 28,
+      "holes": 18,
+      "par": 72,
+      "notes": "Seaforth, beside Garigal National Park."
+    },
+    {
       "name": "Northbridge Golf Club",
       "slug": "northbridge",
       "host": "northbridge.miclub.com.au",
@@ -42,16 +74,6 @@
       "holes": 18,
       "par": 64,
       "notes": "Short, hilly course — par 64."
-    },
-    {
-      "name": "Long Reef Golf Club",
-      "slug": "long-reef",
-      "host": "longreef.miclub.com.au",
-      "feeGroupId": "3752188",
-      "region": "Northern Beaches",
-      "drive_minutes_from_bondi": 45,
-      "holes": 18,
-      "par": 72
     },
     {
       "name": "Bexley Golf Club",
@@ -74,26 +96,15 @@
       "par": 70
     },
     {
-      "name": "Brighton Lakes Recreation Club",
-      "slug": "brighton-lakes",
-      "host": "brightonlakes.miclub.com.au",
-      "feeGroupId": "4328836",
-      "region": "South West",
-      "drive_minutes_from_bondi": 45,
+      "name": "Warringah Golf Club",
+      "slug": "warringah",
+      "host": "warringah.miclub.com.au",
+      "feeGroupId": "108003",
+      "region": "Northern Beaches",
+      "drive_minutes_from_bondi": 32,
       "holes": 18,
-      "par": 72,
-      "notes": "Moorebank — longest drive on the list."
-    },
-    {
-      "name": "Strathfield Golf Club",
-      "slug": "strathfield",
-      "host": "www.strathfieldgolf.com.au",
-      "feeGroupId": "1514453417",
-      "region": "Inner West",
-      "drive_minutes_from_bondi": 25,
-      "holes": 18,
-      "par": 71,
-      "notes": "Members club — may have limited public availability."
+      "par": 70,
+      "address": "397 Condamine St, North Manly NSW"
     },
     {
       "name": "Castle Cove Country Club",
@@ -105,6 +116,38 @@
       "holes": 18,
       "par": 64,
       "notes": "Members club — may have limited public availability."
+    },
+    {
+      "name": "Bayview Golf Club",
+      "slug": "bayview",
+      "host": "bayviewgolfclub.com.au",
+      "feeGroupId": "2",
+      "region": "Northern Beaches",
+      "drive_minutes_from_bondi": 42,
+      "holes": 18,
+      "par": 71,
+      "notes": "Mona Vale. Public bookings need a free account first."
+    },
+    {
+      "name": "Long Reef Golf Club",
+      "slug": "long-reef",
+      "host": "longreef.miclub.com.au",
+      "feeGroupId": "3752188",
+      "region": "Northern Beaches",
+      "drive_minutes_from_bondi": 45,
+      "holes": 18,
+      "par": 72
+    },
+    {
+      "name": "Brighton Lakes Recreation Club",
+      "slug": "brighton-lakes",
+      "host": "brightonlakes.miclub.com.au",
+      "feeGroupId": "4328836",
+      "region": "South West",
+      "drive_minutes_from_bondi": 45,
+      "holes": 18,
+      "par": 72,
+      "notes": "Moorebank — longest drive on the list."
     },
     {
       "name": "Bankstown Golf Club",
