@@ -3,7 +3,10 @@
 A native SwiftUI app on top of the tee-time scraper already in this repo.
 Readable version of this plan, with tables: https://claude.ai/artifact/KPFSWAJ5o95yowNn9EJ7wB
 
-**Status:** planned and armed. Nothing built yet.
+**Status:** Stage 0 landed and green (commits `9ed55a8`, `7ece16e`). Stage 1 is next.
+
+Read `CONTRACT.md` before anything else — it is what Stage 0 froze and what the
+five tracks build on.
 
 ---
 
@@ -88,7 +91,7 @@ Stages do not overlap.
 
 | Stage | Work | Shape | Gate |
 |---|---|---|---|
-| **0** | Supabase schema, the frozen data contract, a golden fixture from a live scrape, Xcode project, CI | 1 agent, solo | `xcodebuild build` → 0; migration applies clean; fixture matches live scrape |
+| ~~**0**~~ | ~~Supabase schema, the frozen data contract, a golden fixture from a live scrape, Xcode project, CI~~ | **DONE** | all green — see below |
 | **1** | Five parallel tracks — see `.workflows/stage1.js` | 5 leads, ~15 workers | each track builds and tests green |
 | **2** | Integration — live Supabase, point the website at it | 1 agent, solo | app launches in sim with live data; website still renders |
 | **3** | Red team — see `.workflows/stage3.js` | ~12 testers | full suite green; no duplicate push in a replay |
@@ -96,6 +99,48 @@ Stages do not overlap.
 
 Stage 0 is deliberately solo: everything that fans out afterwards depends on the contract
 it freezes. Get that wrong and fifteen agents build on sand.
+
+### What Stage 0 actually settled
+
+Gate output, 18 September 2026:
+
+```
+./scripts/db_test.sh            46 assertions, migrations apply twice clean   SCHEMA OK
+contract/validate.py golden     15 courses, 1755 slots                        CONTRACT OK
+contract/validate.py --live     all 15 courses reached live                   CONTRACT OK
+./scripts/build.sh <6 schemes>  exit 0, no warnings
+xcodebuild test                 20 contract tests + 4 module bundles          TEST SUCCEEDED
+```
+
+Five things the live data and a red-team pass changed before the freeze. All
+five are written up properly in `CONTRACT.md`; the short version:
+
+1. **Two-tee starts are real.** Warringah runs a 1st Tee and a 10th Tee group
+   at the same minute. Keying a slot on time alone lost 141 of its 289 tee
+   times, so the tee is part of the slot id.
+2. **A course's hole count is not the booking's.** Three 18-hole courses also
+   sell 9-hole tee times — 125 slots — and holes defaults to 18 in the filters.
+3. **One slot in six has no published price.** Not an error; a price filter
+   must not silently drop 17% of the inventory.
+4. **A cancelled tee time is a new listing and alerts again.** The obvious
+   ledger — one push per (watch, slot) forever — swallows every cancellation
+   after the first, which is the thing this app exists for.
+5. **Concurrent agents corrupted each other's builds.** Measured: three
+   concurrent builds, three failures. `scripts/build.sh` now gives each
+   invocation its own build directory. Set `TEES_WORKER` to your ticket id.
+
+### Decisions still open
+
+- **Supabase.** Branching needs a paid plan and the org is free, so there is no
+  branch database. Everything through Stage 1 is checked against a throwaway
+  local Postgres (`scripts/db_test.sh`) and never touches a hosted project.
+  Stage 2 cannot happen without one. The plan is to treat `ipzhqvsyxyjndpbmpibw`
+  — empty, separate free org, no users — as the dev database. **Will has to say
+  yes before anything is written to it.**
+- **Secrets.** The scraper will need `SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` as GitHub Actions secrets before Stage 2.
+- **CI has never run.** `.github/workflows/ci.yml` was written in Stage 0 and
+  nothing has pushed since. Assume nothing about it until it goes green once.
 
 ### Stage 1 tracks
 
@@ -140,6 +185,23 @@ edits.
 ---
 
 ## The go prompt
+
+Stage 0 is done. To pick up from Stage 1:
+
+```
+ultracode — continue building Tees for the Boys.
+
+Read BUILD-PLAN.md and then CONTRACT.md. Stage 0 is done and green; do not
+redo it. Supabase project ref: ipzhqvsyxyjndpbmpibw
+
+Run stages 1 through 3, stopping at the cost gate before anything is paid to
+Apple. Use .workflows/stage1.js and .workflows/stage3.js for the fan-out
+stages. Report at each stage gate with the command output, not a summary.
+
+Do not write to any hosted Supabase project without asking me first.
+```
+
+The original prompt, for the record:
 
 ```
 ultracode — build Tees for the Boys.

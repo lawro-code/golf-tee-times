@@ -119,21 +119,61 @@ look thorough.`,
     .filter(Boolean)
     .flatMap(r => r.findings || [])
 
-  const fresh = found.filter(f => !seen.has(f.title))
+  // Ten surfaces looking at one app find the same defect from several angles.
+  // Collapsing those before verification matters more than it sounds: at three
+  // judges a finding costs three agents, so every duplicate is paid for three
+  // times. Key on the file plus a normalised title rather than the title
+  // alone, which two agents will always word differently.
+  const key = f => `${(f.file || '?').trim()}::${(f.title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 3)
+    .sort()
+    .join(' ')}`
+
+  const fresh = []
+  for (const f of found) {
+    const k = key(f)
+    if (seen.has(k)) continue
+    seen.add(k)
+    fresh.push(f)
+  }
+
   if (!fresh.length) {
     dryRounds++
     log(`Round ${round}: nothing new (${dryRounds}/2 dry)`)
     continue
   }
   dryRounds = 0
-  fresh.forEach(f => seen.add(f.title))
-  log(`Round ${round}: ${fresh.length} new — verifying`)
 
-  // Three different lenses, not three identical skeptics. Survives on 2 of 3.
+  // Verification depth follows severity. Stage 0 verified a typo in a code
+  // comment as hard as a defect that silently swallowed every cancellation —
+  // 76 findings, three judges each, five survived, and 98% of the tokens went
+  // into refuting things nobody would have shipped anyway.
+  //
+  //   critical / high  three lenses, survives on 2 of 3
+  //   medium           one lens, survives unless that lens refutes it
+  //   low              recorded and fixed on sight, never verified
+  const depth = f => (f.severity === 'critical' || f.severity === 'high') ? 3
+                   : f.severity === 'medium' ? 1
+                   : 0
+
+  const toVerify = fresh.filter(f => depth(f) > 0)
+  const nits = fresh.filter(f => depth(f) === 0)
+  nits.forEach(f => confirmed.push({ ...f, verified: false }))
+
+  const judgeCount = toVerify.reduce((n, f) => n + depth(f), 0)
+  log(`Round ${round}: ${fresh.length} new (${found.length - fresh.length} duplicates dropped) — ` +
+      `${toVerify.length} to verify with ${judgeCount} judges, ${nits.length} low taken on trust`)
+
+  // Different lenses, not identical skeptics. A medium gets the one lens most
+  // likely to catch it out; a high or critical gets all three and survives on
+  // two.
   const judged = await parallel(
-    fresh.map(f => () =>
+    toVerify.map(f => () =>
       parallel(
-        LENSES.map(lens => () =>
+        LENSES.slice(0, depth(f)).map(lens => () =>
           agent(
             `${RULES}
 
@@ -154,14 +194,17 @@ Read the actual code path. Decide.`,
         )
       ).then(votes => {
         const v = votes.filter(Boolean)
-        const survives = v.length && v.filter(x => !x.refuted).length >= 2
-        return survives ? f : null
+        if (!v.length) return null
+        // Three judges: two must let it through. One judge: it must not refute.
+        const needed = depth(f) === 3 ? 2 : 1
+        const survives = v.filter(x => !x.refuted).length >= needed
+        return survives ? { ...f, verified: true } : null
       })
     )
   )
 
   const survivors = judged.filter(Boolean)
-  log(`Round ${round}: ${survivors.length}/${fresh.length} survived verification`)
+  log(`Round ${round}: ${survivors.length}/${toVerify.length} survived verification`)
   confirmed.push(...survivors)
 }
 
@@ -169,7 +212,8 @@ Read the actual code path. Decide.`,
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 }
 const toFix = confirmed.sort((a, b) => RANK[a.severity] - RANK[b.severity])
 
-log(`${toFix.length} confirmed defects — fixing`)
+log(`${toFix.length} defects to fix — ${toFix.filter(f => f.verified).length} verified, ` +
+    `${toFix.filter(f => !f.verified).length} low-severity taken on trust`)
 
 const fixes = await parallel(
   toFix.map(f => () =>
@@ -216,6 +260,8 @@ const applied = fixes.filter(Boolean).filter(x => x.fix && x.fix.fixed)
 return {
   rounds: round,
   confirmed: confirmed.length,
+  verified: confirmed.filter(f => f.verified).length,
+  taken_on_trust: confirmed.filter(f => !f.verified).map(f => f.title),
   fixed: applied.length,
   unfixed: fixes.filter(Boolean).filter(x => !x.fix || !x.fix.fixed).map(x => x.finding.title),
   by_severity: {
