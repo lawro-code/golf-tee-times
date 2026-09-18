@@ -1,0 +1,321 @@
+import SwiftUI
+import TeesContract
+
+/// Search is the product, and this is the screen it lives on.
+///
+/// The shape it is trying to have is Airbnb's, not a settings form's: chips
+/// across the top, results underneath, and the results moving **as the chips
+/// move**. There is no Apply button and no submit step anywhere in this
+/// screen — a filter that needs confirming is a filter nobody experiments
+/// with, and experimenting is how a golfer finds the 6:16 at Warringah they
+/// did not know to ask for.
+///
+/// Three decisions worth knowing about before editing it:
+///
+/// - **The alert button changes job with the results.** With rounds on screen
+///   it is a quiet inline bar; with none it becomes the empty state's primary
+///   call to action. A search that returns nothing is the single moment an
+///   alert is worth the most, so that is where the loudest version of the
+///   button goes.
+/// - **The list is lazy and derives nothing.** `SearchStore` has already run
+///   `SlotQuery` once and published `sections`; the body reads that array and
+///   nothing else. golden.json is 1755 slots and a `ForEach` that filtered or
+///   sorted per row would run that work thousands of times per scroll.
+/// - **Time is never recomputed.** Day headings come from
+///   `SlotFormatting.dayTitle` against `store.today`. CONTRACT.md §4 resolves
+///   Sydney's DST once, on the server; a screen deriving its own calendar day
+///   is how a Sunday in October ends up labelled Saturday.
+public struct SearchScreen: View {
+    @ObservedObject private var store: SearchStore
+    @ObservedObject private var ledger: BookingLedger
+
+    private let isSignedIn: Bool
+    private let onCreateWatch: (WatchDraft) -> Void
+    private let onRequireSignIn: () -> Void
+
+    /// - Parameters:
+    ///   - store: ticket C1's store. Already loaded, or loaded on first appear.
+    ///   - ledger: ticket C4's booking ledger, handed down to the detail screen
+    ///     so a tap out to a club's site is recorded before the app leaves.
+    ///   - isSignedIn: browsing works signed out; alerts are the wall. Passed in
+    ///     rather than read here because Stage 2 owns the session.
+    ///   - onCreateWatch: called with the draft when an alert is created.
+    ///   - onRequireSignIn: called instead, when there is no session yet.
+    public init(
+        store: SearchStore,
+        ledger: BookingLedger,
+        isSignedIn: Bool,
+        onCreateWatch: @escaping (WatchDraft) -> Void,
+        onRequireSignIn: @escaping () -> Void
+    ) {
+        self.store = store
+        self.ledger = ledger
+        self.isSignedIn = isSignedIn
+        self.onCreateWatch = onCreateWatch
+        self.onRequireSignIn = onRequireSignIn
+    }
+
+    public var body: some View {
+        // Read once per pass. Every branch below agrees on the same snapshot,
+        // and nothing in the list re-derives it.
+        let sections = store.sections
+        let presentation = Presentation(state: store.state, resultCount: store.resultCount)
+
+        NavigationStack {
+            content(presentation: presentation, sections: sections)
+                .navigationTitle("Tee times")
+                .navigationDestination(for: SlotResult.self) { result in
+                    SlotDetailScreen(slot: result.slot, today: store.today, ledger: ledger)
+                }
+                .safeAreaInset(edge: .top, spacing: 0) { topChrome }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if presentation.showsInlineAlertButton { inlineAlertBar }
+                }
+                .onAppear {
+                    // Only on a first appear. Coming back from the Upcoming tab
+                    // must not re-read the fixture and scroll the list home.
+                    if store.state == .idle { store.load() }
+                }
+        }
+    }
+
+    // MARK: - The four states
+
+    @ViewBuilder
+    private func content(presentation: Presentation, sections: [SlotDaySection]) -> some View {
+        switch presentation {
+        case .loading:
+            ViewsLoadingState(message: "Finding tee times across the fifteen clubs\u{2026}")
+                .frame(maxHeight: .infinity)
+
+        case .failed(let reason):
+            ViewsErrorState(
+                title: "Couldn't load tee times",
+                message: reason,
+                retry: { store.load() })
+                .frame(maxHeight: .infinity)
+
+        case .empty:
+            emptyState
+                .frame(maxHeight: .infinity)
+
+        case .results:
+            resultsList(sections)
+        }
+    }
+
+    /// No results is not a dead end. The alert is the thing to do about it, so
+    /// it is the state's primary action rather than a link tucked underneath.
+    private var emptyState: some View {
+        ScrollView {
+            ViewsEmptyState(
+                title: "Nothing open for this search",
+                message: Self.emptyMessage(freshness: store.freshness)
+            ) {
+                AlertFromSearchButton(
+                    draft: draft,
+                    prominence: .primary,
+                    isSignedIn: isSignedIn,
+                    onCreate: onCreateWatch,
+                    onRequireSignIn: onRequireSignIn)
+            }
+        }
+    }
+
+    /// A `List` because it is lazy: only the rows on screen are built, which is
+    /// what makes 1755 slots scroll.
+    private func resultsList(_ sections: [SlotDaySection]) -> some View {
+        List {
+            ForEach(sections) { section in
+                Section {
+                    ForEach(section.results) { result in
+                        NavigationLink(value: result) {
+                            SlotRow(result: result)
+                        }
+                    }
+                } header: {
+                    Text(section.title)
+                        .searchSectionHeaderText()
+                        // The relative heading is a shorthand; VoiceOver gets
+                        // the day it actually means.
+                        .accessibilityLabel(SlotFormatting.spokenDayTitle(for: section.date))
+                }
+            }
+        }
+        .listStyle(.plain)
+    }
+
+    // MARK: - Chrome
+
+    private var topChrome: some View {
+        VStack(spacing: 0) {
+            FilterBar(store: store)
+
+            if store.isOffline {
+                ViewsOfflineBanner()
+            }
+            // Renders nothing when `bannerText` is nil, so it can sit here
+            // unconditionally.
+            ViewsStaleBanner(summary: store.freshness)
+        }
+        .background(.bar)
+    }
+
+    /// Pinned to the bottom safe area rather than placed at the end of the
+    /// list: a thumb reaches it without scrolling past 1755 rows first.
+    private var inlineAlertBar: some View {
+        AlertFromSearchButton(
+            draft: draft,
+            prominence: .inline,
+            isSignedIn: isSignedIn,
+            onCreate: onCreateWatch,
+            onRequireSignIn: onRequireSignIn)
+            .padding(.horizontal, SearchStyle.gutter)
+            .padding(.vertical, SearchStyle.chipSpacing)
+            .background(.bar)
+    }
+
+    private var draft: WatchDraft {
+        WatchDraft(filters: store.filters, courses: store.courses, today: store.today)
+    }
+
+    // MARK: - What the screen is showing, as a value
+
+    /// The screen's state, lifted out of the body.
+    ///
+    /// `ios/project.yml` is frozen for Stage 1 — no ViewInspector, no snapshot
+    /// library — so a `body` cannot be asserted on. Naming the state selection
+    /// makes the two decisions that matter testable: which of the four states
+    /// is on screen, and which prominence the alert button takes.
+    public enum Presentation: Equatable, Sendable {
+        case loading
+        case failed(String)
+        case empty
+        case results(Int)
+
+        /// `.idle` presents as loading rather than as empty: "we have not
+        /// looked yet" and "we looked and there is nothing" are different
+        /// claims, and showing the second one first is a lie that lasts about
+        /// a frame but reads as a broken screen.
+        public init(state: SearchStore.LoadState, resultCount: Int) {
+            switch state {
+            case .idle, .loading:
+                self = .loading
+            case .failed(let reason):
+                self = .failed(reason)
+            case .loaded:
+                self = resultCount == 0 ? .empty : .results(resultCount)
+            }
+        }
+
+        /// Loud when there is nothing else on the screen, quiet when there is.
+        public var alertProminence: AlertFromSearchButton.Prominence {
+            self == .empty ? .primary : .inline
+        }
+
+        /// The pinned bar belongs on screen only when there are results behind
+        /// it. In the empty state the same button is already the primary
+        /// action, and two of them is a screen arguing with itself.
+        public var showsInlineAlertButton: Bool {
+            if case .results = self { return true }
+            return false
+        }
+    }
+
+    /// The empty state's second line.
+    ///
+    /// CONTRACT.md §5: a club we reached that had nothing free is a different
+    /// fact from a club we could not reach, and the golfer is owed the first
+    /// one here. The stale banner above already carries the second.
+    static func emptyMessage(freshness: FreshnessSummary) -> String {
+        let base = "No tee times match these filters right now."
+        guard let clubs = freshness.emptyClubsText else {
+            return "\(base) Set an alert and we'll tell you the moment one opens."
+        }
+        return "\(base) \(clubs). Set an alert and we'll tell you the moment one opens."
+    }
+}
+
+// MARK: - Style seam
+
+/// Every measurement and colour the C2 screens use, in one place.
+///
+/// Track D is writing the real token layer concurrently and today `TeesDesign`
+/// contains only `TeesDesignModule.version`, so referencing anything else from
+/// it would not compile. Everything below is therefore a SwiftUI semantic role
+/// or a system text style — both already adapt to light and dark and to
+/// Dynamic Type — held behind names so Stage 2 swaps D's tokens in by editing
+/// this one section rather than by touching five screens.
+///
+/// Nothing here is a fixed height, and nothing ever should be: at AX5 a club
+/// name is three lines and a box sized for one clips it.
+enum SearchStyle {
+    static let gutter: CGFloat = 16
+    static let sectionSpacing: CGFloat = 20
+    static let rowSpacing: CGFloat = 6
+    static let chipSpacing: CGFloat = 8
+    static let chipPadding: CGFloat = 14
+
+    static let calloutShape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+    static let calloutBackground = Color.orange.opacity(0.14)
+
+    static func chipBackground(isSelected: Bool) -> Color {
+        isSelected ? Color.accentColor.opacity(0.16) : Color.secondary.opacity(0.10)
+    }
+
+    static func chipBorder(isSelected: Bool) -> Color {
+        isSelected ? Color.accentColor : Color.secondary.opacity(0.28)
+    }
+}
+
+extension View {
+    func searchTitleText() -> some View {
+        font(.headline).foregroundStyle(.primary)
+    }
+
+    func searchBodyText() -> some View {
+        font(.body).foregroundStyle(.primary)
+    }
+
+    func searchSecondaryText() -> some View {
+        font(.subheadline).foregroundStyle(.secondary)
+    }
+
+    func searchCaptionText() -> some View {
+        font(.footnote).foregroundStyle(.secondary)
+    }
+
+    func searchSectionHeaderText() -> some View {
+        font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+    }
+
+    func searchChipText() -> some View {
+        font(.subheadline.weight(.medium)).foregroundStyle(.primary)
+    }
+
+    func searchCalloutText() -> some View {
+        font(.subheadline).foregroundStyle(.primary)
+    }
+
+    func searchWarningText() -> some View {
+        font(.footnote).foregroundStyle(Color.orange)
+    }
+
+    /// An unknown price is stated quietly rather than dressed up as a number:
+    /// "Price at course" is information, not a placeholder.
+    func searchPriceText(isKnown: Bool) -> some View {
+        font(isKnown ? .headline : .footnote)
+            .foregroundStyle(isKnown ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+    }
+}
+
+#if DEBUG
+#Preview("Search \u{2014} golden") {
+    SearchScreen(
+        store: SearchStore.previewStore(fixture: "golden"),
+        ledger: BookingLedger(),
+        isSignedIn: true,
+        onCreateWatch: { _ in },
+        onRequireSignIn: {})
+}
+#endif

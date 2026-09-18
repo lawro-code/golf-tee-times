@@ -4,11 +4,16 @@ export const meta = {
   phases: [
     { title: 'Plan', detail: 'One lead per track breaks it into tickets with exclusive file ownership' },
     { title: 'Build', detail: 'Workers implement their tickets — no two agents share a file' },
-    { title: 'Review', detail: 'A reviewer reads each diff and can reject it back' },
+    { title: 'Review', detail: 'A reviewer reads each diff; a rejection sends the worker back to fix it' },
     { title: 'Test', detail: 'A tester writes a test that must fail before the change and pass after' },
-    { title: 'Gate', detail: 'Per-track build and test run, output captured verbatim' },
   ],
 }
+
+// The gate is deliberately NOT a phase here. Running ./scripts/build.sh and
+// reporting what it printed is a shell command, not a judgement call, and an
+// agent in the middle of it can only add a chance of reporting green on a red
+// build. The main session runs the verification commands itself and pastes the
+// real output. This workflow's job ends at "the code is written and tested".
 
 // ---------------------------------------------------------------------------
 // Stage 1 assumes Stage 0 has already landed: Supabase schema, the frozen data
@@ -216,18 +221,6 @@ const TEST_SCHEMA = {
   required: ['test_files', 'failed_before', 'passes_after'],
 }
 
-const GATE_SCHEMA = {
-  type: 'object',
-  properties: {
-    track: { type: 'string' },
-    build_clean: { type: 'boolean' },
-    tests_pass: { type: 'boolean' },
-    command_output: { type: 'string' },
-    open_questions: { type: 'array', items: { type: 'string' } },
-  },
-  required: ['track', 'build_clean', 'tests_pass', 'command_output'],
-}
-
 // ---------------------------------------------------------------------------
 
 log(`Stage 1 — ${TRACKS.length} tracks, exclusive file ownership per agent.`)
@@ -309,6 +302,54 @@ a real defect, a missed requirement, or a file written that was not owned.`,
           })
           .then(r => {
             if (!r) return null
+            if (!r.review || r.review.approved !== false) return r
+            // A rejection has to cost the worker something or it is just prose.
+            // Previously `must_fix` was collected, interpolated into the
+            // tester's prompt as a sentence, and then dropped — a rejected
+            // ticket landed exactly like an approved one. One rework pass and
+            // one re-review, bounded, so a stubborn disagreement between two
+            // agents cannot loop forever.
+            return agent(
+              `${HOUSE_RULES}
+
+You are back on ticket ${ticket.id} — ${ticket.title} — because the reviewer
+rejected your work.
+
+REVIEWER'S CRITIQUE
+${r.review.critique}
+
+MUST FIX
+${(r.review.must_fix || []).map(m => `  - ${m}`).join('\n') || '  (see the critique above)'}
+
+FILES YOU OWN — still these and ONLY these:
+${ticket.files.map(f => `  ${f}`).join('\n')}
+
+Fix exactly what was called out. Do not take the opportunity to redesign
+anything else. If you believe the reviewer is wrong, say so plainly in your
+summary rather than silently ignoring it.`,
+              { label: `rework:${ticket.id}`, phase: 'Review', schema: BUILD_SCHEMA }
+            ).then(rework => {
+              if (!rework) return r
+              return agent(
+                `${HOUSE_RULES}
+
+Re-review ticket ${ticket.id} — ${ticket.title} — after a rework pass.
+
+It was rejected for:
+${r.review.critique}
+
+The worker now reports: ${rework.summary}
+Files it changed: ${rework.files_changed.join(', ')}
+
+Read the diff again. Has the rejection actually been addressed? Approve if it
+has, even if you would have written it differently. You are checking that the
+specific objection is answered, not running a fresh review.`,
+                { label: `rereview:${ticket.id}`, phase: 'Review', schema: REVIEW_SCHEMA }
+              ).then(rr => ({ ...r, build: rework, review: rr || r.review, reworked: true }))
+            })
+          })
+          .then(r => {
+            if (!r) return null
             return agent(
               `${HOUSE_RULES}
 
@@ -316,7 +357,7 @@ You are the tester for track ${track.key}, ticket ${ticket.id}: ${ticket.title}
 
 Implementation summary: ${r.build.summary}
 Files: ${r.build.files_changed.join(', ')}
-Reviewer said: ${r.review.approved ? 'approved' : 'REJECTED — ' + r.review.critique}
+Reviewer said: ${!r.review ? 'the review did not complete — judge the code on its own merits' : r.review.approved ? 'approved' : 'REJECTED — ' + r.review.critique}
 
 Write tests that prove the behaviour this ticket claims. The discipline: each
 test must FAIL against the code as it was before this ticket and PASS after.
@@ -327,52 +368,66 @@ Cover the failure paths, not just the happy one.`,
               { label: `test:${ticket.id}`, phase: 'Test', schema: TEST_SCHEMA }
             ).then(test => ({ ...r, test }))
           })
+          // A dead agent anywhere in this chain used to reject the whole thunk,
+          // which parallel() turns into null and .filter(Boolean) then drops —
+          // so a ticket whose code was already written and on disk vanished
+          // from the report entirely. It happened to four tracks at once when
+          // the session limit hit mid-review. Degrade to a partial record
+          // instead: the files are real whether or not the paperwork finished.
+          .catch(err => ({
+            ticket,
+            build: null,
+            review: null,
+            test: null,
+            error: String((err && err.message) || err),
+          }))
       )
     )
   },
 
-  // 5. Per-track gate — run the real commands, capture output verbatim.
-  (tickets, track) => {
-    const done = (tickets || []).filter(Boolean)
-    if (!done.length) return null
-    return agent(
-      `${HOUSE_RULES}
-
-You are the gate for track ${track.key} — ${track.title}.
-
-${done.length} tickets were built, reviewed and tested:
-${done.map(d => `  ${d.ticket.id} ${d.ticket.title} — review: ${d.review.approved ? 'approved' : 'REJECTED'}, tests: ${d.test.passes_after ? 'pass' : 'FAIL'}`).join('\n')}
-
-Run the real verification commands for this track and capture their output
-VERBATIM. Do not summarise, do not paraphrase, do not report success you did
-not observe:
-  - Swift tracks: xcodebuild build and xcodebuild test
-  - Python track: the scraper's own tests, plus scrape.py --validate
-  - Supabase track: migrations apply cleanly against a LOCAL or BRANCH database
-    only — never production
-
-If something fails, say so plainly and paste the failure. A gate that reports
-green on a red build is the worst possible outcome. List any question where
-guessing wrong would waste the next stage.`,
-      { label: `gate:${track.key}`, phase: 'Gate', schema: GATE_SCHEMA }
-    )
-  }
 )
 
-const gates = results.filter(Boolean)
-const green = gates.filter(g => g.build_clean && g.tests_pass)
-const questions = gates.flatMap(g => g.open_questions || [])
+// No gate stage. The main session runs ./scripts/build.sh, ./scripts/db_test.sh
+// and contract/validate.py itself and reports their real output. What this
+// returns is the paperwork the gate needs: what got built, what a reviewer
+// still objects to, and which tests prove nothing.
 
-log(`Stage 1 done — ${green.length}/${TRACKS.length} tracks green.`)
+const byTrack = TRACKS.map((track, i) => ({
+  track: track.key,
+  title: track.title,
+  tickets: (results[i] || []).filter(Boolean).map(d => ({
+    id: d.ticket.id,
+    title: d.ticket.title,
+    approved: d.review ? d.review.approved : null,
+    reworked: !!d.reworked,
+    must_fix: d.review && !d.review.approved ? d.review.must_fix || [] : [],
+    tests_pass: d.test ? d.test.passes_after : null,
+    failed_before: d.test ? d.test.failed_before : null,
+    files: (d.build && d.build.files_changed) || [],
+    blocker: (d.build && d.build.blocker) || null,
+    error: d.error || null,
+  })),
+}))
+
+const all = byTrack.flatMap(t => t.tickets)
+
+log(
+  `Stage 1 build complete — ${all.length} tickets across ${TRACKS.length} tracks. ` +
+    `${all.filter(t => t.reworked).length} reworked after rejection, ` +
+    `${all.filter(t => t.approved === false).length} still rejected, ` +
+    `${all.filter(t => t.tests_pass === false).length} with failing tests.`
+)
+log('Verification commands are not run here — the main session runs them.')
 
 return {
-  tracks_green: green.map(g => g.track),
-  tracks_failed: gates.filter(g => !(g.build_clean && g.tests_pass)).map(g => ({
-    track: g.track,
-    build_clean: g.build_clean,
-    tests_pass: g.tests_pass,
-    output: g.command_output,
-  })),
-  open_questions: questions,
-  ready_for_stage_2: green.length === TRACKS.length,
+  tracks: byTrack,
+  // Still rejected after a rework pass: a human decides these, not an agent.
+  unapproved: all
+    .filter(t => t.approved === false)
+    .map(t => `${t.id}: ${t.must_fix.join('; ') || 'see review critique'}`),
+  failing_tests: all.filter(t => t.tests_pass === false).map(t => t.id),
+  // failed_before === false means the test passed against the OLD code too, so
+  // it is testing nothing. House rule 3 exists precisely for this.
+  tests_that_prove_nothing: all.filter(t => t.failed_before === false).map(t => t.id),
+  blockers: all.filter(t => t.blocker).map(t => `${t.id}: ${t.blocker}`),
 }

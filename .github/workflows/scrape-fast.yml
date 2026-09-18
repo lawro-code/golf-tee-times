@@ -1,0 +1,55 @@
+name: Scrape tee times (fast)
+
+# The cancellation chase: days 0-2 only, every 20 minutes, into Supabase.
+# Cancellations are the reason this app exists and they only matter inside
+# 48 hours, which is what makes a 3-day window the right one to poll.
+
+on:
+  schedule:
+    # No DST gate here, and none is needed: an interval is offset-agnostic.
+    # Every 20 minutes is every 20 minutes in AEST and in AEDT alike, which is
+    # why only the fixed-local-time full run in scrape.yml needs one.
+    #
+    # BUILD-PLAN.md settled this cadence and it is not negotiable. Fifteen
+    # clubs are fifteen separate hosts, so what matters is the rate at each
+    # one: 216 requests/club/day reads as one keen golfer refreshing, while
+    # 5-minute polling is 864/day and reads as a bot. Do not raise it, and do
+    # not extend fast past day 2 — new timesheet releases are a scheduled
+    # burst, not a reason to poll harder.
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+
+# Read-only: slots go to Supabase, nothing is committed.
+permissions:
+  contents: read
+
+# Its own group, so a slow fast run and the twice-daily full run never queue
+# behind each other. cancel-in-progress stays false: a run that is part way
+# through writing slots must be allowed to finish.
+concurrency:
+  group: scrape-fast
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    name: Fast scrape — days 0-2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: Install deps
+        run: pip install -r scraper/requirements.txt
+
+      # --validate gates the write: a payload that fails the frozen contract
+      # is never sent to Supabase.
+      - name: Scrape, validate and write to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scraper/scrape.py --mode fast --validate --write supabase
