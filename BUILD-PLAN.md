@@ -3,7 +3,12 @@
 A native SwiftUI app on top of the tee-time scraper already in this repo.
 Readable version of this plan, with tables: https://claude.ai/artifact/KPFSWAJ5o95yowNn9EJ7wB
 
-**Status:** Stage 0 landed and green (commits `9ed55a8`, `7ece16e`). Stage 1 is next.
+**Status:** Stages 0–2 landed and green (`9ed55a8`, `7ece16e`, `1afd0c4`,
+`0542100`, `d7bcf09`). Stage 3 (red team) is running. Migrations are live on
+`ipzhqvsyxyjndpbmpibw`; the app and website both connect to it for real and
+correctly show empty results, because the scraper has never written to it —
+that needs `SUPABASE_SERVICE_ROLE_KEY` from the project dashboard, which
+nothing here has access to. Everything else in Stage 2 is done.
 
 Read `CONTRACT.md` before anything else — it is what Stage 0 froze and what the
 five tracks build on.
