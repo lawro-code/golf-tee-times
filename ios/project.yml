@@ -206,3 +206,15 @@ schemes:
     test:
       gatherCoverageData: false
       targets: [TeesContractTests, TeesDesignTests, TeesDataTests, TeesViewsTests, TeesPushTests]
+    run:
+      # Stage 2. The dev project's URL and anon (publishable) key — see
+      # `SupabaseConfiguration`'s precedence: the environment beats
+      # Info.plist. Neither value is a secret: the anon key is meant to sit
+      # in a client binary and every table it can touch is behind RLS
+      # (supabase/migrations/0004_rls.sql). The service role key is a
+      # different matter and does not belong anywhere in this repo.
+      environmentVariables:
+        - variable: TEES_SUPABASE_URL
+          value: https://ipzhqvsyxyjndpbmpibw.supabase.co
+        - variable: TEES_SUPABASE_ANON_KEY
+          value: sb_publishable_hWDRhTPRgPBSgmHvuzlEWQ_P6TDcWiA

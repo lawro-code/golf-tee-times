@@ -1,4 +1,69 @@
-const DATA_URL = 'data/teetimes.json';
+// Stage 2. The site used to read a JSON file the old scraper committed to
+// git (`docs/data/teetimes.json`); the scraper now writes to Supabase instead
+// (BUILD-PLAN.md, track A) and nothing commits that file any more. Below is a
+// live fetch against the same project the iOS app reads, reshaped into
+// EXACTLY the object this file was already written against — nested
+// `course.slots[]`, `slot.date`/`slot.time`/`slot.price_tiers` — so the
+// renderer beneath this function needed no changes at all. The two moving
+// pieces are `SUPABASE_URL`/`SUPABASE_ANON_KEY` (below) and `fetchLiveData()`;
+// everything from `populateFilters()` down is untouched Stage-1-era code.
+const SUPABASE_URL = 'https://ipzhqvsyxyjndpbmpibw.supabase.co';
+// The anon (publishable) key. Not a secret — every table it can reach is
+// behind RLS (supabase/migrations/0004_rls.sql) and this key is meant to sit
+// in a public client. The service role key is a different matter and does
+// not belong in this file or in git.
+const SUPABASE_ANON_KEY = 'sb_publishable_hWDRhTPRgPBSgmHvuzlEWQ_P6TDcWiA';
+
+async function supabaseSelect(table, params) {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?${params}`;
+  const resp = await fetch(url, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+  });
+  if (!resp.ok) throw new Error(`${table}: HTTP ${resp.status}`);
+  return resp.json();
+}
+
+async function fetchLiveData() {
+  const [courseRows, slotRows, freshnessRows] = await Promise.all([
+    supabaseSelect('courses', 'select=slug,name,region,holes,drive_minutes_from_bondi,address,active&active=eq.true&order=sort_order.asc'),
+    supabaseSelect('open_slots', 'select=course_slug,tee_date,tee_time,spots_available,price_tiers,booking_url&order=tee_date.asc,tee_time.asc'),
+    supabaseSelect('course_freshness', 'select=last_success_at'),
+  ]);
+
+  const slotsBySlug = new Map();
+  for (const row of slotRows) {
+    if (!slotsBySlug.has(row.course_slug)) slotsBySlug.set(row.course_slug, []);
+    slotsBySlug.get(row.course_slug).push({
+      date: row.tee_date,
+      time: row.tee_time,
+      spots_available: row.spots_available,
+      price_tiers: row.price_tiers || [],
+      booking_url: row.booking_url,
+    });
+  }
+
+  const courses = courseRows.map(c => ({
+    slug: c.slug,
+    name: c.name,
+    region: c.region,
+    holes: c.holes,
+    drive_minutes_from_bondi: c.drive_minutes_from_bondi,
+    address: c.address,
+    slots: slotsBySlug.get(c.slug) || [],
+  }));
+
+  // The closest live equivalent of the old payload's single `generated_at`
+  // stamp: the most recent moment ANY course was actually reached. Nil (every
+  // course still `last_success_at: null`) means nothing has scraped yet —
+  // an honest state right after Stage 2's migrations land and before the
+  // first write with a real service-role key.
+  const successTimes = freshnessRows.map(r => r.last_success_at).filter(Boolean);
+  const generatedAt = successTimes.length
+    ? new Date(Math.max(...successTimes.map(t => new Date(t).getTime()))).toISOString()
+    : null;
+
+  return { courses, generated_at: generatedAt };
+}
 
 const state = {
   data: null,
@@ -257,9 +322,7 @@ function bindTabs() {
 async function init() {
   bindTabs();
   try {
-    const resp = await fetch(`${DATA_URL}?t=${Date.now()}`);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    state.data = await resp.json();
+    state.data = await fetchLiveData();
   } catch (e) {
     els.results.innerHTML = `<p class="empty">Could not load tee times: ${e.message}</p>`;
     els.lastUpdated.textContent = '';

@@ -8,11 +8,13 @@ import TeesContract
 /// summary, and it recomputes the last two whenever either of the first two
 /// changes. A screen reads; it does not derive.
 ///
-/// **Fixtures only.** Track C has no network and no `TeesData` dependency — the
-/// module does not link it and must not. Stage 2 swaps the fixture load for the
-/// real store; until then `ContractLoader.fixture` is the whole data source,
-/// and that is deliberate: the screens get built against the awkward real data
-/// rather than against something convenient.
+/// **No `TeesData` dependency, and never will be.** Track C was built and
+/// tested against `load()` and a bundled fixture on purpose — the screens got
+/// built against the awkward real data rather than against something
+/// convenient. Stage 2 added `apply(payload:errorDescription:)` alongside it
+/// for the live path: the App target owns `TeeTimeStore` and forwards its
+/// snapshots here, so this module still never imports `TeesData` and the
+/// module boundary stays real rather than aspirational.
 @MainActor
 public final class SearchStore: ObservableObject {
 
@@ -101,6 +103,33 @@ public final class SearchStore: ObservableObject {
         } catch {
             payload = nil
             state = .failed(String(describing: error))
+        }
+        recompute()
+    }
+
+    /// The Stage 2 seam this type's own doc comment promised: a live payload
+    /// coming from `TeeTimeStore` rather than a bundled fixture.
+    ///
+    /// Deliberately just a setter, not a subscription. `TeesViews` has no
+    /// `TeesData` dependency and must not gain one — the module boundary is
+    /// the whole point of splitting the tracks. The App target holds
+    /// `TeeTimeStore`, awaits its `snapshotStream()`, and calls this on every
+    /// snapshot; this store never needs to know what a `TeeTimeSnapshot` is.
+    ///
+    /// - Parameters:
+    ///   - payload: nil is a legitimate state — no cache yet and no fetch has
+    ///     landed. It renders as `.loading`, the same as a fixture that has not
+    ///     resolved, not as `.failed`.
+    ///   - errorDescription: set only when a fetch actually failed. A nil
+    ///     payload with no error is "still loading", not "broken".
+    public func apply(payload newPayload: ContractPayload?, errorDescription: String? = nil) {
+        payload = newPayload
+        if let errorDescription {
+            state = .failed(errorDescription)
+        } else if newPayload != nil {
+            state = .loaded
+        } else {
+            state = .loading
         }
         recompute()
     }
