@@ -138,6 +138,39 @@ actor B3Recorder {
     func record(_ name: String, slots: Int) { seen[name] = slots }
 }
 
+/// A controllable stand-in for `Task.sleep`, injected as `TeeTimeStore`'s
+/// `sleep`. The backoff ladder waits real seconds (2s up to 15min); a test
+/// asserting on it needs to see *that* a wait was requested and for how long,
+/// then decide by hand when it ends, the same way `B3FakeRemote`'s gate lets a
+/// test hold a fetch open rather than racing a real clock.
+actor B3ManualSleeper {
+    private(set) var requested: [Duration] = []
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    private var preReleased = 0
+
+    func wait(_ duration: Duration) async {
+        requested.append(duration)
+        if preReleased > 0 {
+            preReleased -= 1
+            return
+        }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            waiters.append(continuation)
+        }
+    }
+
+    /// Ends the oldest still-waiting call, or — if none is waiting yet —
+    /// arms a release for whichever call arrives next, so a test is never
+    /// stuck racing the moment the retry task actually calls in.
+    func release() {
+        if !waiters.isEmpty {
+            waiters.removeFirst().resume()
+        } else {
+            preReleased += 1
+        }
+    }
+}
+
 // MARK: - Tests
 
 final class TeeTimeStoreTests: XCTestCase {
@@ -153,7 +186,20 @@ final class TeeTimeStoreTests: XCTestCase {
         cache: any PayloadCaching,
         clock: B3Clock
     ) -> TeeTimeStore {
-        TeeTimeStore(remote: remote, cache: cache, policy: policy, now: { clock.now })
+        TeeTimeStore(
+            remote: remote, cache: cache, policy: policy, now: { clock.now },
+            sleep: Self.retryNeverFires)
+    }
+
+    /// Every test above this line was written, and still holds, against the
+    /// pre-automatic-retry store: one fetch, then silence until something
+    /// external asks again. Wiring `makeStore()`'s stores to a `sleep` that
+    /// never resolves keeps that true here too — a scheduled retry parks
+    /// forever instead of firing on a real background timer mid-suite. The
+    /// "Automatic retry" tests below exercise the timer itself, with their
+    /// own controllable stand-in (`B3ManualSleeper`).
+    private static let retryNeverFires: @Sendable (Duration) async throws -> Void = { _ in
+        await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in }
     }
 
     /// Give every other task a fair chance to reach the actor. Used only where
@@ -524,6 +570,54 @@ final class TeeTimeStoreTests: XCTestCase {
         XCTAssertNil(snapshot.lastError, "the fetch worked; the disk is a separate problem")
     }
 
+    /// The regression this guards against: `SupabaseSlotsRemote` bounds its
+    /// `course_day_scrapes` read to a window of a few days around today. If
+    /// the scraper has been down long enough (about a week) that even that
+    /// window holds no rows any more, the read still succeeds — it is not an
+    /// error, just an empty one — but before this fix that "success" replaced
+    /// a real, still-useful cache with an empty payload, and with it the one
+    /// signal (`courseDays`) `FreshnessSummary` needs to say "last updated a
+    /// week ago" instead of "haven't loaded yet". `courses` is unaffected by
+    /// the outage (that query is undated), so it is still full — only
+    /// `courseDays`/`slots` collapse to nothing.
+    func testALongScraperOutageDoesNotOverwriteRealDataWithAnEmptyWindow() async {
+        let clock = B3Clock(t0)
+        let cache = B3MemoryCache()
+        let goodPayload = B3Fixtures.payload(slots: 9)
+        let remote = B3FakeRemote(.success(goodPayload))
+        let store = makeStore(remote: remote, cache: cache, clock: clock)
+
+        // A healthy fetch lands first — the real data an outage must not
+        // erase.
+        await store.refresh()
+        let healthy = await store.snapshot
+        XCTAssertEqual(healthy.courseDays.count, 1, "precondition: real scrape history on record")
+        XCTAssertEqual(cache.saveCount, 1)
+
+        // A week passes with the scraper dead. The next read is still a
+        // technical success, but its window now contains nothing: courses
+        // still come back (undated query), courseDays and slots do not.
+        clock.advance(7 * 24 * 3600)
+        let outagePayload = ContractPayload(
+            generatedAt: ContractDate.string(from: clock.now),
+            courses: goodPayload.courses,
+            slots: [],
+            courseDays: [])
+        await remote.setResult(.success(outagePayload))
+        await store.refresh(force: true)
+
+        let afterOutage = await store.snapshot
+        XCTAssertEqual(
+            afterOutage.courseDays, healthy.courseDays,
+            "the real scrape history must survive an empty window, not be replaced by it")
+        XCTAssertFalse(afterOutage.courseDays.isEmpty)
+        XCTAssertEqual(
+            cache.saveCount, 1,
+            "and the on-disk cache must not be overwritten with the empty result")
+        XCTAssertEqual(cache.contents?.payload.courseDays.count, 1)
+        XCTAssertNil(afterOutage.lastError, "a query returning zero rows is not a network failure")
+    }
+
     // MARK: - The stream
 
     func testSnapshotStreamYieldsCurrentStateOnSubscribeAndOnChange() async {
@@ -562,6 +656,19 @@ final class TeeTimeStoreTests: XCTestCase {
         }
         XCTFail("the refresh never finished", file: file, line: line)
         return await store.snapshot
+    }
+
+    /// Poll for the automatic-retry task to have actually reached its wait,
+    /// rather than guessing how many `Task.yield()`s that takes.
+    private func awaitRetryRequested(
+        _ sleeper: B3ManualSleeper, count: Int = 1,
+        file: StaticString = #filePath, line: UInt = #line
+    ) async {
+        for _ in 0..<20_000 {
+            if await sleeper.requested.count >= count { return }
+            await Task.yield()
+        }
+        XCTFail("no automatic retry was ever scheduled", file: file, line: line)
     }
 
     // MARK: - Launching once
@@ -685,6 +792,83 @@ final class TeeTimeStoreTests: XCTestCase {
         XCTAssertEqual(calls, 2, "a new flight, not a join onto a finished one")
         XCTAssertEqual(recovered.slots.count, 8)
         XCTAssertNil(recovered.lastError)
+    }
+
+    // MARK: - Automatic retry
+
+    /// The regression this guards against: `RefreshPolicy` computes a backoff
+    /// ladder (2s, 8s, 30s, 2min) but, before this fix, nothing ever drove it
+    /// — a failure just sat there until something *else* happened to ask
+    /// again (a tab switch, the app returning from the background, a manual
+    /// "Try again"). This test calls none of those. If the store does not
+    /// retry itself, `remote.callCount` never moves past 1 and this fails.
+    func testAFailedFetchAutomaticallyRetriesItselfPerTheBackoffLadder() async {
+        let clock = B3Clock(t0)
+        let sleeper = B3ManualSleeper()
+        let remote = B3FakeRemote(.failure(.offline))
+        let store = TeeTimeStore(
+            remote: remote, cache: B3MemoryCache(), policy: policy, now: { clock.now },
+            sleep: { await sleeper.wait($0) })
+
+        _ = await store.start()
+        let settled = await awaitQuiet(store)
+
+        XCTAssertEqual(settled.lastError, .offline, "precondition: the launch fetch failed")
+        var calls = await remote.callCount
+        XCTAssertEqual(calls, 1, "precondition: only the launch fetch has run")
+
+        await awaitRetryRequested(sleeper)
+        let requested = await sleeper.requested
+        XCTAssertEqual(
+            requested, [.seconds(policy.backoff(attempt: 1))],
+            "a retry must be scheduled for exactly the ladder's first rung — jitter is pinned off")
+
+        // The network recovers. Nothing from here on ever calls `refresh()`,
+        // `appDidBecomeActive()`, or any other trigger — only the ladder's
+        // own timer, once released, is allowed to ask again.
+        await remote.setResult(.success(B3Fixtures.payload(slots: 5)))
+        await sleeper.release()
+        await settle()
+
+        calls = await remote.callCount
+        XCTAssertEqual(
+            calls, 2, "a failed fetch must retry itself once its backoff elapses, with no external trigger")
+        let recovered = await store.snapshot
+        XCTAssertEqual(recovered.slots.count, 5, "the automatic retry's success must reach the screen")
+        XCTAssertNil(recovered.lastError)
+    }
+
+    /// The other half of the same guarantee: a success — from anywhere, not
+    /// just this timer — must cancel any retry still pending, or a store that
+    /// already recovered would still fire a redundant extra request later.
+    func testASuccessCancelsAnyPendingAutomaticRetry() async {
+        let clock = B3Clock(t0)
+        let sleeper = B3ManualSleeper()
+        let remote = B3FakeRemote(.failure(.offline))
+        let store = TeeTimeStore(
+            remote: remote, cache: B3MemoryCache(), policy: policy, now: { clock.now },
+            sleep: { await sleeper.wait($0) })
+
+        _ = await store.start()
+        _ = await awaitQuiet(store)
+        var calls = await remote.callCount
+        XCTAssertEqual(calls, 1)
+        await awaitRetryRequested(sleeper)
+
+        // Recovers via a different path — a manual retry — before the
+        // scheduled automatic one ever fires.
+        await remote.setResult(.success(B3Fixtures.payload(slots: 3)))
+        await store.refresh(force: true)
+        calls = await remote.callCount
+        XCTAssertEqual(calls, 2)
+
+        // Releasing the still-pending automatic retry must not fire a third,
+        // now-redundant fetch.
+        await sleeper.release()
+        await settle()
+        calls = await remote.callCount
+        XCTAssertEqual(
+            calls, 2, "the success above should have cancelled the automatic retry, not left it pending")
     }
 
     // MARK: - The stream

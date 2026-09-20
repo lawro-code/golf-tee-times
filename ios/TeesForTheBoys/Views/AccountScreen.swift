@@ -18,7 +18,15 @@ public struct AccountScreen: View {
     private let email: String?
     private let actions: any AuthActions
     private let alerts: [WatchDraft]
+    /// True when the last attempt to load `alerts` failed — offline, most
+    /// often. Kept distinct from `alerts.isEmpty` on purpose: an empty list
+    /// here means "none loaded", which is also what a genuinely
+    /// alert-free account looks like, and this screen must not tell a
+    /// golfer whose alerts merely failed to load that they never set any —
+    /// see `AppSession.alertsLoadFailed`'s own doc comment.
+    private let alertsLoadFailed: Bool
     private let onDelete: (WatchDraft) -> Void
+    private let onRetryAlerts: () -> Void
     private let onSignedIn: () -> Void
     private let onSignedOut: () -> Void
 
@@ -30,14 +38,18 @@ public struct AccountScreen: View {
         email: String?,
         actions: any AuthActions,
         alerts: [WatchDraft],
+        alertsLoadFailed: Bool = false,
         onDelete: @escaping (WatchDraft) -> Void,
+        onRetryAlerts: @escaping () -> Void = {},
         onSignedIn: @escaping () -> Void = {},
         onSignedOut: @escaping () -> Void = {}
     ) {
         self.email = email
         self.actions = actions
         self.alerts = alerts
+        self.alertsLoadFailed = alertsLoadFailed
         self.onDelete = onDelete
+        self.onRetryAlerts = onRetryAlerts
         self.onSignedIn = onSignedIn
         self.onSignedOut = onSignedOut
     }
@@ -114,7 +126,15 @@ public struct AccountScreen: View {
             }
 
             Section {
-                if alerts.isEmpty {
+                if alerts.isEmpty && alertsLoadFailed {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Couldn't load your alerts. Check your connection and try again.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("Try again", action: onRetryAlerts)
+                    }
+                } else if alerts.isEmpty {
                     Text("No alerts yet. Search for a tee time you want and tap the alert button.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

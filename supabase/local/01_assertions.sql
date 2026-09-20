@@ -217,6 +217,137 @@ end $$;
 select private.assert(count(*) = 2, 'one device token, one row per user')
   from public.push_tokens where token = 'device-token-abc';
 
+-- ------------------- exactly-once must be scoped to the user, not the watch
+-- Regression: a user with two overlapping watches that both cover the same
+-- tee time must get ONE push about it, not one per watch.
+-- alert_deliveries_exactly_once used to be keyed on
+-- (watch_id, slot_id, slot_opened_at), so queue_watch_matches happily queued
+-- a separate row for each matching watch. claim_alert_batch's "one watch per
+-- user per run" only ever limits a single call, and the ten-minute cooldown
+-- just spaces the second push out rather than stopping it — so the user was
+-- pushed twice about the identical tee time, one push per watch.
+--
+-- A fresh user, isolated from every other fixture, so this cannot be affected
+-- by (or accidentally pass because of) another test's watches or deliveries.
+-- Scoped in its own transaction and rolled back.
+begin;
+  insert into auth.users (id, email) values
+    ('44444444-4444-4444-4444-444444444444', 'exactly-once@example.test');
+
+  insert into public.push_tokens (user_id, token)
+  values ('44444444-4444-4444-4444-444444444444', 'device-token-exactly-once');
+
+  insert into public.slots
+    (id, course_slug, tee_date, tee_time, tee_at, spots_available, total_spots,
+     holes, price_min, price_max, price_tiers, booking_type, booking_url)
+  values
+    ('the-coast:2099-07-04:0700:public-play', 'the-coast', '2099-07-04', '07:00',
+     '2099-07-03T21:00:00Z', 4, 4, 18, 55.00, 55.00,
+     '[{"label":"Public","amount":55.0}]'::jsonb, 'Public Play', 'https://example.test/book');
+
+  -- An entirely ordinary pattern, not a contrived one: a broad watch plus a
+  -- narrower "early bird" watch, both covering this tee time.
+  insert into public.watches (id, user_id, label, course_slugs, time_from, time_to, min_players, holes)
+  values
+    ('55555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444',
+     'Any Coast round',   array['the-coast'], '05:00', '19:00', 1, 18),
+    ('66666666-6666-6666-6666-666666666666', '44444444-4444-4444-4444-444444444444',
+     'Coast early bird',  array['the-coast'], '06:00', '09:00', 1, 18);
+
+  select public.queue_watch_matches();
+
+  select private.assert(
+    (select count(*) from public.alert_deliveries
+      where user_id = '44444444-4444-4444-4444-444444444444'
+        and slot_id = 'the-coast:2099-07-04:0700:public-play') = 1,
+    'two overlapping watches matching the same slot queue one delivery for the user, not one per watch');
+
+  -- And the same has to hold once the dispatcher actually sends one and, past
+  -- the cooldown, comes back around: the other watch's would-be duplicate
+  -- must be gone from the ledger already, not merely waiting its turn.
+  create temporary table exactly_once_claim as
+    select * from public.claim_alert_batch(200, 12);
+
+  select private.assert(
+    (select count(*) from exactly_once_claim
+      where user_id = '44444444-4444-4444-4444-444444444444') = 1,
+    'exactly one deliverable row exists for this user, so exactly one claim goes out');
+
+  select public.mark_alert_sent(
+    (select array_agg(delivery_id) from exactly_once_claim
+      where user_id = '44444444-4444-4444-4444-444444444444'),
+    'apns-test-id-exactly-once');
+
+  -- Simulate the ten-minute cooldown having passed, the way a real dispatcher
+  -- run some time later would see it.
+  update public.alert_deliveries
+     set sent_at = now() - interval '11 minutes'
+   where user_id = '44444444-4444-4444-4444-444444444444'
+     and slot_id = 'the-coast:2099-07-04:0700:public-play';
+
+  create temporary table exactly_once_second_claim as
+    select * from public.claim_alert_batch(200, 12);
+
+  select private.assert(
+    (select count(*) from exactly_once_second_claim
+      where user_id = '44444444-4444-4444-4444-444444444444') = 0,
+    'the other watch does not queue a second push for a tee time already sent to this user');
+rollback;
+
+-- ------------------- per-user throttle also gates a claim still in flight
+-- Regression for the alert-dispatch race: two watches for the same user, each
+-- matching a distinct open slot. claim_alert_batch already hands out only one
+-- watch per user PER CALL -- that part was never broken. What was broken is
+-- that a SECOND, overlapping call (a retried scheduler, a second dispatcher
+-- instance) could claim the user's OTHER watch before the first claim was
+-- ever marked sent, because the only per-user throttle checked status='sent',
+-- never the in-flight lease. Two pushes within milliseconds instead of one.
+--
+-- Scoped in its own transaction and rolled back: the fixture slot and watch
+-- must not change the open_slots / course_freshness counts asserted below.
+begin;
+  insert into public.slots
+    (id, course_slug, tee_date, tee_time, tee_at, spots_available, total_spots,
+     holes, price_min, price_max, price_tiers, booking_type, booking_url)
+  values
+    ('the-coast:2099-06-01:0900:public-play', 'the-coast', '2099-06-01', '09:00',
+     '2099-05-31T23:00:00Z', 4, 4, 18, 55.00, 55.00,
+     '[{"label":"Public","amount":55.0}]'::jsonb, 'Public Play', 'https://example.test/book');
+
+  insert into public.watches (id, user_id, label, course_slugs, time_from, time_to, min_players, holes)
+  values ('77777777-7777-7777-7777-777777777777',
+          '11111111-1111-1111-1111-111111111111',
+          'a second watch, same user', array['the-coast'], '08:00', '10:00', 1, 18);
+
+  insert into public.alert_deliveries (watch_id, user_id, slot_id, slot_opened_at)
+  select '77777777-7777-7777-7777-777777777777',
+         '11111111-1111-1111-1111-111111111111',
+         id, opened_at
+    from public.slots where id = 'the-coast:2099-06-01:0900:public-play';
+
+  -- "Dispatcher run 1": claims whatever it is allowed to for this user.
+  create temporary table first_claim as
+    select * from public.claim_alert_batch(200, 12);
+
+  select private.assert(
+    (select count(*) from first_claim where user_id = '11111111-1111-1111-1111-111111111111') > 0,
+    'the first claim actually leases something for this user');
+  select private.assert(
+    (select count(distinct watch_id) from first_claim
+      where user_id = '11111111-1111-1111-1111-111111111111') = 1,
+    'a single claim still hands this user only one watch');
+
+  -- mark_alert_sent is deliberately NOT called here -- this models the real
+  -- gap between claiming a row and the dispatcher's later, network-bound call
+  -- to APNs. "Dispatcher run 2" claims again while run 1's claim is still open.
+  create temporary table second_claim as
+    select * from public.claim_alert_batch(200, 12);
+
+  select private.assert(
+    (select count(*) from second_claim where user_id = '11111111-1111-1111-1111-111111111111') = 0,
+    'an overlapping second claim gets nothing for a user whose first claim has not been sent yet');
+rollback;
+
 -- --------------------------------------- clients hold SELECT and nothing else
 do $$
 declare extra text;

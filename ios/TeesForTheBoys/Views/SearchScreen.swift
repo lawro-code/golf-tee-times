@@ -1,5 +1,6 @@
 import SwiftUI
 import TeesContract
+import TeesDesign
 
 /// Search is the product, and this is the screen it lives on.
 ///
@@ -30,8 +31,19 @@ public struct SearchScreen: View {
     @ObservedObject private var ledger: BookingLedger
 
     private let isSignedIn: Bool
-    private let onCreateWatch: (WatchDraft) -> Void
+    private let onCreateWatch: (WatchDraft) async -> Bool
     private let onRequireSignIn: () -> Void
+
+    /// What "Try again" on the failed state actually does.
+    ///
+    /// `TeesViews` has no `TeesData` dependency and `SearchStore.load()` only
+    /// ever replays the bundled fixture — it has no network to retry. The
+    /// live retry (re-firing `TeeTimeStore`'s fetch) can only be supplied by
+    /// whoever composed a live store in, which is `AppSession`, outside this
+    /// module. Left `nil` — previews and tests with no live backing behind
+    /// them — this falls back to `store.load()`, the only retry a
+    /// fixture-only store can honestly offer.
+    let onRetry: () -> Void
 
     /// - Parameters:
     ///   - store: ticket C1's store. Already loaded, or loaded on first appear.
@@ -39,20 +51,29 @@ public struct SearchScreen: View {
     ///     so a tap out to a club's site is recorded before the app leaves.
     ///   - isSignedIn: browsing works signed out; alerts are the wall. Passed in
     ///     rather than read here because Stage 2 owns the session.
-    ///   - onCreateWatch: called with the draft when an alert is created.
+    ///   - onCreateWatch: called with the draft to create an alert; reports
+    ///     whether the save actually landed, so a network failure never shows
+    ///     as a confirmed "Alert saved" (`AlertFromSearchButton`'s own doc
+    ///     comment on `tap()`).
     ///   - onRequireSignIn: called instead, when there is no session yet.
+    ///   - onRetry: called when the golfer taps "Try again" on a failed load.
+    ///     `AppSession` wires this to `TeeTimeStore.refresh(force:)`; leaving
+    ///     it `nil` falls back to replaying the bundled fixture, which is
+    ///     only ever correct in a preview or a test.
     public init(
         store: SearchStore,
         ledger: BookingLedger,
         isSignedIn: Bool,
-        onCreateWatch: @escaping (WatchDraft) -> Void,
-        onRequireSignIn: @escaping () -> Void
+        onCreateWatch: @escaping (WatchDraft) async -> Bool,
+        onRequireSignIn: @escaping () -> Void,
+        onRetry: (() -> Void)? = nil
     ) {
         self.store = store
         self.ledger = ledger
         self.isSignedIn = isSignedIn
         self.onCreateWatch = onCreateWatch
         self.onRequireSignIn = onRequireSignIn
+        self.onRetry = onRetry ?? { store.load() }
     }
 
     public var body: some View {
@@ -81,8 +102,13 @@ public struct SearchScreen: View {
 
     // MARK: - The four states
 
+    /// Not `private`: `SearchScreenEmptyStateLayoutTests` renders this
+    /// directly, isolated from `topChrome`'s own chip-row `ScrollView`, to
+    /// measure which of the four states puts a real `UIScrollView` in the
+    /// hierarchy — same reasoning as `dayHeader(for:)` and
+    /// `emptyMessage(freshness:)` below.
     @ViewBuilder
-    private func content(presentation: Presentation, sections: [SlotDaySection]) -> some View {
+    func content(presentation: Presentation, sections: [SlotDaySection]) -> some View {
         switch presentation {
         case .loading:
             ViewsLoadingState(message: "Finding tee times across the fifteen clubs\u{2026}")
@@ -92,7 +118,7 @@ public struct SearchScreen: View {
             ViewsErrorState(
                 title: "Couldn't load tee times",
                 message: reason,
-                retry: { store.load() })
+                retry: onRetry)
                 .frame(maxHeight: .infinity)
 
         case .empty:
@@ -106,24 +132,42 @@ public struct SearchScreen: View {
 
     /// No results is not a dead end. The alert is the thing to do about it, so
     /// it is the state's primary action rather than a link tucked underneath.
+    ///
+    /// Not a `ScrollView`: this content is exactly as tall as `.loading`'s and
+    /// `.failed`'s, which sit directly in the `.frame(maxHeight: .infinity)`
+    /// `content(presentation:sections:)` gives every one of the four states —
+    /// SwiftUI centres that by default. A `ScrollView` here used to accept the
+    /// same frame on itself, but a `ScrollView` always lays its content out at
+    /// the top of its scroll axis regardless of the frame it is given, so
+    /// this was the one state, of the four, pinned under the filter bar
+    /// instead of centred (`SearchScreenEmptyStateLayoutTests`).
     private var emptyState: some View {
-        ScrollView {
-            ViewsEmptyState(
-                title: "Nothing open for this search",
-                message: Self.emptyMessage(freshness: store.freshness)
-            ) {
-                AlertFromSearchButton(
-                    draft: draft,
-                    prominence: .primary,
-                    isSignedIn: isSignedIn,
-                    onCreate: onCreateWatch,
-                    onRequireSignIn: onRequireSignIn)
-            }
+        TeesEmptyState(
+            headline: "Nothing open for this search",
+            message: Self.emptyMessage(freshness: store.freshness)
+        ) {
+            AlertFromSearchButton(
+                draft: draft,
+                prominence: .primary,
+                isSignedIn: isSignedIn,
+                onCreate: onCreateWatch,
+                onRequireSignIn: onRequireSignIn)
         }
     }
 
     /// A `List` because it is lazy: only the rows on screen are built, which is
     /// what makes 1755 slots scroll.
+    ///
+    /// `.refreshable` is the only manual retry surface this screen can offer
+    /// while a cached payload is on screen: `AppSession.apply` never lets
+    /// `SearchStore` reach `.failed` (and so never shows `ViewsErrorState`'s
+    /// "Try again" button) unless there is no cached payload at all
+    /// (`TeeTimeSnapshot.isEmptyAndFailing`'s own `payload == nil` guard) — so
+    /// a golfer staring at this morning's tee times after a failed background
+    /// refresh had no gesture that asked for fresh data, only the automatic
+    /// backoff retry to wait out. `onRetry` is `AppSession.retrySearch`
+    /// wherever this is wired live, which forces `TeeTimeStore.refresh` past
+    /// that backoff exactly the way a pull-to-refresh should.
     private func resultsList(_ sections: [SlotDaySection]) -> some View {
         List {
             ForEach(sections) { section in
@@ -134,15 +178,12 @@ public struct SearchScreen: View {
                         }
                     }
                 } header: {
-                    Text(section.title)
-                        .searchSectionHeaderText()
-                        // The relative heading is a shorthand; VoiceOver gets
-                        // the day it actually means.
-                        .accessibilityLabel(SlotFormatting.spokenDayTitle(for: section.date))
+                    Self.dayHeader(for: section)
                 }
             }
         }
         .listStyle(.plain)
+        .refreshable { onRetry() }
     }
 
     // MARK: - Chrome
@@ -234,6 +275,34 @@ public struct SearchScreen: View {
         }
         return "\(base) \(clubs). Set an alert and we'll tell you the moment one opens."
     }
+
+    /// One day-section's header, in `resultsList`: the short on-screen title
+    /// ("Today"), replaced for VoiceOver by the full spoken day, and marked
+    /// as a heading so the rotor's "Headings" navigation can jump straight
+    /// between days.
+    ///
+    /// Pulled out to a name — rather than left inline as `resultsList`'s
+    /// `header:` closure — only so `SearchScreenSectionHeaderAccessibilityTests`
+    /// can assert on it directly, the way `emptyMessage(freshness:)` above
+    /// was pulled out for the same reason. A live `List` rendered in a plain
+    /// `XCTestCase` (no XCUITest, no assistive-technology client attached)
+    /// never actually materialises UIKit's internal accessibility element
+    /// graph — confirmed empirically, it reports empty for every node
+    /// regardless of what traits are set — so this is the only piece small
+    /// enough to inspect directly and prove the trait is really there.
+    static func dayHeader(for section: SlotDaySection) -> some View {
+        Text(section.title)
+            .searchSectionHeaderText()
+            // The relative heading is a shorthand; VoiceOver gets the day it
+            // actually means.
+            .accessibilityLabel(SlotFormatting.spokenDayTitle(for: section.date))
+            // The plain `Section("Title")` string initialiser gets this trait
+            // for free; this custom header (needed for the font and the
+            // label split above) opts out of that, so it has to be added
+            // back by hand — otherwise VoiceOver's rotor "Headings"
+            // navigation has no day sections to jump between.
+            .accessibilityAddTraits(.isHeader)
+    }
 }
 
 // MARK: - Style seam
@@ -258,6 +327,16 @@ enum SearchStyle {
 
     static let calloutShape = RoundedRectangle(cornerRadius: 12, style: .continuous)
     static let calloutBackground = Color.orange.opacity(0.14)
+
+    /// The registration warning's text colour on the results row.
+    /// `.primary` rather than orange: plain `Color.orange` text on this row's
+    /// background (no tint behind it) came out at ~1.8–2.2:1 in light mode,
+    /// far under WCAG's 4.5:1 floor for footnote-sized text. `.primary`
+    /// already adapts to any background the app draws, which is why the same
+    /// warning one screen later — `SlotDetailScreen.registrationCallout`, via
+    /// `searchCalloutText()` — was already using it instead of a coloured
+    /// label.
+    static let warningTextColor = Color.primary
 
     static func chipBackground(isSelected: Bool) -> Color {
         isSelected ? Color.accentColor.opacity(0.16) : Color.secondary.opacity(0.10)
@@ -298,7 +377,7 @@ extension View {
     }
 
     func searchWarningText() -> some View {
-        font(.footnote).foregroundStyle(Color.orange)
+        font(.footnote).foregroundStyle(SearchStyle.warningTextColor)
     }
 
     /// An unknown price is stated quietly rather than dressed up as a number:
@@ -315,7 +394,7 @@ extension View {
         store: SearchStore.previewStore(fixture: "golden"),
         ledger: BookingLedger(),
         isSignedIn: true,
-        onCreateWatch: { _ in },
+        onCreateWatch: { _ in true },
         onRequireSignIn: {})
 }
 #endif

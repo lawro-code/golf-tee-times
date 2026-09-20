@@ -1,5 +1,6 @@
 import SwiftUI
 import TeesContract
+import TeesDesign
 
 /// The six things a golfer narrows by, as one horizontally scrolling row of
 /// chips across the top of the results.
@@ -57,7 +58,10 @@ public struct FilterBar: View {
 
     /// Only ever on screen when there is something to clear. A permanently
     /// visible Clear on an unfiltered search is a control that does nothing.
-    private var clearButton: some View {
+    ///
+    /// Internal rather than `private`: `FilterBarLayoutTests` measures its
+    /// real, un-mocked tap target height and needs to reach it directly.
+    var clearButton: some View {
         Button {
             store.resetFilters()
         } label: {
@@ -66,7 +70,9 @@ public struct FilterBar: View {
                 .searchChipText()
                 .padding(.horizontal, SearchStyle.chipPadding)
                 .padding(.vertical, SearchStyle.chipPadding * 0.6)
+                .frame(minHeight: TeesLayout.minTapTarget)
                 .background(SearchStyle.chipBackground(isSelected: false), in: Capsule())
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Clear filters")
@@ -94,11 +100,13 @@ struct FilterChip: View {
                 .lineLimit(1)
                 .padding(.horizontal, SearchStyle.chipPadding)
                 .padding(.vertical, SearchStyle.chipPadding * 0.6)
+                .frame(minHeight: TeesLayout.minTapTarget)
                 .background(SearchStyle.chipBackground(isSelected: isSelected), in: Capsule())
                 .overlay(
                     Capsule().strokeBorder(
                         SearchStyle.chipBorder(isSelected: isSelected),
                         lineWidth: isSelected ? 1.5 : 1))
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         // The chip's visible text is its value, not its name, so the two are

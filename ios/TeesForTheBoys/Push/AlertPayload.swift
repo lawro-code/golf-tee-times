@@ -67,13 +67,17 @@ public enum AlertPayloadIssue: Error, Equatable, Sendable, CustomStringConvertib
 /// A malformed push must never crash the app, and one bad field must not throw
 /// away a payload that can still be routed. So there are two tiers:
 ///
-/// - **Rejections** — no `tees`, no `v`, a `v` we do not know, or an
-///   unreadable `tee_at` or `count`. These return `nil` with a reason, because
-///   what is left cannot be trusted or cannot be routed.
+/// - **Rejections** — no `tees`, no `v`, a `v` we do not know, a missing
+///   `tee_at`, or an unreadable `count`. These return `nil` with a reason,
+///   because what is left cannot be trusted or cannot be routed.
 /// - **Issues** — a missing course name, a `slot_ids` that is not an array of
-///   strings. These land in ``issues`` and the payload still decodes, exactly
-///   as `ContractPayload.issues` carries a dropped row without blanking the
-///   other fourteen courses.
+///   strings, or a `tee_at` that does not parse. These land in ``issues`` and
+///   the payload still decodes, exactly as `ContractPayload.issues` carries a
+///   dropped row without blanking the other fourteen courses. `tee_at` is an
+///   issue rather than a rejection because ``route`` never reads it — only
+///   `watch_id`, `primary_slot_id` and `count` decide where a tap lands, so a
+///   formatting slip in `tee_at` (a Postgres `date` cast with no offset, say)
+///   must not throw away an otherwise fully-routable push.
 ///
 /// ## `tee_at` is parsed by `ContractDate`, never here
 ///
@@ -99,8 +103,10 @@ public struct AlertPayload: Equatable, Sendable {
     public let courseSlug: String
     public let courseName: String
     /// The absolute instant of the tee time, resolved server-side. Clients
-    /// never recompute it.
-    public let teeAt: Date
+    /// never recompute it. `nil` when the sender's `tee_at` did not parse —
+    /// see ``AlertPayloadIssue/malformedField(name:value:)`` in ``issues``.
+    /// ``route`` never reads this field.
+    public let teeAt: Date?
     /// How many matching slots this push covers. The routing rule turns on it.
     public let count: Int
     /// Fields that were wrong but not fatal. Empty on a clean decode.
@@ -113,7 +119,7 @@ public struct AlertPayload: Equatable, Sendable {
         primarySlotID: String?,
         courseSlug: String,
         courseName: String,
-        teeAt: Date,
+        teeAt: Date?,
         count: Int,
         issues: [AlertPayloadIssue] = []
     ) {
@@ -166,9 +172,6 @@ public struct AlertPayload: Equatable, Sendable {
         guard let rawTeeAt = string(tees["tee_at"]) else {
             return .failure(.missingField("tee_at"))
         }
-        guard let teeAt = ContractDate.date(from: rawTeeAt) else {
-            return .failure(.malformedField(name: "tee_at", value: rawTeeAt))
-        }
 
         guard let count = integer(tees["count"]) else {
             return .failure(tees["count"] == nil ? .missingField("count") : .malformedField(
@@ -176,6 +179,15 @@ public struct AlertPayload: Equatable, Sendable {
         }
 
         var issues: [AlertPayloadIssue] = []
+
+        // Unlike every other rejection above, an unreadable tee_at does not
+        // take the payload down with it: `route` never reads this field, so a
+        // sender's formatting slip here must not silently drop a tap that is
+        // otherwise fully routable on watch_id/primary_slot_id/count alone.
+        let teeAt = ContractDate.date(from: rawTeeAt)
+        if teeAt == nil {
+            issues.append(.malformedField(name: "tee_at", value: rawTeeAt))
+        }
 
         let slotIDs = stringArray(tees["slot_ids"], name: "slot_ids", issues: &issues)
         let courseSlug = required(tees["course_slug"], name: "course_slug", issues: &issues)

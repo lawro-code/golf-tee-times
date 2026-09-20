@@ -223,7 +223,7 @@ class SupabaseWriter:
         try:
             upserted, errs = self._upsert_slots(slots, seen_at)
             errors.extend(errs)
-            closed, errs = self._close_gone_slots(slots, course_days)
+            closed, errs = self._close_gone_slots(slots, course_days, seen_at)
             errors.extend(errs)
             days_written, errs = self._upsert_course_days(course_days, seen_at)
             errors.extend(errs)
@@ -320,14 +320,27 @@ class SupabaseWriter:
         return written, errors
 
     def _close_gone_slots(
-        self, slots: Sequence[dict], course_days: Sequence[dict]
+        self, slots: Sequence[dict], course_days: Sequence[dict], seen_at: str
     ) -> Tuple[int, List[str]]:
         """Close what a successful scrape stopped listing. Nothing else.
 
         A (course, day) that failed is not in `ok_days`, is never queried, and
         therefore cannot lose a single row. That asymmetry is the point.
+
+        Fencing against a second, TOCTOU race: a slow 'full' run's in-memory
+        payload for a (course, day) reflects the instant it fetched that
+        page (`last_attempt_at`), not the instant it gets around to closing.
+        A faster, narrower run (or any other writer) can legitimately write a
+        slot open AFTER that fetch but BEFORE this run's close step runs —
+        full's own 'seen' set then omits it honestly, but the row is not
+        actually gone, this run's snapshot of it is just older than the
+        current truth. A row is only closed when its own `last_seen_at` is
+        no newer than the fetch it is being judged against; a row someone
+        else has touched more recently is left alone rather than closed and
+        immediately reopened with a fresh (spurious) opened_at.
         """
         ok_days: Dict[str, List[str]] = {}
+        fetched_at: Dict[Tuple[str, str], str] = {}
         for day in course_days:
             if not day.get("ok"):
                 continue
@@ -338,6 +351,10 @@ class SupabaseWriter:
             ok_days.setdefault(slug, [])
             if tee_date not in ok_days[slug]:
                 ok_days[slug].append(tee_date)
+            # Per-day fetch time when available (it always is from scrape.py);
+            # the run's own overall timestamp is the safe fallback, since it
+            # is still captured before this run's own writes go out.
+            fetched_at[(slug, tee_date)] = day.get("last_attempt_at") or seen_at
 
         seen: Dict[Tuple[str, str], set] = {}
         for slot in slots:
@@ -358,6 +375,9 @@ class SupabaseWriter:
                 row["id"]
                 for row in open_rows
                 if row.get("id") not in seen.get((slug, row.get("tee_date")), set())
+                and _not_fresher_than(
+                    row.get("last_seen_at"), fetched_at.get((slug, row.get("tee_date")))
+                )
             ]
             for chunk in _chunks(sorted(stale), self.CLOSE_CHUNK):
                 try:
@@ -374,7 +394,7 @@ class SupabaseWriter:
                 "GET",
                 "slots",
                 params={
-                    "select": "id,tee_date",
+                    "select": "id,tee_date,last_seen_at",
                     "course_slug": "eq.{}".format(slug),
                     "tee_date": _in_list(dates),
                     "status": "eq.open",
@@ -498,6 +518,35 @@ def _course_tallies(course_days: Sequence[dict]) -> Tuple[int, int, int]:
 
 def _chunks(rows: Sequence[Any], size: int) -> List[List[Any]]:
     return [list(rows[i:i + size]) for i in range(0, len(rows), size)]
+
+
+def _not_fresher_than(last_seen_at: Optional[str], fetched_at: Optional[str]) -> bool:
+    """True unless `last_seen_at` is strictly after `fetched_at`.
+
+    This is the fence: `fetched_at` is when a run looked at a (course, day)
+    page, `last_seen_at` is when the row now sitting in the DB was last
+    written by anyone. If that write happened after this run's own look at
+    the page, it knows something this run's payload cannot — closing on the
+    strength of an older fetch would clobber newer, real information. Unknown
+    or unparseable timestamps fail open (closable), matching the pre-fence
+    behaviour: every real row from the database has both fields set.
+    """
+    if not fetched_at:
+        return True
+    seen = _parse_instant(last_seen_at)
+    fetched = _parse_instant(fetched_at)
+    if seen is None or fetched is None:
+        return True
+    return seen <= fetched
+
+
+def _parse_instant(value: Optional[str]) -> Optional[datetime]:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        return datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def _in_list(values: Iterable[str]) -> str:

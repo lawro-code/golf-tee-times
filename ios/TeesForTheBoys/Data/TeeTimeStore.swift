@@ -56,7 +56,7 @@ public struct TeeTimeSnapshot: Sendable, Equatable {
 /// Serialising the decision inside an actor is what makes that provable rather
 /// than hopeful.
 ///
-/// Three behaviours, in the order they matter:
+/// Four behaviours, in the order they matter:
 ///
 /// 1. **Cache first, always.** `start()` publishes whatever is on disk and
 ///    returns. It never awaits the network, so first paint is disk-speed even
@@ -64,6 +64,10 @@ public struct TeeTimeSnapshot: Sendable, Equatable {
 /// 2. **Single-flight.** Concurrent callers join the fetch already running.
 /// 3. **A failure never destroys good data.** The last payload stays on
 ///    screen; the error rides alongside it and feeds the backoff.
+/// 4. **A failure retries itself.** `scheduleAutomaticRetry()` below asks
+///    again once the backoff ladder says to, with no tab switch, foreground
+///    event or manual tap required to notice the failure and ask on its
+///    behalf.
 public actor TeeTimeStore {
 
     private let remote: any SlotsFetching
@@ -73,6 +77,12 @@ public actor TeeTimeStore {
     /// Injected so tests can assert on a staleness boundary rather than sleep
     /// through six hours of it.
     private let clock: @Sendable () -> Date
+
+    /// Injected for the same reason `clock` is: `scheduleAutomaticRetry()`
+    /// below waits on the backoff ladder's own numbers (2s up to 15min), and a
+    /// test asserting on that has to control when the wait ends rather than
+    /// actually sitting through it. Defaults to a real `Task.sleep`.
+    private let sleep: @Sendable (Duration) async throws -> Void
 
     private var payload: ContractPayload?
     private var fetchedAt: Date?
@@ -86,18 +96,28 @@ public actor TeeTimeStore {
     /// thundering-herd guarantee.
     private var inFlight: Task<Void, Never>?
 
+    /// The self-scheduled follow-up after a failure — the half of the backoff
+    /// design that was previously missing. Without this, `RefreshPolicy`'s
+    /// ladder is only ever consulted by chance (a tab switch, the app
+    /// returning from the background, a manual "Try again"); a failure that
+    /// happens to land between those had nothing that would ever revisit it.
+    /// Cancelled the moment it is made moot — by a success, from anywhere.
+    private var retryTask: Task<Void, Never>?
+
     private var observers: [UUID: AsyncStream<TeeTimeSnapshot>.Continuation] = [:]
 
     public init(
         remote: any SlotsFetching,
         cache: any PayloadCaching,
         policy: RefreshPolicy = RefreshPolicy.standard,
-        now: @escaping @Sendable () -> Date = { Date() }
+        now: @escaping @Sendable () -> Date = { Date() },
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.remote = remote
         self.cache = cache
         self.policy = policy
         self.clock = now
+        self.sleep = sleep
     }
 
     /// The composition the app uses: Supabase in front, disk behind.
@@ -207,13 +227,27 @@ public actor TeeTimeStore {
     private func performFetch() async {
         do {
             let fresh = try await remote.fetchPayload()
-            let stamp = clock()
-            payload = fresh
-            fetchedAt = stamp
-            lastError = nil
-            lastFailureAt = nil
-            failureCount = 0                  // a success resets the ladder
-            writeCache(fresh, fetchedAt: stamp)
+            // A full-window fetch that comes back with no `course_days` at all
+            // while we already have some is not ordinary emptiness — it is
+            // `SupabaseSlotsRemote`'s query window (bounded to a few days
+            // around today) finding nothing, which only happens once the
+            // scraper has been down longer than that window. The request
+            // still succeeded, so this is not caught below, but the payload
+            // carries no real signal and must not be allowed to overwrite one
+            // that does: that would erase the one thing capable of showing an
+            // honest "last updated N days ago" (FreshnessSummary.make) with
+            // "haven't loaded yet", and would replace a real cached list with
+            // an empty one. Treated as a no-op: keep what is on screen.
+            if !isSuspiciousEmptyRegression(fresh) {
+                let stamp = clock()
+                payload = fresh
+                fetchedAt = stamp
+                lastError = nil
+                lastFailureAt = nil
+                failureCount = 0               // a success resets the ladder
+                writeCache(fresh, fetchedAt: stamp)
+                cancelAutomaticRetry()
+            }
         } catch {
             // Keep the payload. An offline phone showing this morning's tee
             // times with a note is useful; an error screen is not.
@@ -222,10 +256,55 @@ public actor TeeTimeStore {
             failureCount += 1
             lastError = failure
             DataLog.failed("refresh (attempt \(failureCount))", failure, in: .remote)
+            scheduleAutomaticRetry()
         }
         inFlight = nil
         isRefreshing = false
         publish()
+    }
+
+    /// True when a technically-successful fetch carries no scrape history at
+    /// all — empty `courseDays` — while the store already has some on record.
+    ///
+    /// `courseDays` empty is ambiguous on its own: it is also what a device
+    /// that has genuinely never reached the server sees (`payload == nil`),
+    /// and that case must keep reading as "haven't loaded yet"
+    /// (`FreshnessSummary`'s own test asserts it). The `payload != nil` guard
+    /// here is what separates the two: only a *regression* from real data to
+    /// none is suspicious.
+    private func isSuspiciousEmptyRegression(_ fresh: ContractPayload) -> Bool {
+        guard let current = payload, !current.courseDays.isEmpty else { return false }
+        return fresh.courseDays.isEmpty
+    }
+
+    // MARK: - Automatic retry
+
+    /// Ask again once this failure's place on the ladder says to, unless
+    /// something else (another failure, a success) has since cancelled this
+    /// one — see `performFetch()`.
+    ///
+    /// Goes straight to `beginRefresh()`, not `refresh()`: the wait itself
+    /// *is* the "should we retry" decision — `policy.backoff(attempt:)` is
+    /// what said how long to wait — so there is nothing left for
+    /// `shouldRefresh` to add, and asking it again would mean re-deriving the
+    /// same answer from `lastFailureAt` and `now()` a second time for no
+    /// reason, coupling this to the clock the wait itself never touches.
+    private func scheduleAutomaticRetry() {
+        cancelAutomaticRetry()
+        let delay = policy.backoff(attempt: failureCount)
+        let wait = sleep
+        retryTask = Task { [weak self] in
+            if delay > 0 {
+                try? await wait(.seconds(delay))
+            }
+            guard !Task.isCancelled, let self else { return }
+            await self.beginRefresh().value
+        }
+    }
+
+    private func cancelAutomaticRetry() {
+        retryTask?.cancel()
+        retryTask = nil
     }
 
     // MARK: - The cache, which is never allowed to be fatal

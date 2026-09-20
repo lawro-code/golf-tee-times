@@ -251,6 +251,22 @@ final class FilterBarTests: XCTestCase {
         XCTAssertEqual(FilterSheet.footerTitle(resultCount: 143), "Show 143 tee times")
     }
 
+    // MARK: - The day sheet with zero slots
+
+    /// Every course can scrape cleanly and still have nothing open on any
+    /// day — `payload.slots` empty, so `availableDays` is too. The sheet has
+    /// to say that, rather than showing the ordinary "no day chosen" hint
+    /// above a silently empty list, which reads as a broken screen instead
+    /// of a deliberate "nothing to filter by yet".
+    func testDayHintExplainsAnEmptyListInsteadOfGoingSilent() {
+        XCTAssertEqual(
+            FilterSheet.dayHint(availableDays: []),
+            "No tee times are open on any day right now, so there's nothing to filter by yet.")
+        XCTAssertEqual(
+            FilterSheet.dayHint(availableDays: ["2026-10-03"]),
+            "No day chosen means every day we have.")
+    }
+
     // MARK: - Clearing
 
     /// The Clear control exists only while there is something to clear, and

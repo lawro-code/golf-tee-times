@@ -4,9 +4,20 @@ import TeesContract
 
 /// The one object the search screens observe.
 ///
-/// It owns the payload, the filters, the derived sections and the freshness
-/// summary, and it recomputes the last two whenever either of the first two
-/// changes. A screen reads; it does not derive.
+/// It owns the payload and the filters; `sections`, `resultCount` and
+/// `freshness` are derived from those two plus the current instant, computed
+/// fresh on every read rather than cached. A screen reads; it does not
+/// derive.
+///
+/// **Why computed, not cached.** An earlier version cached these three in
+/// `@Published` vars and refreshed them from a private `recompute()` called
+/// only on a filter change or a new payload. Nothing else in the app ever
+/// touches either of those, so a golfer who opens the app once and leaves it
+/// — foregrounded or backgrounded, untouched — sailed straight through local
+/// midnight with the cache frozen on the wrong side of it: "Tomorrow"
+/// stayed "Tomorrow" after it became today, and yesterday's now-past tee
+/// times stayed listed under "Today". `today` (below) was always computed
+/// fresh and never had this problem; `sections` et al. now match it.
 ///
 /// **No `TeesData` dependency, and never will be.** Track C was built and
 /// tested against `load()` and a bundled fixture on purpose — the screens got
@@ -30,7 +41,9 @@ public final class SearchStore: ObservableObject {
     @Published public private(set) var state: LoadState = .idle
     @Published public private(set) var payload: ContractPayload?
 
-    /// Setting this persists the hole choice and recomputes the sections.
+    /// Setting this persists the hole choice. `sections`/`resultCount`
+    /// reflect the new filters on their very next read — see the class doc
+    /// comment — so there is nothing else for this to trigger.
     ///
     /// `didSet` rather than a `setFilters` method so a SwiftUI binding —
     /// `$store.filters.players` — does the right thing without every screen
@@ -40,13 +53,8 @@ public final class SearchStore: ObservableObject {
             if oldValue.holes != filters.holes {
                 ViewsPreferences.setHoles(filters.holes, in: preferences)
             }
-            recompute()
         }
     }
-
-    @Published public private(set) var sections: [SlotDaySection] = []
-    @Published public private(set) var resultCount: Int = 0
-    @Published public private(set) var freshness: FreshnessSummary = .unknown
 
     /// Set by whoever owns connectivity. The store does not watch the network —
     /// it has none — it just carries the flag so one banner decision lives in
@@ -88,7 +96,7 @@ public final class SearchStore: ObservableObject {
         self.filters = initial
     }
 
-    /// Load the fixture and recompute everything derived from it.
+    /// Load the fixture.
     ///
     /// Synchronous on purpose — reading a bundled file is not worth an `async`
     /// seam that Stage 2 would then have to unpick. A missing or undecodable
@@ -104,7 +112,6 @@ public final class SearchStore: ObservableObject {
             payload = nil
             state = .failed(String(describing: error))
         }
-        recompute()
     }
 
     /// The Stage 2 seam this type's own doc comment promised: a live payload
@@ -131,7 +138,6 @@ public final class SearchStore: ObservableObject {
         } else {
             state = .loading
         }
-        recompute()
     }
 
     /// Back to one player, 18 holes, every day, every course.
@@ -155,24 +161,55 @@ public final class SearchStore: ObservableObject {
 
     // MARK: - Derivation
 
-    private func recompute() {
-        guard let payload else {
-            sections = []
-            resultCount = 0
-            freshness = .unknown
-            return
-        }
-
-        let results = SlotQuery.apply(filters, to: payload.slots)
-        sections = SlotQuery.sections(
-            results,
+    /// The day-grouped results a screen renders. Computed fresh on every
+    /// read from `payload`, `filters` and `now()` — never cached — so a
+    /// section's "Today"/"Tomorrow" title, and which now-past slots have
+    /// dropped out, are always true of the instant it is actually read,
+    /// with nothing that needs to remember to ask for a refresh first.
+    public var sections: [SlotDaySection] {
+        guard let payload else { return [] }
+        return SlotQuery.sections(
+            matchingResults(in: payload),
             today: today,
             priceFilterActive: filters.maxPrice != nil)
-        resultCount = results.count
-        freshness = FreshnessSummary.make(
-            courseDays: payload.courseDays,
+    }
+
+    /// `sections.reduce(0) { $0 + $1.results.count }`, computed the same way
+    /// so the two can never disagree.
+    public var resultCount: Int {
+        guard let payload else { return 0 }
+        return matchingResults(in: payload).count
+    }
+
+    /// Scoped to the same day/course facets `matchingResults` uses, so the
+    /// banner describes what's on screen rather than the whole 5-day,
+    /// 15-course payload. Days 3-4 only get a fresh scrape every ~12h
+    /// (`scrape.yml`'s full run) while days 0-2 refresh every 20 minutes
+    /// (`scrape-fast.yml`); mixing them lets an always-recent day-0-2 row
+    /// hide a stale day-3/4 row the golfer actually filtered down to.
+    public var freshness: FreshnessSummary {
+        guard let payload else { return .unknown }
+        return FreshnessSummary.make(
+            courseDays: Self.visibleCourseDays(payload.courseDays, matching: filters),
             courses: payload.courses,
             now: now())
+    }
+
+    private func matchingResults(in payload: ContractPayload) -> [SlotResult] {
+        SlotQuery.apply(filters, to: payload.slots, now: now())
+    }
+
+    /// Narrow `course_days` to the day/course facets a golfer actually
+    /// selected — the same two facets `SlotQuery.matches` uses to narrow
+    /// slots. Other filters (players, holes, price, drive time) select
+    /// individual slots within a day and say nothing about which
+    /// course-day rows are "on screen", so they are deliberately not
+    /// applied here.
+    static func visibleCourseDays(_ courseDays: [CourseDay], matching filters: SearchFilters) -> [CourseDay] {
+        courseDays.filter { day in
+            (filters.days.isEmpty || filters.days.contains(day.teeDate))
+                && (filters.courseSlugs.isEmpty || filters.courseSlugs.contains(day.courseSlug))
+        }
     }
 
     private static let sydneyDateFormatter: DateFormatter = {

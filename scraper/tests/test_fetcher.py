@@ -234,6 +234,39 @@ class TransportFailureTests(FetcherTestCase):
         self.assertFalse(result.ok)
         self.assertTrue(result.error)
 
+    def test_a_dropped_connection_mid_response_is_retried_and_can_recover(self):
+        """ChunkedEncodingError is what requests/urllib3 actually raises when a
+        connection resets or the body is cut short partway through a chunked
+        or streamed read (an IncompleteRead). It is a sibling of
+        ConnectionError, not a subclass of it — same module docstring promise
+        ("a dropped connection... is worth asking again about"), so it must
+        get the same retry budget a plain ConnectionError gets, and recover
+        the same way.
+        """
+        session = self.session(
+            requests.exceptions.ChunkedEncodingError(
+                "Connection broken: IncompleteRead(0 bytes read)"
+            ),
+            FakeResponse(200, text=HTML),
+        )
+        result = fetcher.fetch(TIMESHEET, session=session, retries=2)
+        self.assertEqual(len(session.calls), 2, "worth a second try, same as a ConnectionError")
+        self.assertTrue(result.ok)
+        self.assertEqual(result.html, HTML)
+        self.assertIsNone(result.error)
+
+    def test_a_dropped_connection_that_never_recovers_names_itself_plainly(self):
+        session = self.session(
+            requests.exceptions.ChunkedEncodingError(
+                "Connection broken: IncompleteRead(0 bytes read)"
+            )
+        )
+        result = fetcher.fetch(TIMESHEET, session=session, retries=2)
+        self.assertEqual(len(session.calls), 3, "the same budget a ConnectionError gets")
+        self.assertFalse(result.ok)
+        self.assertTrue(result.error.startswith("connection error: "), result.error)
+        self.assertNotIn("ChunkedEncodingError", result.error, "not a bare exception name")
+
 
 # --------------------------------------------------------------------------
 # 429: honour a small Retry-After, otherwise get out of the way
@@ -330,6 +363,32 @@ class SuspiciousSuccessTests(FetcherTestCase):
         session = self.session(FakeResponse(200, text=HTML, headers={}))
         result = fetcher.fetch(TIMESHEET, session=session, retries=0)
         self.assertTrue(result.ok, result.error)
+
+    def test_a_200_that_bounced_to_the_clubs_own_homepage_is_a_failure(self):
+        """The login/member markers are not the only way a bad session gets
+        bounced. Five of the fifteen courses front MiClub through their own
+        custom domain, and MiClub itself lands a rejected session on the
+        club's ordinary public homepage for several failure modes (a timed
+        out session, "timesheet unavailable", a login flow MiClub changed)
+        that have nothing to do with "login"/"signin"/"sign-in"/"logon"/
+        "/member" in the URL. A 200 that lands anywhere other than the
+        timesheet it asked for is a failure, not a quiet success.
+        """
+        session = self.session(FakeResponse(
+            200,
+            text=(
+                "<html><head><title>Woollahra Golf Club</title></head>"
+                "<body><nav>Home | Membership | Contact</nav>"
+                "<h1>Welcome to Woollahra Golf Club</h1>"
+                "<p>Book online or call the pro shop.</p></body></html>"
+            ),
+            url="https://woollahra.miclub.com.au/",
+        ))
+        result = fetcher.fetch(TIMESHEET, session=session, retries=2)
+        self.assertFalse(result.ok)
+        self.assertIsNotNone(result.error)
+        self.assertIsNone(result.html)
+        self.assertEqual(len(session.calls), 1, "asking again gets the same homepage")
 
 
 # --------------------------------------------------------------------------

@@ -18,8 +18,11 @@ import TeesContract
 @MainActor
 final class SearchScreenTests: XCTestCase {
 
-    /// 8am on the fixture's first day, so `today` is 2026-10-03.
-    private let fixedNow = ContractDate.date(from: "2026-10-03T08:00:00+10:00")!
+    /// Midnight on the fixture's first day, so `today` is 2026-10-03 and every
+    /// one of that day's tee times (earliest 06:16) is still ahead of the
+    /// clock — `SlotQuery.apply` drops anything whose `tee_at` is not, so a
+    /// later instant would quietly age fixture rows out of these assertions.
+    private let fixedNow = ContractDate.date(from: "2026-10-03T00:00:00+10:00")!
 
     private let day1 = "2026-10-03"
     private let day2 = "2026-10-04"
@@ -208,7 +211,7 @@ final class SearchScreenTests: XCTestCase {
             store: loadedStore(),
             ledger: ledger(),
             isSignedIn: false,
-            onCreateWatch: { _ in },
+            onCreateWatch: { _ in true },
             onRequireSignIn: {})
         XCTAssertTrue(view is SearchScreen)
     }
@@ -225,8 +228,10 @@ final class SearchScreenTests: XCTestCase {
 @MainActor
 final class SearchScreenFailurePathTests: XCTestCase {
 
-    /// 8am on the fixture's first day, so `today` is 2026-10-03.
-    private let fixedNow = ContractDate.date(from: "2026-10-03T08:00:00+10:00")!
+    /// Midnight on the fixture's first day — see `SearchScreenTests.fixedNow`
+    /// for why it has to sit before that day's earliest tee time rather than,
+    /// say, 8am.
+    private let fixedNow = ContractDate.date(from: "2026-10-03T00:00:00+10:00")!
 
     private func makeStore(fixture: String, filters: SearchFilters? = nil) -> SearchStore {
         let now = fixedNow
@@ -237,6 +242,10 @@ final class SearchScreenFailurePathTests: XCTestCase {
         store.load()
         if let filters { store.filters = filters }
         return store
+    }
+
+    private func ledger() -> BookingLedger {
+        BookingLedger(store: InMemoryViewsStore(), now: { self.fixedNow })
     }
 
     /// A load that failed has zero results, and zero results is exactly what
@@ -306,21 +315,95 @@ final class SearchScreenFailurePathTests: XCTestCase {
         XCTAssertEqual(presentation.alertProminence, .inline)
     }
 
+    // MARK: - "Try again" must retry, not fabricate
+
+    /// A device with no cache and a fetch that has already failed — a fresh
+    /// install in airplane mode, or a cold launch during a Supabase outage.
+    /// `SearchStore.apply(payload: nil, errorDescription:)` is exactly what
+    /// `AppSession.apply(_:)` calls on that path.
+    private func failedLiveStore() -> SearchStore {
+        let now = fixedNow
+        let store = SearchStore(preferences: InMemoryViewsStore(), now: { now })
+        store.apply(payload: nil, errorDescription: "offline")
+        return store
+    }
+
+    /// The regression this guards: `SearchScreen`'s "Try again" used to be
+    /// hardcoded to `{ store.load() }`, which unconditionally replays the
+    /// bundled `golden` fixture — no network call, no retry, and no sign
+    /// anything was faked. Tapping the one button the error screen offers
+    /// silently swapped 1755 rows of sample data in for a fetch that never
+    /// happened. A caller that wires a real retry (as `AppSession` does, into
+    /// `TeeTimeStore.refresh(force:)`) must have that retry run instead — and
+    /// the store must be left exactly as it was, not quietly reloaded with
+    /// fixture data alongside it.
+    func testTryAgainRunsTheInjectedRetryInsteadOfReloadingTheBundledFixture() {
+        let store = failedLiveStore()
+        XCTAssertEqual(store.state, .failed("offline"))
+
+        var retryCount = 0
+        let screen = SearchScreen(
+            store: store,
+            ledger: ledger(),
+            isSignedIn: false,
+            onCreateWatch: { _ in true },
+            onRequireSignIn: {},
+            onRetry: { retryCount += 1 })
+
+        screen.onRetry()
+
+        XCTAssertEqual(retryCount, 1, "\"Try again\" must call the injected retry action")
+        XCTAssertEqual(
+            store.state, .failed("offline"),
+            "\"Try again\" reloaded the bundled fixture instead of only running the injected retry")
+        XCTAssertNil(store.payload, "the bundled fixture must not have been loaded behind the retry's back")
+    }
+
+    /// The other half of the same seam: with no live retry supplied — a
+    /// preview, or a fixture-only test — falling back to `store.load()` is
+    /// the only honest thing a fixture-backed store can do, so that fallback
+    /// must still work.
+    func testTryAgainFallsBackToTheFixtureLoaderWhenNoRetryIsSupplied() {
+        let now = fixedNow
+        let store = SearchStore(preferences: InMemoryViewsStore(), fixture: "minimal", now: { now })
+        store.apply(payload: nil, errorDescription: "offline")
+        XCTAssertEqual(store.state, .failed("offline"))
+
+        let screen = SearchScreen(
+            store: store,
+            ledger: ledger(),
+            isSignedIn: false,
+            onCreateWatch: { _ in true },
+            onRequireSignIn: {})
+
+        screen.onRetry()
+
+        XCTAssertEqual(store.state, .loaded, "the fallback retry should have reloaded the fixture")
+    }
+
     /// The day headings are relative to the store's clock, not to the position
-    /// of the section in the list. Run the same fixture a week later and the
-    /// first section stops being "Today" — if it does not, the heading is a
-    /// label attached to an index rather than to a date, and CONTRACT.md §4's
-    /// whole point about not re-deriving Sydney days is lost.
+    /// of the section in the list. Move the clock forward past the fixture's
+    /// first day and that section drops out entirely — correctly: every one of
+    /// its tee times has now passed, and a passed tee time is not inventory
+    /// (`SlotQueryTests.testASlotThatHasAlreadyTeedOffIsExcludedEvenThoughItMatchesEveryFilter`).
+    /// What is left is the regression this test actually guards: the section
+    /// that is now first in the list must be labelled "Today" because it *is*
+    /// today, not because a renderer assumed index 0 always is, and the one
+    /// after it must get its real weekday rather than "Tomorrow" just for
+    /// following "Today" in the array.
     func testTheDayHeadingsFollowTheClockRatherThanThePositionInTheList() {
-        let laterNow = ContractDate.date(from: "2026-10-09T08:00:00+10:00")!
+        // Day one's last tee time is 11:20 on the 3rd; this instant is after
+        // all of it and before day two's 09:45, so day one is gone and day two
+        // is what "Today" now means.
+        let laterNow = ContractDate.date(from: "2026-10-04T00:00:00+10:00")!
         let store = SearchStore(
             preferences: InMemoryViewsStore(),
             fixture: "minimal",
             now: { laterNow })
         store.load()
 
-        XCTAssertEqual(store.today, "2026-10-09")
-        XCTAssertEqual(store.sections.map(\.date), ["2026-10-03", "2026-10-04", "2026-10-10"])
-        XCTAssertEqual(store.sections.map(\.title), ["Sat 3 Oct", "Sun 4 Oct", "Tomorrow"])
+        XCTAssertEqual(store.today, "2026-10-04")
+        XCTAssertEqual(store.sections.map(\.date), ["2026-10-04", "2026-10-10"])
+        XCTAssertEqual(store.sections.map(\.title), ["Today", "Sat 10 Oct"])
     }
 }

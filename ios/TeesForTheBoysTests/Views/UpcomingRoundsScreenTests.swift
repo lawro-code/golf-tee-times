@@ -153,6 +153,7 @@ final class UpcomingRoundsFailurePathTests: XCTestCase {
         // golfer on the first tee an hour out.
         let booking = ConfirmedBooking(
             slotID: "long-reef:2026-10-04:0730:default",
+            courseSlug: "long-reef",
             courseName: "Long Reef Golf Club",
             teeDate: "2026-10-04",
             teeTime: "07:30:00",

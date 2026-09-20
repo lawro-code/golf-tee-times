@@ -185,7 +185,19 @@ enum WatchSentence {
     // MARK: Where
 
     /// `` / ` at The Coast` / ` at 3 clubs`.
+    ///
+    /// Selecting every course on the roster is functionally identical to
+    /// selecting none: `private.watch_matches`
+    /// (supabase/migrations/alerts_0010_watch_lifecycle.sql) treats a null
+    /// course list as "every course", and an explicit list naming every real
+    /// slug matches the same rows. So a `courseSlugs` set equal to the whole
+    /// roster is treated the same as an empty one here — otherwise a golfer
+    /// who ticks every box to be thorough is told their watch is bounded
+    /// ("at N clubs") when it behaves exactly like the unfiltered default.
     static func clubClause(_ filters: SearchFilters, courses: [Course]) -> String {
+        if !courses.isEmpty, filters.courseSlugs == Set(courses.map(\.slug)) {
+            return ""
+        }
         switch filters.courseSlugs.count {
         case 0:
             return ""

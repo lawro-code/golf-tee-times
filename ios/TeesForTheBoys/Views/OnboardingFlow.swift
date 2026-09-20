@@ -105,7 +105,13 @@ public struct OnboardingFlow: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .topTrailing) { skipButton }
+        // Not `.overlay(alignment: .topTrailing)`: an overlay reserves no
+        // space, so at larger accessibility text sizes the wrapped title in
+        // `whatWeWatch` renders straight underneath the pinned button. A
+        // `safeAreaInset` is what `SearchScreen` already uses in this
+        // codebase to dock chrome over scrollable content without it — it
+        // pushes the content down by exactly the button's own height instead.
+        .safeAreaInset(edge: .top, alignment: .trailing, spacing: 0) { skipButton }
     }
 
     private var whatWeWatch: some View {

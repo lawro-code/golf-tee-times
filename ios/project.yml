@@ -198,6 +198,31 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: code.lawro.TeesForTheBoys
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
 
+    scheme:
+      testTargets:
+        - TeesForTheBoysAppTests
+
+  # The composition root's own tests. Every other target above tests a track
+  # in isolation; nothing tested Stage 2 assembly itself — `AppSession`,
+  # `AppDelegate`, `TeesForTheBoysApp` — because nothing could: they are the
+  # one place both `TeesPush` and `TeesViews` are visible at once, so a test
+  # for them has to be hosted by the app that imports both. `TEST_HOST` is
+  # what makes `@testable import TeesForTheBoys` link at all against an
+  # application target rather than a framework.
+  TeesForTheBoysAppTests:
+    templates: [ModuleTests]
+    sources: [TeesForTheBoysTests/App]
+    dependencies:
+      - target: TeesForTheBoys
+      - target: TeesContract
+      - target: TeesData
+      - target: TeesViews
+      - target: TeesPush
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/TeesForTheBoys.app/TeesForTheBoys"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 schemes:
   TeesForTheBoys:
     build:
@@ -205,7 +230,8 @@ schemes:
         TeesForTheBoys: all
     test:
       gatherCoverageData: false
-      targets: [TeesContractTests, TeesDesignTests, TeesDataTests, TeesViewsTests, TeesPushTests]
+      targets:
+        [TeesContractTests, TeesDesignTests, TeesDataTests, TeesViewsTests, TeesPushTests, TeesForTheBoysAppTests]
     run:
       # Stage 2. The dev project's URL and anon (publishable) key — see
       # `SupabaseConfiguration`'s precedence: the environment beats

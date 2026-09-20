@@ -156,8 +156,6 @@ final class AlertPayloadTests: XCTestCase {
              .unsupportedVersion(2)),
             ("no tee_at", try userInfo(overriding: "tee_at", with: nil),
              .missingField("tee_at")),
-            ("a tee_at with no offset", try userInfo(overriding: "tee_at", with: "2026-09-20 07:58"),
-             .malformedField(name: "tee_at", value: "2026-09-20 07:58")),
             ("no count", try userInfo(overriding: "count", with: nil), .missingField("count")),
         ]
 
@@ -192,6 +190,26 @@ final class AlertPayloadTests: XCTestCase {
         XCTAssertEqual(payload.issues, [])
         // Count, not the array, is what routing turns on.
         XCTAssertEqual(payload.route, .watch(id: watchID))
+    }
+
+    /// The confirmed defect: a malformed `tee_at` used to reject the whole
+    /// payload even though routing never reads `tee_at` — only `watch_id`,
+    /// `primary_slot_id` and `count`, all of which can be perfectly valid
+    /// alongside a `tee_at` a sender rendered wrong. Both shapes here are what
+    /// a Postgres `date` cast, or a timestamp template missing its offset,
+    /// actually produce.
+    func testAMalformedTeeAtIsAnIssueNotARejectionAndTheTapStillRoutes() throws {
+        for badTeeAt in ["2026-09-20", "2026-09-20 07:58:00"] {
+            let payload = try XCTUnwrap(
+                AlertPayload.decode(userInfo: try userInfo(overriding: "tee_at", with: badTeeAt)),
+                "tee_at \(badTeeAt) should still decode")
+
+            XCTAssertNil(payload.teeAt, "tee_at \(badTeeAt)")
+            XCTAssertEqual(
+                payload.issues, [.malformedField(name: "tee_at", value: badTeeAt)],
+                "tee_at \(badTeeAt)")
+            XCTAssertEqual(payload.route, .watch(id: watchID), "tee_at \(badTeeAt)")
+        }
     }
 
     func testAMissingCourseNameIsAnIssueNotARejection() throws {

@@ -28,8 +28,18 @@ import os
 ///
 /// **Paging.** PostgREST caps a default response. A five-day scrape of fifteen
 /// courses is 1755 slots, so slots are read in blocks of
-/// `PayloadAssembly.slotPageSize` ordered by `tee_at`, and the order matters:
-/// without a stable ORDER BY, two pages can overlap or skip rows.
+/// `PayloadAssembly.slotPageSize` ordered by `(tee_at, id)`.
+///
+/// Paging is **keyset**, not offset: each page asks for rows strictly after
+/// the `(tee_at, id)` of the last row the previous page returned, never "skip
+/// N, take M". `open_slots` is a live view — `status` flips as the scraper
+/// upserts every 20 minutes, and `tee_at > now()` advances as the fetch runs —
+/// so its row set is not stable across the page-1 and page-2 requests. An
+/// offset page is a position in a set that keeps moving under it: a row
+/// dropping out ahead of the current offset shifts every row after it, and
+/// the next page silently repeats or skips rows. A keyset page names the row
+/// itself rather than its position, so it stays correct no matter what
+/// happens to rows already returned.
 ///
 /// **`generated_at` is the scrape, not the download.** It is the newest
 /// `last_seen_at` on the rows that came back. A user looking at a banner that
@@ -107,26 +117,39 @@ public struct SupabaseSlotsRemote: SlotsFetching {
         }
 
         var slots = RawRows(collection: "slots")
-        var offset = 0
+        var cursor: (teeAt: String, id: String)?
         var reachedTheEnd = false
         for _ in 0..<maximumPages {
             let page = try await rows(collection: "slots") {
-                client.from(Source.slots)
+                var query = client.from(Source.slots)
                     .select()
                     .lte("tee_date", value: window.last)
-                    // Ordered before ranged, and with a tiebreaker: two-tee
-                    // starts mean many rows share a `tee_at`, and an unstable
-                    // order can repeat or skip rows between pages.
+                if let cursor {
+                    // Rows strictly after the last one the previous page
+                    // returned — see "Paging" above for why this is a
+                    // cursor and not an offset.
+                    query = query.or(
+                        "tee_at.gt.\(cursor.teeAt),and(tee_at.eq.\(cursor.teeAt),id.gt.\(cursor.id))"
+                    )
+                }
+                // Ordered before limited, and with a tiebreaker: two-tee
+                // starts mean many rows share a `tee_at`, and an unstable
+                // order can repeat or skip rows between pages.
+                return query
                     .order("tee_at")
                     .order("id")
-                    .range(from: offset, to: offset + pageSize - 1)
+                    .limit(pageSize)
             }
             slots.append(page)
+            if let last = page.values.last as? [String: Any],
+               let teeAt = last["tee_at"] as? String,
+               let id = last["id"] as? String {
+                cursor = (teeAt, id)
+            }
             if page.count < pageSize {
                 reachedTheEnd = true
                 break
             }
-            offset += page.count
         }
         if !reachedTheEnd {
             // Only reachable if the database holds more than 64,000 open future

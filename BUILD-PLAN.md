@@ -3,12 +3,23 @@
 A native SwiftUI app on top of the tee-time scraper already in this repo.
 Readable version of this plan, with tables: https://claude.ai/artifact/KPFSWAJ5o95yowNn9EJ7wB
 
-**Status:** Stages 0–2 landed and green (`9ed55a8`, `7ece16e`, `1afd0c4`,
-`0542100`, `d7bcf09`). Stage 3 (red team) is running. Migrations are live on
-`ipzhqvsyxyjndpbmpibw`; the app and website both connect to it for real and
-correctly show empty results, because the scraper has never written to it —
-that needs `SUPABASE_SERVICE_ROLE_KEY` from the project dashboard, which
-nothing here has access to. Everything else in Stage 2 is done.
+**Status:** Stages 0–3 landed. Stage 3's red team confirmed 43 findings
+(critical 4, high 20, medium 16, low 3) and all 43 are fixed — full run:
+0 agent errors. Its own completeness check then found one more real bug not
+in that 43 — sign-out never told `PushRegistrar` to give back the device's
+token, so a second golfer sharing a phone kept getting the first golfer's
+alerts — fixed the same way, with a regression test
+(`AppSessionPushRetireOnSignOutTests`). Two things the red team could not
+actually prove are being carried forward rather than blocking: `alert-dispatch`
+has never been invoked against anything real (only mocks and sequential SQL),
+so "no duplicate push in a replay" is proven on paper, not live; and every
+accessibility fix is verified by formula/unit test, never a live VoiceOver or
+Accessibility Inspector pass. Will's call, 20 September 2026: leave both for
+now, move to the UI sweep next. Migrations are live on `ipzhqvsyxyjndpbmpibw`;
+the app and website both connect to it for real and correctly show empty
+results, because the scraper has never written to it — that needs
+`SUPABASE_SERVICE_ROLE_KEY` from the project dashboard, which nothing here has
+access to.
 
 Read `CONTRACT.md` before anything else — it is what Stage 0 froze and what the
 five tracks build on.
@@ -99,7 +110,7 @@ Stages do not overlap.
 | ~~**0**~~ | ~~Supabase schema, the frozen data contract, a golden fixture from a live scrape, Xcode project, CI~~ | **DONE** | all green — see below |
 | **1** | Five parallel tracks — see `.workflows/stage1.js` | 5 leads, ~15 workers | each track builds and tests green |
 | **2** | Integration — live Supabase, point the website at it | 1 agent, solo | app launches in sim with live data; website still renders |
-| **3** | Red team — see `.workflows/stage3.js` | ~12 testers | full suite green; no duplicate push in a replay |
+| ~~**3**~~ | ~~Red team — see `.workflows/stage3.js`~~ | **DONE, with 2 known gaps** | 43/43 confirmed findings fixed; "no duplicate push in a replay" and all a11y fixes are unverified against anything live — see Status above |
 | **4** | **COST GATE.** Demo in the simulator with screenshots *before* any Apple purchase. | Stops for Will | Will decides, then TestFlight |
 
 Stage 0 is deliberately solo: everything that fans out afterwards depends on the contract
@@ -133,6 +144,16 @@ five are written up properly in `CONTRACT.md`; the short version:
 5. **Concurrent agents corrupted each other's builds.** Measured: three
    concurrent builds, three failures. `scripts/build.sh` now gives each
    invocation its own build directory. Set `TEES_WORKER` to your ticket id.
+
+### Next up after Stage 3
+
+- **UI sweep.** Requested by Will, 20 September 2026. A separate visual/UX
+  pass over the built screens, after Stage 3's bug-hardening lands green and
+  before Stage 4's cost gate. Not part of Stage 3's fix scope.
+  **Goal, confirmed by Will: fidelity to the existing website, not new taste.**
+  Compare every app screen against `docs/style.css` and the live site —
+  colour, type, spacing, component shapes — and flag drift from that, not
+  from a generic design opinion.
 
 ### Decisions still open
 

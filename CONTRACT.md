@@ -126,7 +126,9 @@ The naive ledger — one push per `(watch, slot)` forever — swallows every
 cancellation after the first, because the slot id is deliberately stable. So
 `slots` carries `opened_at`, bumped by the `slots_lifecycle` trigger whenever a
 gone slot comes back, and the ledger is keyed on
-`(watch_id, slot_id, slot_opened_at)`:
+`(user_id, slot_id, slot_opened_at)` — per user, not per watch, so two of a
+user's own watches matching the same listing still produce one push, not two
+(`alerts_0021_exactly_once_per_user.sql`):
 
 | What happens | Result |
 |---|---|

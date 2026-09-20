@@ -125,17 +125,37 @@ function isTwilightTier(tier) {
   return tier && /twilight/i.test(tier.label);
 }
 
+// Every other timestamp formatter in this codebase (scraper/cadence.py, the
+// Deno edge function's formatSydneyDay/formatSydneyTime, the iOS
+// SlotFormatting/ContractDecoding types) pins Australia/Sydney explicitly
+// (CONTRACT.md §4: "the client never recomputes it"). This one has to match:
+// `new Date(iso)` + `.getDay()/.getHours()/...` reads in the VISITOR's local
+// timezone, which silently produced the wrong day/time for anyone whose
+// browser clock isn't set to Sydney. Intl's `timeZone` option is the only
+// piece of this that must NOT default to the visitor's locale.
+const LAST_UPDATED_FORMAT = new Intl.DateTimeFormat('en-AU', {
+  timeZone: 'Australia/Sydney',
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+});
+
 function formatLastUpdated(iso) {
   if (!iso) return '';
-  const d = new Date(iso);
-  const day = DAY_NAMES_SHORT[d.getDay()];
-  const dd = d.getDate();
-  const mon = MONTHS_SHORT[d.getMonth()];
-  let h = d.getHours();
-  const m = d.getMinutes();
-  const mer = h < 12 ? 'am' : 'pm';
-  h = h % 12 === 0 ? 12 : h % 12;
-  return `Refreshed ${day} ${dd} ${mon} · ${h}:${String(m).padStart(2, '0')} ${mer}`;
+  const parts = LAST_UPDATED_FORMAT.formatToParts(new Date(iso));
+  const pick = (type) => parts.find((p) => p.type === type)?.value ?? '';
+  // en-AU renders month as "Sept" (four letters) — slice to the three-letter
+  // abbreviation this UI uses everywhere else (MONTHS_SHORT above).
+  const day = pick('weekday').slice(0, 3);
+  const dd = pick('day');
+  const mon = pick('month').slice(0, 3);
+  const hour = pick('hour');
+  const minute = pick('minute');
+  const mer = pick('dayPeriod').toLowerCase();
+  return `Refreshed ${day} ${dd} ${mon} · ${hour}:${minute} ${mer}`;
 }
 
 function el(tag, className, text) {

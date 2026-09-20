@@ -220,6 +220,17 @@ public final class AuthFormViewModel: ObservableObject {
         raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
+    /// What VoiceOver should say when it lands on a field.
+    ///
+    /// The plain label, unless this is the field that just failed the local
+    /// check — then the reason is folded in. A red ring around the text field
+    /// says nothing to a screen reader; the label is the only thing VoiceOver
+    /// has, so it has to carry the "why", not just the "what".
+    public func accessibleLabel(for field: Field, defaultText: String) -> String {
+        guard field == invalidField, let errorText else { return defaultText }
+        return "\(defaultText). \(errorText)"
+    }
+
     /// Turn anything thrown at this screen into a sentence.
     ///
     /// Two opt-ins, then a fallback. `AuthDisplayableError` is the seam for an
@@ -347,7 +358,7 @@ struct AuthForm<Footer: View>: View {
                         .submitLabel(.next)
                         .focused($focus, equals: .email)
                         .onSubmit { focus = .password }
-                        .accessibilityLabel(Text("Email"))
+                        .accessibilityLabel(Text(model.accessibleLabel(for: .email, defaultText: "Email")))
                 }
 
                 field(
@@ -362,7 +373,7 @@ struct AuthForm<Footer: View>: View {
                     .submitLabel(.go)
                     .focused($focus, equals: .password)
                     .onSubmit { submit() }
-                    .accessibilityLabel(Text("Password"))
+                    .accessibilityLabel(Text(model.accessibleLabel(for: .password, defaultText: "Password")))
                 }
 
                 if let errorText = model.errorText {
@@ -398,7 +409,17 @@ struct AuthForm<Footer: View>: View {
 
     @MainActor
     private func submit() {
-        Task { await model.submit() }
+        Task {
+            await model.submit()
+            // A local validation failure returns synchronously with nothing
+            // else changing on screen — the button doesn't spin, no alert
+            // appears. Moving focus to the invalid field is what makes
+            // VoiceOver say anything at all, and it lands on the field whose
+            // label now carries the reason.
+            if let invalidField = model.invalidField {
+                focus = invalidField
+            }
+        }
     }
 
     @ViewBuilder

@@ -9,8 +9,11 @@ import TeesContract
 @MainActor
 final class SearchStoreTests: XCTestCase {
 
-    /// 2026-10-03T09:00:00+10:00, inside `minimal.json`'s first day.
-    private let day1Morning = Date(timeIntervalSince1970: 1_790_982_000)
+    /// 2026-10-03T00:00:00+10:00 — inside `minimal.json`'s first day, and
+    /// deliberately ahead of every one of that day's tee times (earliest is
+    /// 06:16) so this fixed clock does not itself age a fixture slot into the
+    /// past and filter it out of `SlotQuery.apply`.
+    private let day1Morning = Date(timeIntervalSince1970: 1_790_949_600)
 
     private func store(
         preferences: ViewsKeyValueStore = InMemoryViewsStore(),
@@ -215,6 +218,44 @@ final class SearchStoreTests: XCTestCase {
         XCTAssertEqual(s.sections.map(\.title), ["Today", "Tomorrow", "Sat 10 Oct"])
     }
 
+    // MARK: - Day rollover
+
+    /// The confirmed regression: nothing ever re-derived `sections` after
+    /// launch, so a golfer who opened the app once and left it sitting —
+    /// no filter touched, no reload, no relaunch — sailed through local
+    /// midnight with yesterday's section titles frozen in place.
+    ///
+    /// The clock starts at 23:58 on 2026-10-03 and moves two hours forward
+    /// with nothing else touched — exactly the shipped app between
+    /// refreshes. No fixture slot's `tee_at` falls inside that two-hour
+    /// window (`minimal.json`'s Oct-4 round is `bayview` at 09:45, hours
+    /// later), so which rounds match must not change at all — isolating the
+    /// one thing that must: `today` moves from "2026-10-03" to "2026-10-04",
+    /// and the still-present, still-in-the-same-place 2026-10-04 section's
+    /// title has to move with it, from "Tomorrow" to "Today".
+    func testSectionsReflectTheClockEvenWithoutATouchedFilterOrReload() {
+        let clock = MutableClock(ContractDate.date(from: "2026-10-03T23:58:00+10:00")!)
+        let s = SearchStore(preferences: InMemoryViewsStore(), fixture: "minimal", now: { clock.date })
+        s.load()
+
+        XCTAssertEqual(s.today, "2026-10-03")
+        XCTAssertEqual(s.sections.map(\.date), ["2026-10-04", "2026-10-10"])
+        XCTAssertEqual(s.sections.first(where: { $0.date == "2026-10-04" })?.title, "Tomorrow")
+        XCTAssertEqual(s.resultCount, 2)
+
+        // Two hours later. No filter touched, no `load()`/`apply()` call —
+        // the only thing that changes is the clock.
+        clock.date = clock.date.addingTimeInterval(2 * 3600)
+
+        XCTAssertEqual(s.today, "2026-10-04", "today was already computed fresh and never had this bug")
+        XCTAssertEqual(
+            s.resultCount, 2,
+            "no slot's tee_at falls inside the two hours that passed; only the day changed, not the matches")
+        XCTAssertEqual(
+            s.sections.first(where: { $0.date == "2026-10-04" })?.title, "Today",
+            "2026-10-04 is today now; this section must not still read 'Tomorrow'")
+    }
+
     // MARK: - Freshness
 
     func testFreshnessIsComputedFromTheLoadedPayload() {
@@ -233,6 +274,46 @@ final class SearchStoreTests: XCTestCase {
         s.load()
         XCTAssertFalse(s.freshness.isStale)
         XCTAssertEqual(s.freshness.bannerText, "Couldn't reach Castle Cove")
+    }
+
+    /// The real cadence: days 0-2 rescrape every 20 minutes
+    /// (`scrape-fast.yml`), days 3-4 only every ~12h at the full run
+    /// (`scrape.yml` + `cadence.py`'s `FULL_RUN_HOURS`). A payload always mixes
+    /// both. Filtering down to a stale-only day must surface that day's own
+    /// staleness — not borrow freshness from a day-0-2 row nobody is looking
+    /// at. Before the fix, `freshness` was computed from the whole payload
+    /// regardless of `filters.days`/`filters.courseSlugs`, so this failed.
+    func testFreshnessReflectsTheSelectedDayNotTheWholePayload() {
+        let now = Date(timeIntervalSince1970: 1_790_949_600) // matches `day1Morning`
+        let freshDay = "2026-10-03"
+        let staleDay = "2026-10-07"
+
+        let payload = ContractPayload(
+            generatedAt: "2026-10-03T00:00:00+10:00",
+            courses: [],
+            slots: [],
+            courseDays: [
+                CourseDay(
+                    courseSlug: "bayview", teeDate: freshDay, ok: true, slotCount: 1,
+                    error: nil, lastAttemptAt: now, lastSuccessAt: now.addingTimeInterval(-5 * 60)),
+                CourseDay(
+                    courseSlug: "bayview", teeDate: staleDay, ok: true, slotCount: 1,
+                    error: nil, lastAttemptAt: now, lastSuccessAt: now.addingTimeInterval(-4 * 3600))
+            ])
+
+        let s = store(now: now)
+        s.apply(payload: payload)
+
+        // Unfiltered: the recent day-0 row keeps the aggregate looking fresh.
+        XCTAssertFalse(s.freshness.isStale)
+
+        // A golfer narrows to the day that's actually only checked every ~12h.
+        s.filters.days = [staleDay]
+        XCTAssertTrue(
+            s.freshness.isStale,
+            "filtering to a day last scraped 4 hours ago must show as stale, " +
+            "even though an unrelated day elsewhere in the payload is fresh")
+        XCTAssertEqual(s.freshness.lastSuccessAt, now.addingTimeInterval(-4 * 3600))
     }
 
     // MARK: - Previews
@@ -257,6 +338,17 @@ final class SearchStoreTests: XCTestCase {
         s.isOffline = true
         XCTAssertTrue(s.isOffline)
     }
+}
+
+/// A clock a test can move forward mid-run, so it can assert on what the
+/// store does when time passes with nothing else touched — the exact shape
+/// of the day-rollover regression, which no fixed instant can exercise.
+/// `@unchecked Sendable`: only ever touched from the main actor in a test,
+/// same as every other seam here, but the `now: () -> Date` closure it backs
+/// is not itself actor-isolated.
+private final class MutableClock: @unchecked Sendable {
+    var date: Date
+    init(_ date: Date) { self.date = date }
 }
 
 /// An `InMemoryViewsStore` that also remembers what was written to it, so a

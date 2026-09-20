@@ -25,13 +25,30 @@ public struct TeesRootView: View {
     private let email: String?
     private let actions: any AuthActions
     private let alerts: [WatchDraft]
-    private let onCreateWatch: (WatchDraft) -> Void
+    private let alertsLoadFailed: Bool
+    private let onCreateWatch: (WatchDraft) async -> Bool
     private let onDeleteWatch: (WatchDraft) -> Void
+    private let onRetryAlerts: () -> Void
     private let onSignedIn: () -> Void
     private let onSignedOut: () -> Void
+    private let onRetry: (() -> Void)?
+    private let onBecameActive: () -> Void
 
     @State private var selection: TeesTab = .search
     @Environment(\.scenePhase) private var scenePhase
+
+    /// Lets something outside this view (Stage 2 assembly) put a specific tab
+    /// on screen — a tapped push notification routing to the tab that can show
+    /// what it named, say. `nil` (every existing call site, every preview,
+    /// every test) keeps `selection` as this view's own `@State`, unchanged
+    /// from before this existed.
+    private let externalSelection: Binding<TeesTab>?
+
+    /// What `TabView` actually binds to: the caller's binding when it supplied
+    /// one, this view's own state otherwise.
+    private var activeSelection: Binding<TeesTab> {
+        externalSelection ?? $selection
+    }
 
     public init(
         store: SearchStore,
@@ -39,31 +56,42 @@ public struct TeesRootView: View {
         email: String?,
         actions: any AuthActions,
         alerts: [WatchDraft],
-        onCreateWatch: @escaping (WatchDraft) -> Void,
+        alertsLoadFailed: Bool = false,
+        onCreateWatch: @escaping (WatchDraft) async -> Bool,
         onDeleteWatch: @escaping (WatchDraft) -> Void,
+        onRetryAlerts: @escaping () -> Void = {},
         onSignedIn: @escaping () -> Void = {},
-        onSignedOut: @escaping () -> Void = {}
+        onSignedOut: @escaping () -> Void = {},
+        onRetry: (() -> Void)? = nil,
+        onBecameActive: @escaping () -> Void = {},
+        selection: Binding<TeesTab>? = nil
     ) {
         self.store = store
         self.ledger = ledger
         self.email = email
         self.actions = actions
         self.alerts = alerts
+        self.alertsLoadFailed = alertsLoadFailed
         self.onCreateWatch = onCreateWatch
         self.onDeleteWatch = onDeleteWatch
+        self.onRetryAlerts = onRetryAlerts
         self.onSignedIn = onSignedIn
         self.onSignedOut = onSignedOut
+        self.onRetry = onRetry
+        self.onBecameActive = onBecameActive
+        self.externalSelection = selection
     }
 
     public var body: some View {
-        TabView(selection: $selection) {
+        TabView(selection: activeSelection) {
             // SearchScreen brings its own NavigationStack; the other two do not.
             SearchScreen(
                 store: store,
                 ledger: ledger,
                 isSignedIn: email != nil,
                 onCreateWatch: onCreateWatch,
-                onRequireSignIn: { selection = .account })
+                onRequireSignIn: { selection = .account },
+                onRetry: onRetry)
                 .tabItem { Label(TeesTab.search.title, systemImage: TeesTab.search.systemImage) }
                 .tag(TeesTab.search)
 
@@ -80,7 +108,9 @@ public struct TeesRootView: View {
                     email: email,
                     actions: actions,
                     alerts: alerts,
+                    alertsLoadFailed: alertsLoadFailed,
                     onDelete: onDeleteWatch,
+                    onRetryAlerts: onRetryAlerts,
                     onSignedIn: onSignedIn,
                     onSignedOut: onSignedOut)
             }
@@ -89,9 +119,16 @@ public struct TeesRootView: View {
         }
         .didYouBookPrompt(ledger: ledger)
         .onChange(of: scenePhase) { _, phase in
-            // The return from MiClub. `.active` is the only moment the app
-            // learns the trip is over, so the question is asked from here.
-            if phase == .active { ledger.appDidBecomeActive() }
+            // The return from MiClub — or from anywhere else the app was
+            // backgrounded, including an idle phone left suspended for hours.
+            // `.active` is the only signal a scene gives that this happened,
+            // so it is both when the did-you-book question is asked and the
+            // only remaining trigger (besides the one cold-launch fetch) that
+            // ever asks the data track to check staleness again.
+            if phase == .active {
+                ledger.appDidBecomeActive()
+                onBecameActive()
+            }
         }
     }
 }
@@ -132,7 +169,7 @@ public enum TeesTab: String, CaseIterable, Identifiable, Sendable {
         email: nil,
         actions: StubAuthActions(),
         alerts: [],
-        onCreateWatch: { _ in },
+        onCreateWatch: { _ in true },
         onDeleteWatch: { _ in })
 }
 #endif

@@ -238,10 +238,18 @@ def _classify_transport(exc: BaseException, timeout: int) -> Tuple[bool, str]:
 
     Timeout is checked before ConnectionError on purpose: requests' own
     ConnectTimeout is both, and "timeout after 25s" is the more useful half.
+
+    ChunkedEncodingError rides alongside ConnectionError on purpose too: it is
+    what requests/urllib3 actually raises when a connection resets or the body
+    is cut short partway through a chunked or streamed read (an
+    IncompleteRead) — a sibling exception, not a subclass, but the same
+    "dropped connection, worth asking again about" case the module docstring
+    promises a retry for.
     """
     if isinstance(exc, requests.exceptions.Timeout):
         return True, f"timeout after {timeout}s"
-    if isinstance(exc, requests.exceptions.ConnectionError):
+    if isinstance(exc, (requests.exceptions.ConnectionError,
+                        requests.exceptions.ChunkedEncodingError)):
         return True, f"connection error: {_connection_reason(exc)}"
     if isinstance(exc, requests.exceptions.TooManyRedirects):
         return False, "too many redirects"
@@ -279,7 +287,16 @@ def _retry_after_seconds(response: Any) -> Optional[float]:
 
 
 def _redirect_problem(requested: str, final: str) -> Optional[str]:
-    """Did a 200 actually land somewhere that is not the public timesheet?"""
+    """Did a 200 actually land somewhere that is not the public timesheet?
+
+    The named markers give the specific, human-readable reason when the
+    bounce target says what it is. But the timesheet URL is fixed (see the
+    module docstring) and never legitimately redirects anywhere else, so any
+    200 that lands on a different path is a failure regardless of whether
+    the destination happens to mention login or membership — a club's own
+    homepage, an access-denied page, a session-timeout notice, or anything
+    else a custom-domain club or a MiClub product change bounces us to.
+    """
     final_lower = (final or "").lower()
     if not final_lower:
         return None
@@ -287,6 +304,10 @@ def _redirect_problem(requested: str, final: str) -> Optional[str]:
         return "redirected to login"
     if final_lower != (requested or "").lower() and "/member" in final_lower:
         return "redirected to member area"
+    requested_path = urlparse(requested or "").path.rstrip("/")
+    final_path = urlparse(final or "").path.rstrip("/")
+    if final_path != requested_path:
+        return f"redirected away from the timesheet (landed on {_trim(final, 80)})"
     return None
 
 

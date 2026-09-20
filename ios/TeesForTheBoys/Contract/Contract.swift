@@ -236,7 +236,10 @@ public struct Slot: Codable, Sendable, Hashable, Identifiable {
         holes = try c.decode(Int.self, forKey: .holes)
         priceMin = try c.decodeNumberIfPresent(forKey: .priceMin)
         priceMax = try c.decodeNumberIfPresent(forKey: .priceMax)
-        priceTiers = (try? c.decode([PriceTier].self, forKey: .priceTiers)) ?? []
+        // A malformed tier must not take its siblings down with it — same
+        // principle as the top-level courses/slots/course_days arrays.
+        var tierIssues: [DecodingIssue] = []
+        priceTiers = (try? c.decodeLenient([PriceTier].self, forKey: .priceTiers, into: &tierIssues)) ?? []
         bookingType = (try? c.decode(String.self, forKey: .bookingType)) ?? ""
         bookingURLString = (try? c.decode(String.self, forKey: .bookingURLString)) ?? ""
     }

@@ -19,6 +19,11 @@ public struct ConfirmedBooking: Identifiable, Equatable, Codable, Sendable {
 
     /// `course_slug:YYYY-MM-DD:HHMM:tee`.
     public let slotID: String
+    /// Copied off the slot at confirm time so a booking can still be written
+    /// to `public.bookings` — and so `bookings_satisfy_watches` can still
+    /// match it against a watch — once the slot itself has sold out and the
+    /// next scrape has dropped it (`AppSession.slotToPersist(for:in:)`).
+    public let courseSlug: String
     public let courseName: String
     /// `YYYY-MM-DD` at the course.
     public let teeDate: String
@@ -37,6 +42,7 @@ public struct ConfirmedBooking: Identifiable, Equatable, Codable, Sendable {
 
     public init(
         slotID: String,
+        courseSlug: String,
         courseName: String,
         teeDate: String,
         teeTime: String,
@@ -46,6 +52,7 @@ public struct ConfirmedBooking: Identifiable, Equatable, Codable, Sendable {
         confirmedAt: Date
     ) {
         self.slotID = slotID
+        self.courseSlug = courseSlug
         self.courseName = courseName
         self.teeDate = teeDate
         self.teeTime = teeTime
@@ -59,6 +66,7 @@ public struct ConfirmedBooking: Identifiable, Equatable, Codable, Sendable {
     public init(slot: Slot, confirmedAt: Date) {
         self.init(
             slotID: slot.id,
+            courseSlug: slot.courseSlug,
             courseName: slot.courseName,
             teeDate: slot.teeDate,
             teeTime: slot.teeTime,
@@ -66,6 +74,44 @@ public struct ConfirmedBooking: Identifiable, Equatable, Codable, Sendable {
             holes: slot.holes,
             par: slot.par,
             confirmedAt: confirmedAt)
+    }
+
+    // MARK: - Codable
+
+    /// Written by hand, not synthesised, so a `courseSlug`-less blob already
+    /// on a golfer's phone from before this field existed decodes as an empty
+    /// string instead of failing the whole array — `BookingLedger.decode`
+    /// treats one bad `ConfirmedBooking` the same as a corrupt blob and
+    /// throws the entire booking history away, which "added a field" must
+    /// never do to somebody's already-confirmed rounds.
+    private enum CodingKeys: String, CodingKey {
+        case slotID, courseSlug, courseName, teeDate, teeTime, teeAt, holes, par, confirmedAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        slotID = try c.decode(String.self, forKey: .slotID)
+        courseSlug = (try? c.decode(String.self, forKey: .courseSlug)) ?? ""
+        courseName = try c.decode(String.self, forKey: .courseName)
+        teeDate = try c.decode(String.self, forKey: .teeDate)
+        teeTime = try c.decode(String.self, forKey: .teeTime)
+        teeAt = try c.decode(Date.self, forKey: .teeAt)
+        holes = try c.decode(Int.self, forKey: .holes)
+        par = try c.decodeIfPresent(Int.self, forKey: .par)
+        confirmedAt = try c.decode(Date.self, forKey: .confirmedAt)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(slotID, forKey: .slotID)
+        try c.encode(courseSlug, forKey: .courseSlug)
+        try c.encode(courseName, forKey: .courseName)
+        try c.encode(teeDate, forKey: .teeDate)
+        try c.encode(teeTime, forKey: .teeTime)
+        try c.encode(teeAt, forKey: .teeAt)
+        try c.encode(holes, forKey: .holes)
+        try c.encode(par, forKey: .par)
+        try c.encode(confirmedAt, forKey: .confirmedAt)
     }
 }
 

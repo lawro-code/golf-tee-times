@@ -169,25 +169,71 @@ def parse_price_tiers(fees_wrapper) -> list:
     return tiers
 
 
+class TimesheetStructureError(ValueError):
+    """The page has zero rows our selectors recognise at all.
+
+    Not the same thing as a day with zero AVAILABLE spots: CONTRACT.md section
+    5 is explicit that "Long Reef had zero free tee times and scraped
+    perfectly" — a real timesheet lists every tee time for the day, available
+    or not, so a genuinely quiet day still has `div.row-time` rows, just none
+    with a `cell-available` cell. Finding NO rows at all on an otherwise
+    well-formed page (reached, non-empty, not a login/member redirect — those
+    are fetcher.py's job) means the selectors no longer match this page's
+    markup, which a club or MiClub template/theme push can do without
+    changing the HTTP status at all. Raising here — instead of quietly
+    returning [] — is what stops that from being recorded as a clean, empty
+    day: scrape_course's existing per-day except turns this into a failed
+    day, and a failed (course, day) is the one thing
+    supabase_writer._close_gone_slots is never allowed to touch, so real
+    still-open tee times cannot be marked 'gone' just because a rename made
+    the page look silently empty.
+    """
+
+
 def parse_timesheet(html: str, booking_url: str, selected_date: date) -> list:
     """One MiClub public timesheet page -> the rows that still have a spot.
 
     The booking type (h4) is carried through even when it is blank: it is what
     separates a 1st Tee group from a 10th Tee group going out the same minute.
+
+    Raises TimesheetStructureError when zero rows match at all, or when rows
+    match but not one of them yields a readable time + cell structure — see
+    that class's docstring for why that must never be treated as an ordinary
+    empty day.
     """
     soup = BeautifulSoup(html, "html.parser")
+    rows = soup.select("div.row-time")
+    if not rows:
+        raise TimesheetStructureError(
+            "0 rows matched div.row-time — selectors may no longer match "
+            "this page's markup (a genuinely empty day still has rows, "
+            "just none available; see CONTRACT.md section 5)"
+        )
     slots = []
-    for row in soup.select("div.row-time"):
+    recognised_rows = 0  # rows whose time + cell structure was readable at
+    # all, regardless of how many spots (if any) were available in them.
+    unreadable_rows = 0  # rows that matched div.row-time but got no
+    # foothold at all (no .time-wrapper h3, unparsable time text, or no
+    # .records-wrapper .cell) — distinct from a recognised row that simply
+    # has zero available spots today. A page mixing template types (e.g. a
+    # shotgun/comp row alongside ordinary public-play rows) can have some of
+    # these while recognised_rows stays > 0, so the raise below never fires
+    # — that drop must still be counted and reported, never silent.
+    for row in rows:
         time_h3 = row.select_one(".time-wrapper h3")
         if not time_h3:
+            unreadable_rows += 1
             continue
         t = normalise_time(time_h3.get_text(strip=True))
         if not t:
+            unreadable_rows += 1
             continue
         price_tiers = parse_price_tiers(row.select_one(".fees-wrapper"))
         cells = row.select(".records-wrapper .cell")
         if not cells:
+            unreadable_rows += 1
             continue
+        recognised_rows += 1
         spots_available = sum(1 for c in cells if "cell-available" in (c.get("class") or []))
         if spots_available <= 0:
             continue
@@ -204,6 +250,26 @@ def parse_timesheet(html: str, booking_url: str, selected_date: date) -> list:
             "booking_type": booking_type,
             "booking_url": booking_url,
         })
+    if recognised_rows == 0:
+        raise TimesheetStructureError(
+            f"{len(rows)} row(s) matched div.row-time but none yielded a "
+            "readable .time-wrapper h3 time + .records-wrapper .cell "
+            "structure — those selectors may no longer match this page's "
+            "markup (a genuinely empty or fully-booked day still has "
+            "readable rows, just none available; see CONTRACT.md section 5)"
+        )
+    if unreadable_rows:
+        # Cheaper and kinder than raising over the whole page for the sake
+        # of one odd row (see schema_problem's docstring for the same
+        # trade-off) — but silently doing nothing here is what let a mixed
+        # template page lose a real, bookable row with zero observability.
+        print(
+            f"  {unreadable_rows} of {len(rows)} row-time row(s) skipped — "
+            "no readable .time-wrapper h3 time or .records-wrapper .cell "
+            "structure (possible mixed template on this page); any real "
+            "availability in those rows is missing from this count",
+            file=sys.stderr,
+        )
     return slots
 
 
@@ -256,15 +322,22 @@ def _course_error(day_records: Iterable[dict], days: int) -> Optional[str]:
     return f"{len(failed)} of {days} day(s) failed: {detail}"
 
 
-def scrape_course(course: dict, days: int) -> dict:
+def scrape_course(course: dict, days: int, today: Optional[date] = None) -> dict:
     """Scrape one course over `days` days from today, Sydney time.
 
-    FROZEN SIGNATURE. contract/validate.py:live_payload calls this
-    positionally and feeds the result to transform.build_payload, which reads
-    slug, slots and error. Keys may be added here; none may be removed.
+    FROZEN SIGNATURE for the first two (positional) arguments.
+    contract/validate.py:live_payload calls this positionally and feeds the
+    result to transform.build_payload, which reads slug, slots and error.
+    Keys may be added to the returned dict; none may be removed.
+
+    `today` defaults to "right now" when omitted, but a run that scrapes
+    several courses in a loop must compute it ONCE and pass the same value to
+    every call — otherwise a loop that happens to straddle Sydney local
+    midnight hands different courses in the same payload a different
+    day-window (see main()).
     """
     host = course_host(course)
-    today = datetime.now(SYDNEY).date()
+    today = today or datetime.now(SYDNEY).date()
     all_slots: list = []
     day_records: list = []
 
@@ -318,9 +391,9 @@ def scrape_course(course: dict, days: int) -> dict:
     }
 
 
-def failed_course(course: dict, days: int, reason: str) -> dict:
+def failed_course(course: dict, days: int, reason: str, today: Optional[date] = None) -> dict:
     """A course that blew up before it could report for itself."""
-    records = [day_record(d, False, error=reason) for d in requested_dates(days)]
+    records = [day_record(d, False, error=reason) for d in requested_dates(days, today)]
     return {
         "slug": course.get("slug", ""),
         "name": course.get("name", course.get("slug", "unknown course")),
@@ -524,12 +597,19 @@ def main(argv: Optional[list] = None) -> int:
         raise SystemExit("no courses configured in courses.json — nothing to scrape")
 
     print(f"scraping {len(courses)} course(s), {days} day(s) each ({args.mode} mode)")
+    # Computed once, here, and handed to every course: 15 courses x up to
+    # `days` fetches each, with the fetcher's own retries/backoff, is enough
+    # elapsed time for a run to cross Sydney local midnight mid-loop. Every
+    # course in this run must agree on what day "today" is, or the courses on
+    # either side of midnight end up with different day-windows in the same
+    # payload.
+    today = datetime.now(SYDNEY).date()
     results: list = []
     for course in courses:
         label = course.get("name") or course.get("slug") or "unknown course"
         print(f"--- {label} ---")
         try:
-            results.append(scrape_course(course, days))
+            results.append(scrape_course(course, days, today=today))
         except Exception as e:
             # One malformed roster entry, one club's markup blowing up
             # BeautifulSoup, one socket doing something exotic — none of it is
@@ -537,7 +617,7 @@ def main(argv: Optional[list] = None) -> int:
             reason = f"{type(e).__name__}: {e}"
             print(f"  course failed: {reason}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
-            results.append(failed_course(course, days, reason))
+            results.append(failed_course(course, days, reason, today=today))
 
     payload = payload_from_results(results, roster, mode=args.mode, days=days)
 

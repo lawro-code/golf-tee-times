@@ -13,7 +13,7 @@ import sys
 import tempfile
 import types
 import unittest
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from unittest import mock
 
@@ -167,12 +167,97 @@ class PerDayStatusTests(unittest.TestCase):
         self.assertEqual([d["ok"] for d in result["days"]], [False, True])
         self.assertIn("bad markup", result["days"][0]["error"])
 
+    def test_a_club_side_rename_fails_the_day_instead_of_reporting_it_clean_and_empty(self):
+        """The regression this ticket exists for.
+
+        A normal 200 OK page with two genuinely open tee times, but with the
+        wrapper/cell classes renamed (a plausible club/MiClub template push:
+        div.row-time -> div.tee-row, .records-wrapper .cell -> .slots-block
+        .slot). Before the fix this silently produced ok=True, slot_count=0,
+        error=None — indistinguishable from a real quiet day — which is
+        exactly what let supabase_writer._close_gone_slots treat the day as a
+        successful scrape that stopped listing every currently-open slot for
+        that course/day, and mark real, still-available tee times 'gone'.
+        """
+        renamed_page = page("""
+        <div class="tee-row">
+          <div class="time-wrapper"><h3>6:16am</h3><h4>1st Tee Social</h4></div>
+          <div class="slots-block">
+            <div class="slot slot-available"></div>
+            <div class="slot slot-available"></div>
+          </div>
+        </div>
+        <div class="tee-row">
+          <div class="time-wrapper"><h3>6:24am</h3><h4>1st Tee Social</h4></div>
+          <div class="slots-block">
+            <div class="slot slot-available"></div>
+          </div>
+        </div>
+        """)
+        result, _ = self.scrape([ok(renamed_page)], days=1)
+
+        day = result["days"][0]
+        self.assertFalse(day["ok"], "a page whose selectors matched nothing must not read as a clean day")
+        self.assertIsNotNone(day["error"])
+        self.assertIsNone(day["succeeded_at"])
+        self.assertIsNotNone(result["error"])
+        # No slots is the honest side effect of failing the day, not a claim
+        # that the course has no availability.
+        self.assertEqual(result["slots"], [])
+
     def test_one_request_per_requested_day(self):
         _, fetcher = self.scrape([ok(TWO_SLOTS)] * 4, days=4)
         self.assertEqual(len(fetcher.urls), 4)
         for url, tee_date in zip(fetcher.urls, scrape.requested_dates(4)):
             self.assertIn(f"selectedDate={tee_date}", url)
             self.assertTrue(url.startswith("https://woollahra.miclub.com.au/"))
+
+
+class MidnightBoundaryTests(unittest.TestCase):
+    """The regression this ticket fixes: a run's course loop can straddle
+    Sydney local midnight (retries, timeouts and per-host courtesy sleeps are
+    plenty of elapsed time across 15 courses). Every course scraped in the
+    SAME run must anchor its day-window to the same 'today', not to whatever
+    the wall clock read when that particular course's turn came up."""
+
+    def test_a_run_uses_one_today_for_every_course_even_across_midnight(self):
+        before = datetime(2026, 9, 19, 23, 58, tzinfo=scrape.SYDNEY)
+        after = datetime(2026, 9, 20, 0, 3, tzinfo=scrape.SYDNEY)
+        calls = {"n": 0}
+
+        class FrozenDatetime(scrape.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                # First call is a run computing (or, pre-fix, the first
+                # course computing its own) 'today' just before midnight;
+                # every later now() call -- the second course's own today
+                # calc, and every attempted/succeeded timestamp -- lands just
+                # after it, exactly like a run that crosses local midnight
+                # mid-loop.
+                calls["n"] += 1
+                value = before if calls["n"] == 1 else after
+                return value if tz is None else value.astimezone(tz)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_path = Path(tmp) / "payload.json"
+            with mock.patch.object(scrape, "datetime", FrozenDatetime), \
+                    mock.patch.object(scrape, "fetch", lambda url: fail("stubbed")), \
+                    mock.patch.object(scrape, "polite_sleep", lambda *a: None), \
+                    contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                scrape.main([
+                    "--course", "woollahra", "--course", "eastlake",
+                    "--days", "1", "--out", str(out_path),
+                ])
+            payload = json.loads(out_path.read_text())
+
+        by_course = {d["course_slug"]: d["tee_date"] for d in payload["course_days"]}
+        self.assertEqual(
+            by_course["woollahra"], by_course["eastlake"],
+            "two courses in the same run disagreed about which date 'today' "
+            "is, purely because the loop crossed local midnight between them",
+        )
+        self.assertEqual(by_course["woollahra"], "2026-09-19",
+                         "the whole run should anchor to 'today' as of when it started")
 
 
 class ParserTests(unittest.TestCase):
@@ -199,12 +284,110 @@ class ParserTests(unittest.TestCase):
         slots = scrape.parse_timesheet(page(row_html("8:00am", "Public Play")), "https://x.test/y", date(2026, 9, 18))
         self.assertEqual(slots[0]["price_tiers"], [])
 
+    def test_a_fully_booked_day_is_still_zero_available_not_a_structural_error(self):
+        """CONTRACT.md section 5: 'Long Reef had zero free tee times and
+        scraped perfectly.' Rows are present, just none available — this must
+        return [] quietly, not raise."""
+        html = page(
+            row_html("7:00am", "Public Play", [("Midweek", 39.0)], available=0, total=4),
+            row_html("7:08am", "Public Play", [("Midweek", 39.0)], available=0, total=4),
+        )
+        slots = scrape.parse_timesheet(html, "https://example.test/x", date(2026, 9, 18))
+        self.assertEqual(slots, [])
+
+    def test_zero_rows_at_all_raises_instead_of_reporting_a_clean_empty_day(self):
+        """The defect this ticket fixes: a club/MiClub markup rename (e.g.
+        div.row-time -> div.tee-row, .records-wrapper .cell -> .slots-block
+        .slot) makes the row selector match nothing at all. That must not be
+        indistinguishable from a genuinely quiet day (previous test) — it has
+        to surface as a structural failure so scrape_course records the day as
+        failed rather than clean-and-empty."""
+        renamed_markup = """
+        <div class="tee-row">
+          <div class="time-wrapper"><h3>6:16am</h3><h4>1st Tee Social</h4></div>
+          <div class="slots-block">
+            <div class="slot slot-available"></div>
+            <div class="slot slot-available"></div>
+          </div>
+        </div>
+        """
+        with self.assertRaises(scrape.TimesheetStructureError):
+            scrape.parse_timesheet(page(renamed_markup), "https://example.test/x", date(2026, 9, 18))
+
+    def test_inner_selectors_renamed_also_raises_not_returns_empty(self):
+        """div.row-time still matches (outer wrapper untouched), but the
+        markup inside each row was renamed — .time-wrapper -> .time-box,
+        .records-wrapper -> .slots-grid. Every row hits `continue` for want
+        of a readable time/cell structure and the loop falls through with an
+        untouched `slots = []`, which is indistinguishable from a genuinely
+        quiet day unless something notices that NO row anywhere was actually
+        readable."""
+        inner_renamed = page("""
+        <div class="row-time">
+          <div class="time-box"><h3>6:16am</h3><h4>1st Tee Social</h4></div>
+          <div class="slots-grid">
+            <div class="cell cell-available"></div>
+            <div class="cell cell-available"></div>
+          </div>
+        </div>
+        <div class="row-time">
+          <div class="time-box"><h3>6:24am</h3><h4>1st Tee Social</h4></div>
+          <div class="slots-grid">
+            <div class="cell cell-available"></div>
+          </div>
+        </div>
+        """)
+        with self.assertRaises(scrape.TimesheetStructureError):
+            scrape.parse_timesheet(inner_renamed, "https://example.test/x", date(2026, 9, 18))
+
+    def test_a_single_unreadable_row_among_good_rows_is_counted_not_silent(self):
+        """The defect this ticket fixes: parse_timesheet's four `continue`
+        points (no .time-wrapper h3, unmatched time text, no
+        .records-wrapper .cell, zero available cells) increment nothing and
+        print nothing. A club that mixes template types on one page -- e.g.
+        a shotgun/comp row whose cells sit under a differently-named
+        wrapper -- can drop ONE real, open row while the other rows on the
+        page parse fine, so `recognised_rows` stays > 0 and
+        TimesheetStructureError never fires. That must not be silent: it
+        has to be counted and reported, the same way schema_problem's
+        dropped rows are 'cheaper... but counted and reported', even though
+        the row's actual availability still can't be recovered from
+        markup the selectors don't recognise."""
+        mixed_page = page(
+            row_html("6:16am", "Public Play", [("Midweek", 39.0)], available=2, total=4),
+            row_html("6:24am", "Public Play", [("Midweek", 39.0)], available=2, total=4),
+            # A shotgun/comp row real-world-plausible on a MiClub site: the
+            # time text carries extra words but still matches _TIME_RE, while
+            # its slot cells sit under a wrapper .records-wrapper .cell
+            # cannot see -- and it has open spots.
+            '<div class="row-time">'
+            '<div class="time-wrapper"><h3>Shotgun 12:30pm start</h3></div>'
+            '<div class="slots-block">'
+            '<div class="slot slot-available"></div>'
+            '<div class="slot slot-available"></div>'
+            '</div>'
+            '</div>',
+        )
+        self.assertEqual(mixed_page.count('class="row-time"'), 3, "sanity: 3 rows are really on the page")
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            slots = scrape.parse_timesheet(mixed_page, "https://example.test/x", date(2026, 9, 18))
+
+        # The third row's real availability genuinely cannot be recovered --
+        # its cells are unreadable under this selector -- but its loss must
+        # now be visible instead of indistinguishable from "only 2 rows
+        # existed".
+        self.assertEqual(len(slots), 2)
+        self.assertIn("1", stderr.getvalue(), "the one skipped row must be counted, not just implied")
+        self.assertTrue(stderr.getvalue().strip(), "a structurally-unreadable row among good rows must leave a trace")
+
 
 # --------------------------------------------------------------------------
 # Per-course isolation, through main()
 # --------------------------------------------------------------------------
 
-def good_result(course, days=1, slots_per_day=1):
+def good_result(course, days=1, slots_per_day=1, today=None):
     dates = scrape.requested_dates(days)
     host = scrape.course_host(course)
     slots = []
@@ -239,7 +422,7 @@ class RunIsolationTests(unittest.TestCase):
         return code, out.getvalue(), err.getvalue()
 
     def test_a_course_that_raises_does_not_stop_the_others(self):
-        def side_effect(course, days):
+        def side_effect(course, days, today=None):
             if course["slug"] == "woollahra":
                 raise KeyError("feeGroupId")
             return good_result(course, days)
@@ -265,7 +448,7 @@ class RunIsolationTests(unittest.TestCase):
         self.assertIn("CONTRACT OK", stdout)
 
     def test_a_course_that_raises_is_failed_on_every_requested_day(self):
-        def side_effect(course, days):
+        def side_effect(course, days, today=None):
             raise ValueError("courses.json entry is malformed")
 
         code, _, err = self.run_main(["--course", "woollahra", "--days", "5"], side_effect)
@@ -273,7 +456,7 @@ class RunIsolationTests(unittest.TestCase):
         self.assertIn("every course failed", err)
 
     def test_a_run_with_one_survivor_still_exits_zero(self):
-        def side_effect(course, days):
+        def side_effect(course, days, today=None):
             if course["slug"] == "woollahra":
                 raise RuntimeError("boom")
             return good_result(course, days)
@@ -283,14 +466,14 @@ class RunIsolationTests(unittest.TestCase):
 
     def test_an_unknown_course_slug_is_refused(self):
         with self.assertRaises(SystemExit):
-            self.run_main(["--course", "st-andrews"], lambda c, d: good_result(c, d))
+            self.run_main(["--course", "st-andrews"], lambda c, d, today=None: good_result(c, d))
 
 
 class CliTests(unittest.TestCase):
     def run_main(self, argv):
         seen = {}
 
-        def side_effect(course, days):
+        def side_effect(course, days, today=None):
             seen["days"] = days
             return good_result(course, days)
 
@@ -330,7 +513,7 @@ class CliTests(unittest.TestCase):
         self.assertNotIn("wrote", out.getvalue())
 
     def test_write_supabase_validates_first_and_never_writes_an_invalid_payload(self):
-        def side_effect(course, days):
+        def side_effect(course, days, today=None):
             result = good_result(course, days)
             result["slots"][0]["booking_url"] = "https://woollahra.miclub.com.au/x"
             result["slots"][0]["time"] = "07:00"
@@ -431,7 +614,7 @@ class RunOutcomeTests(unittest.TestCase):
     def test_a_course_that_fails_every_day_without_raising_still_fails_the_run(self):
         code, payload, _, err = self.run_main(
             ["--course", "woollahra", "--days", "3"],
-            lambda course, days: all_days_failed_result(course, days, "http 500"),
+            lambda course, days, today=None: all_days_failed_result(course, days, "http 500"),
         )
         self.assertEqual(code, 1, "no course was reached on any day")
         self.assertIn("every course failed", err)
@@ -442,7 +625,7 @@ class RunOutcomeTests(unittest.TestCase):
         self.assertTrue(all(r["last_success_at"] is None for r in rows))
 
     def test_one_reached_day_anywhere_is_enough_for_a_zero_exit(self):
-        def side_effect(course, days):
+        def side_effect(course, days, today=None):
             if course["slug"] == "woollahra":
                 return all_days_failed_result(course, days, "connection timed out")
             return good_result(course, days)
@@ -459,7 +642,7 @@ class RunOutcomeTests(unittest.TestCase):
         self.assertEqual({s["course_slug"] for s in payload["slots"]}, {"eastlake"})
 
     def test_a_raising_course_is_failed_on_every_requested_day_with_its_reason(self):
-        def side_effect(course, days):
+        def side_effect(course, days, today=None):
             if course["slug"] == "woollahra":
                 raise RuntimeError("kaboom")
             return good_result(course, days)
@@ -484,7 +667,7 @@ class DayWindowTests(unittest.TestCase):
         for bad in ("0", "15", "-1"):
             with self.subTest(days=bad):
                 reached = []
-                with mock.patch.object(scrape, "scrape_course", side_effect=lambda c, d: reached.append(c)), \
+                with mock.patch.object(scrape, "scrape_course", side_effect=lambda c, d, today=None: reached.append(c)), \
                         contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                     with self.assertRaises(SystemExit):
                         scrape.main(["--course", "woollahra", "--days", bad])

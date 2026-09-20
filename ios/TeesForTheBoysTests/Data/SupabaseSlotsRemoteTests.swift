@@ -102,6 +102,75 @@ final class B2StubBox: @unchecked Sendable {
     }
 }
 
+/// A live `open_slots` table shared across a fetch's several page requests,
+/// mutable between them. Behind a lock for the same reason as `B2StubBox`.
+final class B2LiveTableBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _rows: [[String: Any]]
+    private var requestCount = 0
+
+    init(_ rows: [[String: Any]]) { self._rows = rows }
+
+    var rows: [[String: Any]] {
+        lock.lock(); defer { lock.unlock() }
+        return _rows
+    }
+
+    /// Replace the table's contents. Read old, computed new, written back
+    /// under the same lock so a concurrent request never sees a half-applied
+    /// mutation.
+    func mutate(_ transform: ([[String: Any]]) -> [[String: Any]]) {
+        lock.lock(); defer { lock.unlock() }
+        _rows = transform(_rows)
+    }
+
+    /// Count and return this request's 1-based position among every request
+    /// this box has served.
+    func recordRequest() -> Int {
+        lock.lock(); defer { lock.unlock() }
+        requestCount += 1
+        return requestCount
+    }
+}
+
+/// Paginate a row array the way `open_slots` does now: a `limit`, and from
+/// the second page on an `or` keyset cursor naming `(tee_at, id)` rather than
+/// an `offset` naming a position. Shared by every stub in this file so a
+/// paging test proves something about the real query `SupabaseSlotsRemote`
+/// sends, not about a hand-rolled convention.
+enum B2PagingSim {
+    static func page(from rows: [Any], url: URL) -> [Any] {
+        let limit = Int(B2StubURLProtocol.queryValue("limit", in: url) ?? "1000") ?? 1000
+        let startIndex: Int
+        if let offsetValue = B2StubURLProtocol.queryValue("offset", in: url),
+           let offset = Int(offsetValue)
+        {
+            // A literal position in whatever the table currently is — the
+            // thing a real PostgREST server does too, and exactly why an
+            // offset page is unsound against a table that moves under it.
+            startIndex = offset
+        } else if let orValue = B2StubURLProtocol.queryValue("or", in: url),
+                  let cursorID = cursorID(fromOrFilter: orValue),
+                  let position = rows.firstIndex(where: { ($0 as? [String: Any])?["id"] as? String == cursorID })
+        {
+            startIndex = position + 1
+        } else {
+            startIndex = 0
+        }
+        let upper = min(startIndex + limit, rows.count)
+        return startIndex < upper ? Array(rows[startIndex..<upper]) : []
+    }
+
+    /// Pull the id back out of the exact string `SupabaseSlotsRemote` builds:
+    /// `"(tee_at.gt.<teeAt>,and(tee_at.eq.<teeAt>,id.gt.<id>))"`.
+    static func cursorID(fromOrFilter raw: String) -> String? {
+        guard let marker = raw.range(of: "id.gt.") else { return nil }
+        var id = String(raw[marker.upperBound...])
+        while id.hasSuffix(")") { id.removeLast() }
+        return id
+    }
+}
+
 // MARK: - Tests
 
 /// The live read path, driven entirely through canned PostgREST bytes.
@@ -141,7 +210,8 @@ final class SupabaseSlotsRemoteTests: XCTestCase {
     }
 
     /// Serve the three views from arrays, paging `open_slots` the way PostgREST
-    /// does: honour the `offset` and `limit` the client asked for.
+    /// does: honour the `limit` the client asked for and, from the second page
+    /// on, the keyset `or` cursor rather than an `offset`.
     private func stubViews(
         courses: [Any] = B2Rows.fifteenCourses,
         slots: [Any] = [],
@@ -158,11 +228,37 @@ final class SupabaseSlotsRemoteTests: XCTestCase {
                 return (200, try JSONSerialization.data(withJSONObject: courseDays))
             case "open_slots":
                 if let slotBody { return (slotStatus, slotBody) }
-                let offset = Int(B2StubURLProtocol.queryValue("offset", in: url) ?? "0") ?? 0
-                let limit = Int(B2StubURLProtocol.queryValue("limit", in: url) ?? "1000") ?? 1000
-                let upper = min(offset + limit, slots.count)
-                let page = offset < upper ? Array(slots[offset..<upper]) : []
+                let page = B2PagingSim.page(from: slots, url: url)
                 return (slotStatus, try JSONSerialization.data(withJSONObject: page))
+            default:
+                throw URLError(.unsupportedURL)
+            }
+        }
+    }
+
+    /// A mutable `open_slots` table: the row list can change between page
+    /// requests, the way a live view does mid-fetch — the scraper upserts, a
+    /// slot closes, `tee_at > now()` moves on. `mutateBeforeSecondRequest`
+    /// fires once, right before the SECOND request to `open_slots` is served,
+    /// and its effect persists for every request after that — exactly the
+    /// shape of the defect: one shift, mid-fetch, that a stable offset or a
+    /// stable cursor has to survive.
+    private func stubLiveSlots(
+        _ initial: [[String: Any]],
+        mutateBeforeSecondRequest: @escaping ([[String: Any]]) -> [[String: Any]]
+    ) {
+        let table = B2LiveTableBox(initial)
+        B2StubURLProtocol.respond { request in
+            guard let url = request.url else { throw URLError(.badURL) }
+            switch url.lastPathComponent {
+            case "courses", "course_day_scrapes":
+                return (200, try JSONSerialization.data(withJSONObject: [Any]()))
+            case "open_slots":
+                if table.recordRequest() == 2 {
+                    table.mutate(mutateBeforeSecondRequest)
+                }
+                let page = B2PagingSim.page(from: table.rows.map { $0 as Any }, url: url)
+                return (200, try JSONSerialization.data(withJSONObject: page))
             default:
                 throw URLError(.unsupportedURL)
             }
@@ -210,8 +306,13 @@ final class SupabaseSlotsRemoteTests: XCTestCase {
         XCTAssertEqual(payload.slots.count, 5)
         let pages = B2StubURLProtocol.requests(to: "open_slots")
         XCTAssertEqual(pages.count, 3, "two full pages and a short one")
-        XCTAssertEqual(pages.map { B2StubURLProtocol.queryValue("offset", in: $0) },
-                       ["0", "2", "4"])
+        XCTAssertNil(B2StubURLProtocol.queryValue("or", in: pages[0]),
+                     "the first page has nothing to page after yet")
+        XCTAssertNotNil(B2StubURLProtocol.queryValue("or", in: pages[1]),
+                        "later pages carry a keyset cursor, not a position")
+        XCTAssertNotNil(B2StubURLProtocol.queryValue("or", in: pages[2]))
+        XCTAssertNil(B2StubURLProtocol.queryValue("offset", in: pages[1]),
+                     "paging must not fall back to an offset the live view can shift under")
         XCTAssertEqual(Set(pages.map { B2StubURLProtocol.queryValue("limit", in: $0) }), ["2"])
     }
 
@@ -245,8 +346,68 @@ final class SupabaseSlotsRemoteTests: XCTestCase {
 
         let pages = B2StubURLProtocol.requests(to: "open_slots")
         XCTAssertEqual(pages.count, 2)
-        XCTAssertEqual(pages.map { B2StubURLProtocol.queryValue("offset", in: $0) }, ["0", "1000"])
+        XCTAssertNil(B2StubURLProtocol.queryValue("or", in: pages[0]))
+        XCTAssertNotNil(B2StubURLProtocol.queryValue("or", in: pages[1]))
         XCTAssertEqual(Set(pages.map { B2StubURLProtocol.queryValue("limit", in: $0) }), ["1000"])
+    }
+
+    // MARK: - Paging a live view (regression)
+
+    /// The confirmed defect: `open_slots` is a live view, and an offset page
+    /// is a position in a row set that keeps moving under it. Insert a row
+    /// ahead of the page-1/page-2 boundary — a slot reopening, say — between
+    /// the two requests, exactly the way the scraper's 20-minute upsert can,
+    /// and an offset page repeats the row that used to sit at that position.
+    ///
+    /// `SlotQuery.sections` never dedupes by id (Views/SlotQuery.swift), and
+    /// `ForEach(section.results)` keys on `SlotResult.id`
+    /// (Views/SearchScreen.swift) — so this is not a cosmetic double-count,
+    /// it is the same tee time rendered as two rows.
+    func testARowOpeningBetweenPagesMustNotRepeatTheBoundaryRow() async throws {
+        let a = B2Rows.slot(time: "06:00", tee: "a")
+        let b = B2Rows.slot(time: "06:08", tee: "b")
+        let x = B2Rows.slot(time: "06:04", tee: "x")
+
+        stubLiveSlots([a, b]) { rows in
+            // x sorts between a and b — inserted where the already-returned
+            // page-1/page-2 boundary sits, the way a newly reopened slot
+            // would land between two rows already scanned past.
+            [rows[0], x, rows[1]]
+        }
+
+        let payload = try await makeRemote(pageSize: 2).fetchPayload()
+
+        let ids = payload.slots.map(\.id)
+        XCTAssertEqual(Set(ids).count, ids.count,
+                       "a duplicated id renders as a phantom repeat of the same tee time: \(ids)")
+    }
+
+    /// The more severe sibling: a row *closing* ahead of the page-1/page-2
+    /// boundary — the natural-key upsert flipping `status` mid-fetch — shifts
+    /// every row after it. An offset page keeps asking for the position that
+    /// row used to occupy, and whatever has slid into the position just past
+    /// it is never asked for again: a still-open tee time silently missing
+    /// from the list, with no error and no log line (the log only fires on
+    /// hitting `maximumPages`, the opposite condition).
+    func testARowClosingBetweenPagesMustNotDropTheRowsAfterIt() async throws {
+        let a = B2Rows.slot(time: "06:00", tee: "a")
+        let b = B2Rows.slot(time: "06:04", tee: "b")
+        let c = B2Rows.slot(time: "06:08", tee: "c")
+        let d = B2Rows.slot(time: "06:12", tee: "d")
+        let aID = try XCTUnwrap(a["id"] as? String)
+        let expectedIDs = Set([a, b, c, d].compactMap { $0["id"] as? String })
+
+        stubLiveSlots([a, b, c, d]) { rows in
+            // a closes — status flips to 'gone', or its tee_at finally falls
+            // behind `now()` — after page 1 already returned it but before
+            // page 2 is asked for. b, c and d all shift one place earlier.
+            rows.filter { ($0["id"] as? String) != aID }
+        }
+
+        let payload = try await makeRemote(pageSize: 2).fetchPayload()
+
+        XCTAssertEqual(Set(payload.slots.map(\.id)), expectedIDs,
+                       "c never left the table; a row closing earlier in the page order must not drop it")
     }
 
     // MARK: - Bad data, live

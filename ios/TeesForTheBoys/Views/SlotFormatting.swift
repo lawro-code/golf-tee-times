@@ -113,7 +113,15 @@ public enum SlotFormatting {
 
     /// `$55` for a whole number, `$55.50` otherwise. Club fees are usually
     /// whole dollars and `$55.00` reads like a receipt.
+    ///
+    /// The finite/magnitude guard mirrors `TeesPriceTierBadge.Model.wholeDollars`
+    /// — `Int(_:)` is a non-failable, trapping initialiser that crashes on NaN
+    /// and on anything past `Int.max`, and the decoder is deliberately lenient
+    /// about a `numeric` price sent as a string (CONTRACT.md), so an absurd but
+    /// well-shaped `price_min`/`price_max` must degrade here rather than crash
+    /// every screen that formats a price.
     static func money(_ amount: Double) -> String {
+        guard amount.isFinite, amount.magnitude < 1_000_000_000 else { return priceAtCourse }
         let rounded = (amount * 100).rounded() / 100
         if abs(rounded.rounded() - rounded) < 0.005 {
             return "$\(Int(rounded.rounded()))"

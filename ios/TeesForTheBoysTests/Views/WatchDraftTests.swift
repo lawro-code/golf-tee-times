@@ -78,8 +78,28 @@ final class WatchDraftTests: XCTestCase {
     // MARK: - 3. Several clubs, and none
 
     func testSeveralClubsAreCountedRatherThanListed() {
-        let watch = draft(SearchFilters(courseSlugs: ["the-coast", "bondi", "moore-park"]))
-        XCTAssertEqual(watch.sentence, "Alert me when any tee time opens at 3 clubs")
+        // A strict subset of the fixture's roster — selecting *every* course
+        // is a different case, covered below, where the count must not
+        // appear at all.
+        let watch = draft(SearchFilters(courseSlugs: ["the-coast", "bondi"]))
+        XCTAssertEqual(watch.sentence, "Alert me when any tee time opens at 2 clubs")
+    }
+
+    /// Regression test for the defect where ticking every course on the
+    /// roster read as a bounded "at N clubs" watch instead of the unfiltered
+    /// default it actually behaves as.
+    ///
+    /// `private.watch_matches`
+    /// (supabase/migrations/alerts_0010_watch_lifecycle.sql) treats a null
+    /// `course_slugs` column as "every course" and an explicit list naming
+    /// every real slug matches identically — so a golfer who ticks every box
+    /// to be thorough must be told the same thing as a golfer who ticks
+    /// nothing at all.
+    func testSelectingEveryCourseOnTheRosterReadsAsNoClubFilterAtAll() {
+        let everyCourse = Set(Self.courses.map(\.slug))
+        let watch = draft(SearchFilters(courseSlugs: everyCourse))
+        XCTAssertEqual(watch.sentence, "Alert me when any tee time opens")
+        XCTAssertEqual(watch.emptySentence, "No tee times \u{2014} alert me when one opens.")
     }
 
     func testNoClubSelectedMeansTheClubIsNotMentionedAtAll() {

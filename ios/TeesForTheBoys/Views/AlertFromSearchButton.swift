@@ -56,12 +56,19 @@ public struct AlertFromSearchButton: View {
     public enum TapOutcome: Equatable, Sendable {
         case created
         case signInRequired
+        /// Signed in, and `onCreate` ran — but it reported the save never
+        /// landed (offline, a dropped connection, the backend down). Never
+        /// treat this as `.created`: that is the flag the button uses to show
+        /// "Alert saved", and a save that failed must not be confirmed.
+        case failed
     }
 
     private let draft: WatchDraft
     private let prominence: Prominence
     private let isSignedIn: Bool
-    private let onCreate: (WatchDraft) -> Void
+    /// Creates the watch and reports whether it actually landed. Awaited by
+    /// `tap()` before it will call anything `.created` — see `TapOutcome`.
+    private let onCreate: (WatchDraft) async -> Bool
     private let onRequireSignIn: () -> Void
 
     /// Non-nil once the watch has been created; holds the newest version of it
@@ -73,7 +80,7 @@ public struct AlertFromSearchButton: View {
         draft: WatchDraft,
         prominence: Prominence,
         isSignedIn: Bool,
-        onCreate: @escaping (WatchDraft) -> Void,
+        onCreate: @escaping (WatchDraft) async -> Bool,
         onRequireSignIn: @escaping () -> Void
     ) {
         self.draft = draft
@@ -90,14 +97,17 @@ public struct AlertFromSearchButton: View {
     /// The button's action calls this and then updates its own state; a test
     /// calls it directly. Both go through the same two lines, so the test is
     /// testing the shipping behaviour rather than a copy of it.
+    ///
+    /// Waits on `onCreate` rather than firing it and reporting `.created`
+    /// regardless: `onCreate` reaches a network call, and calling it is not
+    /// the same thing as it having worked.
     @discardableResult
-    public func tap() -> TapOutcome {
+    public func tap() async -> TapOutcome {
         guard isSignedIn else {
             onRequireSignIn()
             return .signInRequired
         }
-        onCreate(draft)
-        return .created
+        return await onCreate(draft) ? .created : .failed
     }
 
     // MARK: - The filters moving underneath
@@ -145,8 +155,13 @@ public struct AlertFromSearchButton: View {
             AlertAdjustSheet(
                 draft: saved ?? draft,
                 onSave: { edited in
-                    saved = edited
-                    onCreate(edited)
+                    // Same rule as `tap()`: only claim it is saved once
+                    // `onCreate` says the save actually landed.
+                    Task {
+                        if await onCreate(edited) {
+                            saved = edited
+                        }
+                    }
                 }
             )
         }
@@ -155,8 +170,10 @@ public struct AlertFromSearchButton: View {
     @ViewBuilder
     private var button: some View {
         Button {
-            if tap() == .created {
-                withAnimation { saved = draft }
+            Task {
+                if await tap() == .created {
+                    withAnimation { saved = draft }
+                }
             }
         } label: {
             switch prominence {
@@ -181,6 +198,16 @@ public struct AlertFromSearchButton: View {
                 .font(.subheadline.weight(.semibold))
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
+                // This bar is pinned over the results list
+                // (`SearchScreen.inlineAlertBar`, via `.safeAreaInset(edge:
+                // .bottom)`) and its height comes straight out of the list's
+                // own viewport. Uncapped, a watch sentence at the largest
+                // accessibility text sizes wraps to three or four lines and
+                // the bar swells to roughly a third of the screen, leaving no
+                // room above it for even one tee-time row. Two lines bounds
+                // that growth; the full sentence is never lost, since it is
+                // still the accessibility label on the whole button, below.
+                .lineLimit(2)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
@@ -259,7 +286,7 @@ public struct AlertFromSearchButton: View {
         draft: WatchDraft(filters: .standard, courses: [], today: "2026-09-18"),
         prominence: .inline,
         isSignedIn: true,
-        onCreate: { _ in },
+        onCreate: { _ in true },
         onRequireSignIn: {}
     )
     .padding()
@@ -274,7 +301,7 @@ public struct AlertFromSearchButton: View {
         ),
         prominence: .primary,
         isSignedIn: false,
-        onCreate: { _ in },
+        onCreate: { _ in true },
         onRequireSignIn: {}
     )
     .padding()

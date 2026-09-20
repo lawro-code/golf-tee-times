@@ -184,6 +184,34 @@ final class ContractTests: XCTestCase {
         }
     }
 
+    /// A `last_success_at` that is present but not a parseable date must not
+    /// silently decode as `nil` — that would let an `ok:true` row claim
+    /// `lastSuccessAt == nil`, falsifying the invariant the test above checks,
+    /// with no issue recorded anywhere to explain why. It must degrade the same
+    /// way the required `last_attempt_at` field already does: throw, get caught
+    /// by `decodeLenient`, drop the whole row, and record a `DecodingIssue`.
+    func testMalformedLastSuccessAtDropsTheRowRatherThanNullingIt() throws {
+        let json = """
+        {
+          "contract_version": "1.0.0",
+          "generated_at": "2026-10-01T07:30:00+10:00",
+          "mode": "full",
+          "days": 5,
+          "courses": [],
+          "slots": [],
+          "course_days": [
+            {"course_slug":"a","tee_date":"2026-10-03","ok":true,"slot_count":0,"error":null,"last_attempt_at":"2026-10-03T08:00:00+10:00","last_success_at":"not-a-real-date"}
+          ]
+        }
+        """
+        let payload = try ContractLoader.decode(Data(json.utf8))
+        XCTAssertTrue(
+            payload.courseDays.isEmpty,
+            "a malformed last_success_at must drop the row, not decode it with lastSuccessAt silently nulled")
+        XCTAssertEqual(payload.issues.count, 1, "the malformed row must be recorded, not swallowed")
+        XCTAssertEqual(payload.issues.first?.collection, "course_days")
+    }
+
     // MARK: - Decoding survives bad data
 
     func testOneMalformedSlotDoesNotLoseThePayload() throws {
@@ -209,10 +237,118 @@ final class ContractTests: XCTestCase {
         XCTAssertEqual(payload.issues.first?.index, 1)
     }
 
+    /// A malformed tier must not take its siblings down with it — same
+    /// principle the contract already applies to courses/slots/course_days.
+    func testOneMalformedPriceTierDoesNotDiscardTheOthers() throws {
+        let json = """
+        {
+          "contract_version": "1.0.0",
+          "generated_at": "2026-10-01T07:30:00+10:00",
+          "mode": "full",
+          "days": 5,
+          "courses": [],
+          "course_days": [],
+          "slots": [
+            {"id":"a:2026-10-03:0800:t","course_slug":"a","course_name":"A","region":"","drive_minutes_from_bondi":10,"par":72,"length_metres":null,"requires_registration":false,"tee_date":"2026-10-03","tee_time":"08:00:00","tee_at":"2026-10-03T08:00:00+10:00","spots_available":4,"total_spots":4,"holes":18,"price_min":45.0,"price_max":90.0,"price_tiers":[{"label":"Member","amount":45.0},{"label":"Guest","amount":"not-a-number"}],"booking_type":"1st Tee","booking_url":"https://example.test/a"}
+          ]
+        }
+        """
+        let payload = try ContractLoader.decode(Data(json.utf8))
+        XCTAssertEqual(payload.slots.count, 1, "the slot itself is not malformed")
+        let slot = try XCTUnwrap(payload.slots.first)
+        XCTAssertEqual(slot.priceMin, 45.0)
+        XCTAssertEqual(slot.priceMax, 90.0)
+        XCTAssertEqual(slot.priceTiers.count, 1, "the one good tier must survive its malformed sibling")
+        XCTAssertEqual(slot.priceTiers.first?.label, "Member")
+        XCTAssertEqual(slot.priceTiers.first?.amount, 45.0)
+    }
+
     func testAPriceThatArrivesAsAStringStillDecodes() throws {
         let json = slotPayload(priceMin: "\"55.00\"", priceMax: "\"55.00\"")
         let payload = try ContractLoader.decode(Data(json.utf8))
         XCTAssertEqual(payload.slots.first?.priceMin, 55.0)
+    }
+
+    /// `Double("NaN")`, `Double("Infinity")` and `Double("-Infinity")` all
+    /// succeed in Swift — they are not malformed numbers, they are the
+    /// non-finite kind. A club or proxy sending one of those strings for
+    /// price_min/price_max must not decode into a "known" price that later
+    /// renders as the literal text "$nan"/"$inf" styled like a real fee. It
+    /// has to be treated exactly like any other malformed price: the row
+    /// drops and a DecodingIssue is recorded, the same as `testOneMalformedSlotDoesNotLoseThePayload` above.
+    func testNonFinitePriceStringsDropTheRowRatherThanRenderingAsGarbage() throws {
+        for bad in ["\"NaN\"", "\"Infinity\"", "\"-Infinity\""] {
+            let json = slotPayload(priceMin: bad, priceMax: "50")
+            let payload = try ContractLoader.decode(Data(json.utf8))
+            XCTAssertTrue(payload.slots.isEmpty, "price_min: \(bad) must not decode as a real slot")
+            XCTAssertEqual(payload.issues.count, 1, "price_min: \(bad) must be recorded, not swallowed")
+            XCTAssertEqual(payload.issues.first?.collection, "slots")
+        }
+    }
+
+    /// Swift's `Double(String)` also accepts an out-of-range numeric string
+    /// like "1e400" and silently returns `.infinity` rather than failing to
+    /// parse. Same defect, same fix: it must not pass as a decoded price.
+    func testOverflowingPriceStringDropsTheRowRatherThanBecomingInfinity() throws {
+        XCTAssertEqual(Double("1e400"), Double.infinity, "documents the Swift stdlib behaviour this test guards against")
+        let json = slotPayload(priceMin: "\"1e400\"", priceMax: "50")
+        let payload = try ContractLoader.decode(Data(json.utf8))
+        XCTAssertTrue(payload.slots.isEmpty, "an overflowing price_min must not decode as a real slot")
+        XCTAssertEqual(payload.issues.count, 1)
+        XCTAssertEqual(payload.issues.first?.collection, "slots")
+    }
+
+    /// The same defect in `price_tiers[].amount`: a non-finite tier amount
+    /// must be dropped like any other malformed tier (`testOneMalformedPriceTierDoesNotDiscardTheOthers`),
+    /// not kept as a tier worth `nan`.
+    func testNonFinitePriceTierAmountIsDroppedNotKept() throws {
+        let json = """
+        {
+          "contract_version": "1.0.0",
+          "generated_at": "2026-10-01T07:30:00+10:00",
+          "mode": "full",
+          "days": 5,
+          "courses": [],
+          "course_days": [],
+          "slots": [
+            {"id":"a:2026-10-03:0800:t","course_slug":"a","course_name":"A","region":"","drive_minutes_from_bondi":10,"par":72,"length_metres":null,"requires_registration":false,"tee_date":"2026-10-03","tee_time":"08:00:00","tee_at":"2026-10-03T08:00:00+10:00","spots_available":4,"total_spots":4,"holes":18,"price_min":45.0,"price_max":90.0,"price_tiers":[{"label":"Member","amount":45.0},{"label":"Guest","amount":"NaN"}],"booking_type":"1st Tee","booking_url":"https://example.test/a"}
+          ]
+        }
+        """
+        let payload = try ContractLoader.decode(Data(json.utf8))
+        let slot = try XCTUnwrap(payload.slots.first)
+        XCTAssertEqual(slot.priceTiers.count, 1, "the NaN tier must not survive as a priced tier")
+        XCTAssertEqual(slot.priceTiers.first?.label, "Member")
+    }
+
+    /// `decodeLenient` is only lenient about *elements* inside an array — the
+    /// container fetch itself (`nestedUnkeyedContainer(forKey:)`) was
+    /// unguarded, so a collection that arrives as the wrong JSON type (an
+    /// object instead of an array) threw straight out of
+    /// `ContractPayload.init(from:)` and discarded the whole payload,
+    /// including the `courses` array that had already decoded successfully.
+    /// One club changing its HTML must not blank out the other fourteen — the
+    /// same principle has to hold when a whole collection is the wrong shape,
+    /// not just when one element in it is malformed.
+    func testWrongTypeForATopLevelCollectionDropsOnlyThatCollection() throws {
+        let json = """
+        {
+          "contract_version": "1.0.0",
+          "generated_at": "2026-10-01T07:30:00+10:00",
+          "mode": "full",
+          "days": 5,
+          "courses": [
+            {"slug":"a","name":"A","region":"","host":"","fee_group_id":"","holes":18,"par":72,"drive_minutes_from_bondi":10,"requires_registration":false,"address":null,"notes":"","sort_order":1}
+          ],
+          "slots": {"oops": "not an array"},
+          "course_days": []
+        }
+        """
+        let payload = try ContractLoader.decode(Data(json.utf8))
+        XCTAssertEqual(payload.courses.count, 1, "a valid sibling collection must survive a malformed one")
+        XCTAssertTrue(payload.slots.isEmpty, "the wrongly-typed collection decodes as empty, not as a thrown error")
+        XCTAssertEqual(payload.issues.count, 1, "the malformed collection must be recorded, not silently dropped")
+        XCTAssertEqual(payload.issues.first?.collection, "slots")
     }
 
     func testAMalformedBookingURLDoesNotCrash() throws {

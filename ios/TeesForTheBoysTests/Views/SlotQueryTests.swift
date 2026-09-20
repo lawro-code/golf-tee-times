@@ -255,6 +255,28 @@ final class SlotQueryTests: XCTestCase {
         XCTAssertTrue(SlotQuery.apply(SearchFilters(players: 1), to: [booked]).isEmpty)
     }
 
+    /// A cached payload is only ever all-future at the moment it was written
+    /// (`open_slots` filters on `tee_at > now()` server-side); left on disk
+    /// through an offline stretch, some of it teed off without anything on the
+    /// client re-checking. A slot like that must not survive `apply` no matter
+    /// what the facets say — not "hide it if the caller happens to filter by
+    /// time", but gone, the same way a fully booked slot is gone.
+    func testASlotThatHasAlreadyTeedOffIsExcludedEvenThoughItMatchesEveryFilter() {
+        let cutoff = Date(timeIntervalSince1970: 1_790_000_000)
+        let justPast = Self.row(
+            id: "past:2026-10-03:0600:default", teeAt: cutoff.addingTimeInterval(-60))
+        let stillToCome = Self.row(
+            id: "future:2026-10-03:0700:default", teeAt: cutoff.addingTimeInterval(60))
+        let exactlyNow = Self.row(id: "now:2026-10-03:0630:default", teeAt: cutoff)
+
+        let kept = ids(SlotQuery.apply(
+            SearchFilters(holes: .any), to: [justPast, stillToCome, exactlyNow], now: cutoff))
+
+        XCTAssertEqual(
+            kept, ["future:2026-10-03:0700:default"],
+            "a slot whose tee time is at or before now rendered as a normal, bookable row")
+    }
+
     /// Picking two buckets means "either", not "both" — an intersection is
     /// always empty, because no tee time is in two buckets at once. That is the
     /// kind of bug that shows up as "the filter returns nothing" rather than as
@@ -350,7 +372,8 @@ final class SlotQueryTests: XCTestCase {
     private static func row(
         id: String,
         teeTime: String = "07:00:00",
-        spotsAvailable: Int = 4
+        spotsAvailable: Int = 4,
+        teeAt: Date = Date(timeIntervalSince1970: 1_790_000_000)
     ) -> Slot {
         Slot(
             id: id,
@@ -362,7 +385,7 @@ final class SlotQueryTests: XCTestCase {
             requiresRegistration: false,
             teeDate: "2026-10-03",
             teeTime: teeTime,
-            teeAt: Date(timeIntervalSince1970: 1_790_000_000),
+            teeAt: teeAt,
             spotsAvailable: spotsAvailable,
             totalSpots: 4,
             holes: 18,

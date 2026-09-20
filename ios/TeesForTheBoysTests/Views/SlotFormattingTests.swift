@@ -85,6 +85,23 @@ final class SlotFormattingTests: XCTestCase {
         XCTAssertEqual(SlotFormatting.money(0), "$0")
     }
 
+    /// `Int(Double)` is a non-failable, trapping initialiser: it crashes on
+    /// anything past `Int.max` (~9.22e18) and on NaN. A `price_min`/`price_max`
+    /// this large is perfectly valid-shaped JSON that the decoder accepts
+    /// (CONTRACT.md's lenient numeric-as-string rule included), so `money`
+    /// must degrade to `priceAtCourse` rather than crash every screen that
+    /// formats a price — the same guard `TeesPriceTierBadge.Model.wholeDollars`
+    /// already has.
+    func testAnAbsurdlyLargePriceDegradesRatherThanCrashing() throws {
+        XCTAssertEqual(SlotFormatting.money(1e20), SlotFormatting.priceAtCourse)
+        XCTAssertEqual(SlotFormatting.money(-1e20), SlotFormatting.priceAtCourse)
+        XCTAssertEqual(SlotFormatting.money(.nan), SlotFormatting.priceAtCourse)
+        XCTAssertEqual(SlotFormatting.money(.infinity), SlotFormatting.priceAtCourse)
+
+        let huge = Self.priced(try slot("the-coast:2026-10-03:0800:1st-tee"), min: 1e20, max: nil)
+        XCTAssertEqual(SlotFormatting.price(huge), SlotFormatting.priceAtCourse)
+    }
+
     /// An en dash in the middle of a currency range is read as a hyphen or
     /// skipped, so the spoken form spells the range out.
     func testSpokenPriceAvoidsTheEnDash() throws {

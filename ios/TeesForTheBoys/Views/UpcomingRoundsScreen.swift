@@ -1,4 +1,5 @@
 import SwiftUI
+import TeesDesign
 
 /// Every string an upcoming-round row shows.
 ///
@@ -81,12 +82,9 @@ public struct UpcomingRoundsScreen: View {
         Group {
             let rounds = ledger.upcoming
             if rounds.isEmpty {
-                ViewsEmptyState(
-                    title: UpcomingRoundCopy.emptyTitle,
-                    message: UpcomingRoundCopy.emptyMessage
-                ) {
-                    EmptyView()
-                }
+                TeesEmptyState(
+                    headline: UpcomingRoundCopy.emptyTitle,
+                    message: UpcomingRoundCopy.emptyMessage)
             } else {
                 List(rounds) { booking in
                     UpcomingRoundRow(booking: booking, today: today)

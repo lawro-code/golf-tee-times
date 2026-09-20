@@ -68,6 +68,13 @@ create index if not exists alert_deliveries_sent_recent_idx
 --   * p_max_slots_per_user slots   — the remainder stay queued
 --   * ten minutes between pushes   — a busy user is not machine-gunned
 --
+-- "Per run" holds across overlapping runs too, not only within one: a user
+-- with a claim still in flight (claimed, not yet sent) is untouchable by any
+-- OTHER call to this function until that claim is sent, fails, or its lease
+-- goes stale — see the claimed_at check below. Without that, two overlapping
+-- dispatcher invocations could each claim a different watch for the same
+-- user and both push before either recorded sent_at.
+--
 -- And one freshness gate, re-checked at claim time rather than trusted from
 -- queue time: the slot has to still be open and still be in the future.
 --
@@ -142,6 +149,23 @@ as $$
           where r.user_id = d.user_id
             and r.status = 'sent'
             and r.sent_at > now() - interval '10 minutes'
+       )
+       -- A claim already in flight for this user counts too, not only a sent
+       -- one. sent_at is written by mark_alert_sent only AFTER the outbound
+       -- APNs call completes, so a user whose first claim is still sitting
+       -- between "claimed" and "sent" would otherwise look untouched to a
+       -- second, overlapping call -- a scheduler retry, a second dispatcher
+       -- instance -- and that call would happily hand out this user's OTHER
+       -- watch, or another batch of the SAME watch's remaining slots, before
+       -- the first push has even reached Apple. Same five-minute lease
+       -- threshold as the claimable check above: once a lease goes stale the
+       -- row becomes reclaimable and so does the rest of this user's queue.
+       and not exists (
+         select 1
+           from public.alert_deliveries r
+          where r.user_id = d.user_id
+            and r.claimed_at is not null
+            and r.claimed_at > now() - interval '5 minutes'
        )
   ),
   -- One watch per user. The watch chosen is the one holding the soonest
@@ -220,7 +244,7 @@ as $$
 $$;
 
 comment on function public.claim_alert_batch(integer, integer) is
-  'Leases a batch of queued alert deliveries whose slot is still open and still in the future: at most one watch per user per run, at most p_max_slots_per_user slots in it, and nothing at all for a user pushed in the last ten minutes. Returns one row per (delivery, device token). Rows that do not fit stay queued — this coalesces, it never drops.';
+  'Leases a batch of queued alert deliveries whose slot is still open and still in the future: at most one watch per user per run, at most p_max_slots_per_user slots in it, and nothing at all for a user pushed in the last ten minutes or with a claim still in flight from an overlapping run. Returns one row per (delivery, device token). Rows that do not fit stay queued — this coalesces, it never drops.';
 
 -- ---------------------------------------------------------------------------
 -- mark_alert_sent — one apns-id across the whole coalesced group.

@@ -101,6 +101,57 @@ final class AuthScreensTests: XCTestCase {
         XCTAssertEqual(model.invalidField, .password)
     }
 
+    // MARK: - VoiceOver hears about a local validation failure too
+
+    /// The bug: a red ring is invisible to VoiceOver, and the field's
+    /// accessibility label used to stay the plain "Email"/"Password" no
+    /// matter what failed. A screen-reader user exploring the form after a
+    /// failed submit has to be told *which* field is wrong and *why* — the
+    /// label is the only channel VoiceOver has, so it has to say both.
+    func testTheInvalidFieldsLabelNamesTheReason() async {
+        let stub = StubAuthActions()
+        let model = AuthFormViewModel(mode: .signIn, actions: stub)
+        model.email = "willexample.com"
+        model.password = "eightchars"
+
+        await model.submit()
+
+        XCTAssertEqual(
+            model.accessibleLabel(for: .email, defaultText: "Email"),
+            "Email. That does not look like an email address.",
+            "VoiceOver on the failed field must say why it failed, not just its name")
+    }
+
+    func testTheFieldThatDidNotFailKeepsItsPlainLabel() async {
+        let stub = StubAuthActions()
+        let model = AuthFormViewModel(mode: .signUp, actions: stub)
+        model.email = "will@example.com"
+        model.password = "short"
+
+        await model.submit()
+
+        XCTAssertEqual(model.invalidField, .password)
+        XCTAssertEqual(
+            model.accessibleLabel(for: .email, defaultText: "Email"), "Email",
+            "Only the field that actually failed should carry the explanation")
+    }
+
+    /// Before any submit, and again after a successful one, every field reads
+    /// as itself — nothing left over from a previous failure.
+    func testFieldLabelsArePlainOutsideOfAFailure() async {
+        let stub = StubAuthActions()
+        let model = AuthFormViewModel(mode: .signIn, actions: stub)
+        XCTAssertEqual(model.accessibleLabel(for: .email, defaultText: "Email"), "Email")
+        XCTAssertEqual(model.accessibleLabel(for: .password, defaultText: "Password"), "Password")
+
+        model.email = "will@example.com"
+        model.password = "eightchars"
+        await model.submit()
+
+        XCTAssertEqual(model.accessibleLabel(for: .email, defaultText: "Email"), "Email")
+        XCTAssertEqual(model.accessibleLabel(for: .password, defaultText: "Password"), "Password")
+    }
+
     // MARK: - The happy path
 
     func testSigningInSendsTheTrimmedLowercasedAddressAndReportsSuccess() async {

@@ -50,7 +50,12 @@ public enum ContractDate {
         from container: KeyedDecodingContainer<K>, forKey key: K
     ) throws -> Date? {
         guard let raw = try container.decodeIfPresent(String.self, forKey: key) else { return nil }
-        return date(from: raw)
+        guard let parsed = date(from: raw) else {
+            throw DecodingError.dataCorruptedError(
+                forKey: key, in: container,
+                debugDescription: "\(raw) is not ISO-8601 with an offset")
+        }
+        return parsed
     }
 }
 
@@ -59,16 +64,35 @@ extension KeyedDecodingContainer {
     /// clients, as a numeric string. A price that arrives as "55.00" is worth
     /// reading, not worth crashing over.
     func decodeNumber(forKey key: Key) throws -> Double {
-        if let d = try? decode(Double.self, forKey: key) { return d }
-        if let s = try? decode(String.self, forKey: key), let d = Double(s) { return d }
+        if let d = try? decode(Double.self, forKey: key), d.isFinite { return d }
+        if let s = try? decode(String.self, forKey: key), let d = Double(s), d.isFinite { return d }
         throw DecodingError.dataCorruptedError(
-            forKey: key, in: self, debugDescription: "expected a number")
+            forKey: key, in: self, debugDescription: "expected a finite number")
     }
 
     func decodeNumberIfPresent(forKey key: Key) throws -> Double? {
         if try decodeNil(forKey: key) { return nil }
-        if let d = try? decode(Double.self, forKey: key) { return d }
-        if let s = try? decode(String.self, forKey: key) { return Double(s) }
+        if let d = try? decode(Double.self, forKey: key) {
+            guard d.isFinite else {
+                throw DecodingError.dataCorruptedError(
+                    forKey: key, in: self, debugDescription: "expected a finite number, got \(d)")
+            }
+            return d
+        }
+        if let s = try? decode(String.self, forKey: key) {
+            // A numeric-looking string that fails to parse at all (garbage,
+            // not a number) still reads as "no price" — the pre-existing,
+            // deliberate behaviour. But `Double("NaN")`, `Double("Infinity")`
+            // and an overflowing literal like `Double("1e400")` all SUCCEED
+            // in Swift while being non-finite. Those are not a real price
+            // either, so they must fail the decode rather than pass through.
+            guard let d = Double(s) else { return nil }
+            guard d.isFinite else {
+                throw DecodingError.dataCorruptedError(
+                    forKey: key, in: self, debugDescription: "expected a finite number, got \"\(s)\"")
+            }
+            return d
+        }
         return nil
     }
 
@@ -79,7 +103,20 @@ extension KeyedDecodingContainer {
         _ type: [T].Type, forKey key: Key, into issues: inout [DecodingIssue]
     ) throws -> [T] {
         guard contains(key), try !decodeNil(forKey: key) else { return [] }
-        var unkeyed = try nestedUnkeyedContainer(forKey: key)
+        // The container itself can be the wrong JSON type (an object where an
+        // array was expected, say). That is still just this one collection
+        // being bad — not a reason to fail every other collection in the
+        // payload, the same principle applied below to a single element.
+        var unkeyed: UnkeyedDecodingContainer
+        do {
+            unkeyed = try nestedUnkeyedContainer(forKey: key)
+        } catch {
+            issues.append(DecodingIssue(
+                collection: key.stringValue,
+                index: -1,
+                reason: String(describing: error)))
+            return []
+        }
         var result: [T] = []
         if let count = unkeyed.count { result.reserveCapacity(count) }
         var index = 0

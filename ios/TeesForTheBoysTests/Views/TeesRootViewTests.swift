@@ -92,7 +92,7 @@ final class TeesRootViewTests: XCTestCase {
             email: nil,
             actions: StubAuthActions(),
             alerts: [],
-            onCreateWatch: { _ in },
+            onCreateWatch: { _ in true },
             onDeleteWatch: { _ in })
         XCTAssertTrue(view is TeesRootView)
     }
@@ -107,7 +107,7 @@ final class TeesRootViewTests: XCTestCase {
             email: "golfer@example.com",
             actions: StubAuthActions(),
             alerts: [draft],
-            onCreateWatch: { _ in },
+            onCreateWatch: { _ in true },
             onDeleteWatch: { _ in })
         XCTAssertTrue(view is TeesRootView)
     }

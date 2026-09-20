@@ -190,7 +190,17 @@ class FakeSession:
         offset = int(params.get("offset", 0) or 0)
         limit = int(params.get("limit", len(rows)) or len(rows))
         page = rows[offset:offset + limit]
-        return [{"id": r["id"], "tee_date": r["tee_date"]} for r in page]
+        return [
+            {
+                "id": r["id"],
+                "tee_date": r["tee_date"],
+                # Every real row has one; tests that don't care default to
+                # something long enough ago to close under the old and new
+                # rules alike. Tests proving the fencing set it explicitly.
+                "last_seen_at": r.get("last_seen_at", "2020-01-01T00:00:00+10:00"),
+            }
+            for r in page
+        ]
 
     def _close(self, params):
         hit = self._matching(params)
@@ -321,6 +331,72 @@ class GoneSlotTests(unittest.TestCase):
 
         order = [(r.method, r.table) for r in session.requests]
         self.assertLess(order.index(("POST", "slots")), order.index(("GET", "slots")))
+
+    def test_a_slot_a_concurrent_faster_scrape_just_reopened_is_not_closed(self):
+        """TOCTOU between two independently-scheduled writers.
+
+        A slow 'full' run's own HTML fetch for this (course, day) happened
+        at 05:00 and honestly saw nothing (a genuine cancellation, or a slot
+        not yet released). A 'fast' run then wrote this slot open at 05:03 —
+        after full's fetch, before full gets around to closing. full's
+        payload is not lying: it just fetched before fast's more current
+        write landed. Closing here would flip a genuinely-open slot to
+        'gone' and back to 'open' on the next scrape, minting a spurious
+        opened_at and a duplicate "just opened" alert for nobody's benefit.
+        """
+        slug = "woollahra"
+        y_id = "woollahra:%s:0700:public-play" % DAY_ONE
+        session = FakeSession(open_rows=[
+            {
+                "id": y_id,
+                "course_slug": slug,
+                "tee_date": DAY_ONE,
+                # The concurrent fast run's write, landed after full fetched.
+                "last_seen_at": "2026-09-18T05:03:00+10:00",
+            },
+        ])
+
+        full_day = course_day(slug, DAY_ONE, ok=True, slot_count=0)
+        full_day["last_attempt_at"] = "2026-09-18T05:00:00+10:00"
+
+        result = writer(session).write(payload(
+            slots=[],  # full's own fetch never saw Y open
+            course_days=[full_day],
+            mode="full",
+        ))
+
+        self.assertEqual(session.closed_ids, [])
+        self.assertEqual(result.slots_closed, 0)
+
+    def test_a_slot_nobody_touched_since_before_the_fetch_is_still_closed(self):
+        """The fence must not turn off closing altogether.
+
+        Same shape as the race test, except the row's last_seen_at predates
+        this run's own fetch of the page — an ordinary stale listing, not a
+        concurrent write — so it still closes.
+        """
+        slug = "woollahra"
+        y_id = "woollahra:%s:0700:public-play" % DAY_ONE
+        session = FakeSession(open_rows=[
+            {
+                "id": y_id,
+                "course_slug": slug,
+                "tee_date": DAY_ONE,
+                "last_seen_at": "2026-09-18T04:00:00+10:00",  # before the fetch
+            },
+        ])
+
+        full_day = course_day(slug, DAY_ONE, ok=True, slot_count=0)
+        full_day["last_attempt_at"] = "2026-09-18T05:00:00+10:00"
+
+        result = writer(session).write(payload(
+            slots=[],
+            course_days=[full_day],
+            mode="full",
+        ))
+
+        self.assertEqual(session.closed_ids, [y_id])
+        self.assertEqual(result.slots_closed, 1)
 
 
 class SlotUpsertTests(unittest.TestCase):

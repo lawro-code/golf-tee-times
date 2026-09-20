@@ -92,6 +92,22 @@ public struct FilterSheet: View {
 
     // MARK: - Day
 
+    /// The hint shown above the day list.
+    ///
+    /// When every course scraped fine but nothing is open on any day,
+    /// `availableDays` is empty and the ordinary "no day chosen" copy would
+    /// sit above a list of zero rows with nothing explaining why — reading as
+    /// a broken screen rather than a deliberate "nothing to filter by yet".
+    /// This names that state instead of leaving it silent, the same way
+    /// `FreshnessSummary.emptyClubsText` explains an empty results list
+    /// rather than just showing none.
+    static func dayHint(availableDays: [String]) -> String {
+        guard !availableDays.isEmpty else {
+            return "No tee times are open on any day right now, so there's nothing to filter by yet."
+        }
+        return "No day chosen means every day we have."
+    }
+
     /// Only the days the payload actually has. Offering a seventh day the
     /// scrape never covered is offering an empty list.
     ///
@@ -104,7 +120,7 @@ public struct FilterSheet: View {
 
     private var daySection: some View {
         VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
-            sectionHint("No day chosen means every day we have.")
+            sectionHint(Self.dayHint(availableDays: availableDays))
 
             ForEach(availableDays, id: \.self) { date in
                 FilterOptionRow(

@@ -58,9 +58,21 @@ public enum SlotQuery {
     ///
     /// `maxPrice` compares against `price_min`: the filter asks "can I play
     /// this for under $X", and the cheapest tier is the honest answer.
-    public static func apply(_ filters: SearchFilters, to slots: [Slot]) -> [SlotResult] {
+    ///
+    /// A third rule, ahead of any facet: a slot whose `tee_at` is not after
+    /// `now` never survives, regardless of what the filters say. `open_slots`
+    /// only ever hands the server `tee_at > now()` rows, so a freshly fetched
+    /// payload is all-future — but `TeeTimeStore` keeps serving a cached
+    /// payload through however long the device stays offline, and nothing
+    /// re-checks that boundary once the payload is on disk. Without this, a
+    /// tee time that already happened renders exactly like a bookable one,
+    /// working link included. `now` is injected, the same as `SearchStore`'s
+    /// own clock, so a test can sit on a fixed instant rather than racing the
+    /// wall clock.
+    public static func apply(_ filters: SearchFilters, to slots: [Slot], now: Date = Date()) -> [SlotResult] {
         slots
             .lazy
+            .filter { $0.teeAt > now }
             .filter { matches(filters, $0) }
             .map(SlotResult.init(slot:))
             .sorted(by: precedes)
