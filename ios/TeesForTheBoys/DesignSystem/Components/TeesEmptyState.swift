@@ -45,6 +45,19 @@ public struct TeesEmptyState<Action: View>: View {
                     .font(TeesFont.bodyStrong)
                     .foregroundStyle(TeesColor.ink)
                     .multilineTextAlignment(.center)
+                    // Without this, a caller that constrains this view's
+                    // height (`SearchScreen.content(presentation:sections:)`
+                    // does, via `.frame(maxHeight: .infinity)` inside a
+                    // NavigationStack that only has so much room) can propose
+                    // this Text less height than it needs at large Dynamic
+                    // Type sizes. Text obliges by truncating to fewer lines
+                    // than the string needs — headline and message ending up
+                    // stacked on almost the same lines is that truncation,
+                    // not a rendering bug. `fixedSize` refuses the smaller
+                    // proposal and forces the true height instead, matching
+                    // `ViewsLoadingState`/`ViewsErrorState`'s own text in
+                    // `StateViews.swift`, which already do this.
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if let message, !message.isEmpty {
                     Text(message)
@@ -54,6 +67,7 @@ public struct TeesEmptyState<Action: View>: View {
                         .font(TeesFont.quote)
                         .foregroundStyle(TeesColor.muted)
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .accessibilityElement(children: .ignore)

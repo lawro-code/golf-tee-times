@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import XCTest
 @testable import TeesDesign
 
@@ -7,6 +8,72 @@ import XCTest
 /// have to hold: the optional action slot must not cost anything when it is
 /// not used, and the sentence VoiceOver reads has to be a sentence.
 final class TeesEmptyStateTests: XCTestCase {
+
+    // MARK: - AX5 must not truncate
+
+    /// The regression this guards: `SearchScreen`'s empty state renders this
+    /// component inside a caller-imposed `.frame(maxHeight: .infinity)`
+    /// (`SearchScreen.content(presentation:sections:)`) that, at large
+    /// Dynamic Type sizes, can offer this view less height than its headline
+    /// and message need. Without `.fixedSize(horizontal: false, vertical:
+    /// true)`, `Text` obliges a smaller proposal by dropping lines and
+    /// truncating with an ellipsis — which is what made the headline and
+    /// message render almost on top of each other rather than stacked: two
+    /// truncated blocks squeezed into a space sized for neither. `TeesDesign`'s
+    /// sibling components (`ViewsLoadingState`, `ViewsErrorState` in
+    /// `StateViews.swift`) already carry this modifier for the same reason;
+    /// this component did not.
+    ///
+    /// `ios/project.yml` is frozen — no ViewInspector, no snapshot library —
+    /// so this measures the real, un-mocked view the way
+    /// `AlertFromSearchButtonLayoutTests` does: `UIHostingController
+    /// .sizeThatFits(in:)` lays it out for real and hands back its measured
+    /// height.
+    @MainActor
+    private func measuredHeight(proposedHeight: CGFloat) -> CGFloat {
+        let view = TeesEmptyState(
+            headline: "Nothing open for this search",
+            message: "No tee times match these filters right now. Set an alert and we'll tell you the "
+                + "moment one opens."
+        )
+        .dynamicTypeSize(.accessibility5)
+
+        let controller = UIHostingController(rootView: view)
+        let screenWidth: CGFloat = 393 // iPhone 17's point width.
+        controller.view.frame = CGRect(x: 0, y: 0, width: screenWidth, height: 3000)
+        return controller.sizeThatFits(in: CGSize(width: screenWidth, height: proposedHeight)).height
+    }
+
+    /// However little height a caller proposes, the headline and message must
+    /// come back at the size they actually need — never smaller. A smaller
+    /// result is truncation happening silently inside the measurement itself.
+    @MainActor
+    func testHeadlineAndMessageIgnoreATooSmallProposedHeightAtAccessibility5() {
+        let unconstrained = measuredHeight(proposedHeight: .greatestFiniteMagnitude)
+        let constrained = measuredHeight(proposedHeight: 80)
+
+        XCTAssertEqual(
+            constrained, unconstrained, accuracy: 1,
+            "TeesEmptyState measured \(constrained)pt when proposed only 80pt, but \(unconstrained)pt when "
+                + "proposed unlimited height — the headline and message shrank to fit instead of demanding "
+                + "their real size, which is what truncates them and, in SearchScreen's empty state, renders "
+                + "them overlapping instead of stacked.")
+    }
+
+    /// A sanity check on the test above: at AX5, this headline and message
+    /// genuinely need much more than one line each. If this ever drops, either
+    /// the fixture copy changed or Dynamic Type stopped scaling, and the
+    /// equality assertion above would start passing for the wrong reason —
+    /// two heights agreeing because neither needs much room, not because
+    /// truncation was avoided.
+    @MainActor
+    func testTheFixtureCopyActuallyNeedsRealRoomAtAccessibility5() {
+        let unconstrained = measuredHeight(proposedHeight: .greatestFiniteMagnitude)
+        XCTAssertGreaterThan(
+            unconstrained, 300,
+            "the headline and message measured only \(unconstrained)pt at AX5 — too short to exercise the "
+                + "truncation this test class is guarding against")
+    }
 
     // MARK: - The two initialisers
 

@@ -111,19 +111,22 @@ public struct SearchScreen: View {
     func content(presentation: Presentation, sections: [SlotDaySection]) -> some View {
         switch presentation {
         case .loading:
-            ViewsLoadingState(message: "Finding tee times across the fifteen clubs\u{2026}")
-                .frame(maxHeight: .infinity)
+            CenteredWhenItFits {
+                ViewsLoadingState(message: "Finding tee times across the fifteen clubs\u{2026}")
+            }
 
         case .failed(let reason):
-            ViewsErrorState(
-                title: "Couldn't load tee times",
-                message: reason,
-                retry: onRetry)
-                .frame(maxHeight: .infinity)
+            CenteredWhenItFits {
+                ViewsErrorState(
+                    title: "Couldn't load tee times",
+                    message: reason,
+                    retry: onRetry)
+            }
 
         case .empty:
-            emptyState
-                .frame(maxHeight: .infinity)
+            CenteredWhenItFits {
+                emptyState
+            }
 
         case .results:
             resultsList(sections)
@@ -133,14 +136,11 @@ public struct SearchScreen: View {
     /// No results is not a dead end. The alert is the thing to do about it, so
     /// it is the state's primary action rather than a link tucked underneath.
     ///
-    /// Not a `ScrollView`: this content is exactly as tall as `.loading`'s and
-    /// `.failed`'s, which sit directly in the `.frame(maxHeight: .infinity)`
-    /// `content(presentation:sections:)` gives every one of the four states —
-    /// SwiftUI centres that by default. A `ScrollView` here used to accept the
-    /// same frame on itself, but a `ScrollView` always lays its content out at
-    /// the top of its scroll axis regardless of the frame it is given, so
-    /// this was the one state, of the four, pinned under the filter bar
-    /// instead of centred (`SearchScreenEmptyStateLayoutTests`).
+    /// Wrapped in `CenteredWhenItFits` by `content(presentation:sections:)`,
+    /// not left to size itself directly — see that type's doc comment for why
+    /// a plain `.frame(maxHeight: .infinity)` here truncated and overlapped
+    /// this exact headline and message at large Dynamic Type sizes
+    /// (`SearchScreenEmptyStateLayoutTests`).
     private var emptyState: some View {
         TeesEmptyState(
             headline: "Nothing open for this search",
@@ -302,6 +302,63 @@ public struct SearchScreen: View {
             // back by hand — otherwise VoiceOver's rotor "Headings"
             // navigation has no day sections to jump between.
             .accessibilityAddTraits(.isHeader)
+    }
+}
+
+// MARK: - Centred, but not clipped by the chrome above it
+
+/// What `.loading`, `.failed` and `.empty` render into, instead of a bare
+/// `.frame(maxHeight: .infinity)`.
+///
+/// That bare frame gives each state's content a height capped at whatever
+/// room `NavigationStack` has below `topChrome` and above the tab bar — fine
+/// at the default text size, where none of the three comes close to filling
+/// it, and `.frame`'s default `.center` alignment is what puts it in the
+/// middle of that space rather than pinned under the filter bar. At large
+/// Dynamic Type sizes the empty state's message alone can run to four or five
+/// lines: a plain `.frame(maxHeight: .infinity)` still reports its own size as
+/// however tall the content actually needs (`TeesEmptyState`'s headline and
+/// message both carry `.fixedSize(horizontal: false, vertical: true)`, so
+/// neither shrinks to fit), and centring content taller than the space on
+/// offer makes it overflow the same amount top and bottom — which, up here
+/// where the top edge is `topChrome`'s filter chips and title, reads as the
+/// empty state's own text overlapping them.
+///
+/// A `ScrollView` would be the ordinary fix, but a `ScrollView` anywhere
+/// inside `NavigationStack`'s content is what the navigation bar watches to
+/// decide when to collapse the large title — introducing one here collapsed
+/// "Tee times" to a blank bar on first appearance, for a screen that was
+/// never meant to scroll in the first place. So this measures the content's
+/// own height instead (the `GeometryReader` + `PreferenceKey` pair below,
+/// a standard SwiftUI technique for exactly this), and only adds top padding
+/// when there is genuinely room to spare. Content that fits centres, the same
+/// as before; content that does not simply starts at the top — under the
+/// chrome, never behind it — and is clipped at the bottom rather than
+/// overlapping anything above it.
+private struct CenteredWhenItFits<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+    @State private var contentHeight: CGFloat?
+
+    var body: some View {
+        GeometryReader { proxy in
+            let topInset = contentHeight.map { max(0, (proxy.size.height - $0) / 2) } ?? 0
+            content()
+                .frame(width: proxy.size.width)
+                .background(
+                    GeometryReader { inner in
+                        Color.clear.preference(key: MeasuredHeightKey.self, value: inner.size.height)
+                    }
+                )
+                .padding(.top, topInset)
+        }
+        .onPreferenceChange(MeasuredHeightKey.self) { contentHeight = $0 }
+    }
+}
+
+private struct MeasuredHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat?
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) {
+        value = nextValue() ?? value
     }
 }
 
