@@ -1,4 +1,5 @@
 import SwiftUI
+import TeesDesign
 
 /// The same form as `SignInScreen`, with the one line that matters on it.
 ///
@@ -40,8 +41,9 @@ public struct SignUpScreen: View {
             footer: {
                 if let onSignInInstead {
                     Button("Already have an account? Sign in", action: onSignInInstead)
-                        .font(.subheadline)
-                        .frame(minHeight: 44)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.green)
+                        .frame(minHeight: TeesLayout.minTapTarget)
                 }
             }
         )

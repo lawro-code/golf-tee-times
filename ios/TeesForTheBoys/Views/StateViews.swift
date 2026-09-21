@@ -1,13 +1,12 @@
 import SwiftUI
+import TeesDesign
 
 // Four states every screen in this track ends up in, written once.
 //
-// **These are deliberately unstyled.** Track D's token layer is being written
-// concurrently, so anything beyond `TeesDesignModule.version` would not
-// compile today. Every colour below is a SwiftUI semantic role and every font
-// is a system text style, both of which already adapt to light/dark and
-// Dynamic Type — so Stage 2 swaps D's tokens in by editing these modifiers,
-// not by rewriting the views.
+// Every colour below is a `TeesColor` semantic role and every font a
+// `TeesFont` role — `docs/style.css`'s `.loading`/`.empty` are italic serif,
+// muted, centred, which is what `ViewsLoadingState` and `ViewsErrorState`
+// port here.
 //
 // Nothing here has a fixed height. At AX5 the message in an empty state is
 // four or five lines tall, and a box sized for one line clips it.
@@ -21,16 +20,17 @@ public struct ViewsLoadingState: View {
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: TeesSpacing.md) {
             ProgressView()
+                .tint(TeesColor.green)
             Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(TeesFont.quote)
+                .foregroundStyle(TeesColor.muted)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
-        .padding(24)
+        .padding(TeesSpacing.xxl)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(message)
     }
@@ -53,20 +53,21 @@ public struct ViewsEmptyState<Action: View>: View {
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: TeesSpacing.md) {
             Text(title)
-                .font(.headline)
+                .font(TeesFont.bodyStrong)
+                .foregroundStyle(TeesColor.ink)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(TeesFont.quote)
+                .foregroundStyle(TeesColor.muted)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             action
         }
         .frame(maxWidth: .infinity)
-        .padding(24)
+        .padding(TeesSpacing.xxl)
     }
 }
 
@@ -84,23 +85,24 @@ public struct ViewsErrorState: View {
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: TeesSpacing.md) {
             Text(title)
-                .font(.headline)
+                .font(TeesFont.bodyStrong)
+                .foregroundStyle(TeesColor.ink)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(TeesFont.quote)
+                .foregroundStyle(TeesColor.muted)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             if let retry {
                 Button("Try again", action: retry)
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.teesSecondary)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(24)
+        .padding(TeesSpacing.xxl)
     }
 }
 
@@ -142,19 +144,19 @@ struct ViewsBannerRow: View {
     let text: String
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
+        HStack(alignment: .firstTextBaseline, spacing: TeesSpacing.sm) {
             Image(systemName: systemImage)
                 .imageScale(.small)
             Text(text)
-                .font(.footnote)
+                .font(TeesFont.caption)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .foregroundStyle(TeesColor.muted)
+        .padding(.horizontal, TeesSpacing.lg)
+        .padding(.vertical, TeesSpacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.secondary.opacity(0.12))
+        .background(TeesColor.gold.opacity(0.14))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(text)
     }

@@ -32,24 +32,31 @@ public struct FilterBar: View {
         let today = store.today
 
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: SearchStyle.chipSpacing) {
+            HStack(spacing: TeesSpacing.sm) {
                 if filters.activeCount > 0 {
                     clearButton
                 }
 
                 ForEach(FilterField.allCases) { field in
-                    FilterChip(
-                        title: field.chipTitle(filters: filters, today: today),
-                        isSelected: field.isSelected(in: filters),
-                        spokenValue: field.spokenValue(filters: filters, today: today),
-                        name: field.name
+                    TeesFilterChip(
+                        model: .selector(
+                            label: field.name,
+                            value: field.chipTitle(filters: filters, today: today),
+                            isSelected: field.isSelected(in: filters)),
+                        style: .selector
                     ) {
                         presented = field
                     }
+                    // `TeesFilterChip`'s spoken value is its own `displayText`
+                    // by default — right for most fields, but "Day"/"Time" can
+                    // read a shorter chip label ("2 days") than the full
+                    // sentence VoiceOver should hear ("Sat 19 Sep, Sun 20
+                    // Sep"). Override with the field's own richer sentence.
+                    .accessibilityValue(field.spokenValue(filters: filters, today: today))
                 }
             }
-            .padding(.horizontal, SearchStyle.gutter)
-            .padding(.vertical, SearchStyle.chipSpacing)
+            .padding(.horizontal, TeesSpacing.lg)
+            .padding(.vertical, TeesSpacing.sm)
         }
         .sheet(item: $presented) { field in
             FilterSheet(store: store, field: field)
@@ -61,61 +68,32 @@ public struct FilterBar: View {
     ///
     /// Internal rather than `private`: `FilterBarLayoutTests` measures its
     /// real, un-mocked tap target height and needs to reach it directly.
+    ///
+    /// `button#reset-filters` in `docs/style.css`: transparent, green
+    /// hairline, green tracked-caps text — its own look, distinct from both
+    /// `TeesFilterChip` (a value pill) and `TeesButtonStyle` (filled or
+    /// hairline-neutral), so it is built from tokens directly rather than
+    /// forcing it into either.
     var clearButton: some View {
         Button {
             store.resetFilters()
         } label: {
             Label("Clear", systemImage: "xmark")
                 .labelStyle(.titleOnly)
-                .searchChipText()
-                .padding(.horizontal, SearchStyle.chipPadding)
-                .padding(.vertical, SearchStyle.chipPadding * 0.6)
+                .font(TeesFont.control)
+                .textCase(.uppercase)
+                .tracking(1)
+                .padding(.horizontal, TeesSpacing.lg)
+                .padding(.vertical, TeesSpacing.sm)
                 .frame(minHeight: TeesLayout.minTapTarget)
-                .background(SearchStyle.chipBackground(isSelected: false), in: Capsule())
+                .foregroundStyle(TeesColor.green)
+                .overlay(
+                    Capsule().strokeBorder(TeesColor.green, lineWidth: TeesStroke.hairline))
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Clear filters")
         .accessibilityHint("Back to one player, 18 holes, every day")
-    }
-}
-
-// MARK: - One chip
-
-/// A capsule that states its own value.
-///
-/// Not public: `FilterBar` is the vocabulary, and a loose chip with no sheet
-/// behind it would be a control that looks live and is not.
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let spokenValue: String
-    let name: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .searchChipText()
-                .lineLimit(1)
-                .padding(.horizontal, SearchStyle.chipPadding)
-                .padding(.vertical, SearchStyle.chipPadding * 0.6)
-                .frame(minHeight: TeesLayout.minTapTarget)
-                .background(SearchStyle.chipBackground(isSelected: isSelected), in: Capsule())
-                .overlay(
-                    Capsule().strokeBorder(
-                        SearchStyle.chipBorder(isSelected: isSelected),
-                        lineWidth: isSelected ? 1.5 : 1))
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        // The chip's visible text is its value, not its name, so the two are
-        // separated for VoiceOver: label is what it filters, value is what it
-        // is set to.
-        .accessibilityLabel(name)
-        .accessibilityValue(spokenValue)
-        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
-        .accessibilityHint("Opens \(name) options")
     }
 }
 

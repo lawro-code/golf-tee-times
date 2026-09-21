@@ -1,4 +1,5 @@
 import SwiftUI
+import TeesDesign
 
 /// Which auth screen a sheet is currently showing. `Identifiable` so one
 /// `.sheet(item:)` can swap between the two without a second presentation.
@@ -92,21 +93,22 @@ public struct AuthGate<Content: View>: View {
     }
 
     private var wall: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: TeesSpacing.lg) {
             Image(systemName: "bell.badge")
                 .font(.title)
+                .foregroundStyle(TeesColor.green)
                 .accessibilityHidden(true)
             Text(AuthGatePresentation.explanation)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(TeesFont.body)
+                .foregroundStyle(TeesColor.muted)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
             Button(AuthGatePresentation.callToAction) { sheet = .signIn }
-                .buttonStyle(.borderedProminent)
-                .frame(minHeight: 44)
+                .buttonStyle(.teesPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
+        .padding(TeesSpacing.xl)
+        .background(TeesColor.background)
     }
 
     private func finish() {

@@ -1,5 +1,6 @@
 import SwiftUI
 import TeesContract
+import TeesDesign
 
 /// Everything the contract knows about one tee time, and the tap that leaves
 /// for the club's own booking page.
@@ -44,7 +45,7 @@ public struct SlotDetailScreen: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: SearchStyle.sectionSpacing) {
+            VStack(alignment: .leading, spacing: TeesSpacing.xl) {
                 header
 
                 if let note = SlotFormatting.registrationNote(for: slot) {
@@ -56,8 +57,9 @@ public struct SlotDetailScreen: View {
                 bookingBlock
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(SearchStyle.gutter)
+            .padding(TeesSpacing.lg)
         }
+        .background(TeesColor.background)
         .navigationTitle(SlotFormatting.shortCourseName(slot.courseName))
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -65,13 +67,16 @@ public struct SlotDetailScreen: View {
     // MARK: - Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: TeesSpacing.xs) {
             Text(slot.courseName)
-                .searchTitleText()
+                .font(TeesFont.courseName)
+                .foregroundStyle(TeesColor.ink)
             Text(slot.region)
-                .searchSecondaryText()
+                .font(TeesFont.body)
+                .foregroundStyle(TeesColor.muted)
             Text("\(SlotFormatting.dayTitle(for: slot.teeDate, today: today)) \u{00B7} \(SlotFormatting.time(slot))")
-                .searchSecondaryText()
+                .font(TeesFont.body)
+                .foregroundStyle(TeesColor.muted)
         }
         .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .combine)
@@ -82,21 +87,27 @@ public struct SlotDetailScreen: View {
 
     /// Made loud rather than tucked into a footnote: finding out at the club's
     /// checkout that it wants an account first is the surprise this exists to
-    /// prevent.
+    /// prevent. Gold rather than a system warning colour — the same mark
+    /// `TeesCourseHeader`'s registration dot and `TeesSlotRow`'s use, just
+    /// loud instead of decorative, so "needs an account" reads as one idea
+    /// wherever it appears rather than two different colours for one fact.
     private func registrationCallout(_ note: String) -> some View {
         Label(note, systemImage: "exclamationmark.triangle.fill")
-            .searchCalloutText()
+            .font(TeesFont.control)
+            .foregroundStyle(TeesColor.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(SearchStyle.gutter)
-            .background(SearchStyle.calloutBackground, in: SearchStyle.calloutShape)
+            .padding(TeesSpacing.lg)
+            .background(
+                TeesColor.gold.opacity(0.16),
+                in: RoundedRectangle(cornerRadius: TeesRadius.sharp, style: .continuous))
             .accessibilityElement(children: .combine)
     }
 
     // MARK: - Facts
 
     private var facts: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             factRow("Round", SlotFormatting.holesAndPar(slot))
             factRow("Spots", SlotFormatting.players(slot))
             factRow("Tee", slot.bookingType.isEmpty ? "\u{2014}" : slot.bookingType)
@@ -111,13 +122,13 @@ public struct SlotDetailScreen: View {
     private func factRow(_ label: String, _ value: String) -> some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .firstTextBaseline) {
-                Text(label).searchCaptionText()
-                Spacer(minLength: SearchStyle.gutter)
-                Text(value).searchBodyText()
+                Text(label).teesMeta()
+                Spacer(minLength: TeesSpacing.lg)
+                Text(value).font(TeesFont.body).foregroundStyle(TeesColor.ink)
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label).searchCaptionText()
-                Text(value).searchBodyText()
+            VStack(alignment: .leading, spacing: TeesSpacing.xxs) {
+                Text(label).teesMeta()
+                Text(value).font(TeesFont.body).foregroundStyle(TeesColor.ink)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -128,16 +139,18 @@ public struct SlotDetailScreen: View {
     // MARK: - Price
 
     private var priceBlock: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
-            Text("Price").searchCaptionText()
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
+            Text("Price").teesMeta()
 
             if slot.priceTiers.isEmpty {
                 // CONTRACT.md §3. One slot in six is here, and it is ordinary
                 // data rather than a failure, so the copy is plain.
                 Text(SlotFormatting.priceAtCourse)
-                    .searchBodyText()
+                    .font(TeesFont.body)
+                    .foregroundStyle(TeesColor.ink)
                 Text("This club doesn't publish a fee for this tee time.")
-                    .searchCaptionText()
+                    .font(TeesFont.caption)
+                    .foregroundStyle(TeesColor.muted)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 ForEach(Array(slot.priceTiers.enumerated()), id: \.offset) { _, tier in
@@ -150,7 +163,7 @@ public struct SlotDetailScreen: View {
     // MARK: - Booking
 
     private var bookingBlock: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             Button {
                 guard case .open(let url) = action else { return }
                 // Recorded before the app is backgrounded: afterwards there is
@@ -162,8 +175,7 @@ public struct SlotDetailScreen: View {
                     .frame(maxWidth: .infinity)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(.teesPrimary)
             .disabled(action.isDisabled)
             .accessibilityHint(
                 action.isDisabled
@@ -172,7 +184,8 @@ public struct SlotDetailScreen: View {
 
             if let explanation = action.explanation {
                 Text(explanation)
-                    .searchCaptionText()
+                    .font(TeesFont.caption)
+                    .foregroundStyle(TeesColor.muted)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

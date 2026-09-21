@@ -2,19 +2,19 @@ import SwiftUI
 import UIKit
 import XCTest
 import TeesContract
+import TeesDesign
 @testable import TeesViews
 
-/// The regression this guards: the six filter chips (`FilterChip`,
-/// `FilterBar.swift`) and the `Clear` button both padded a
-/// `.searchChipText()` label (`.subheadline.weight(.medium)`) with
-/// `SearchStyle.chipPadding` (14) horizontal and `chipPadding * 0.6` (8.4)
-/// vertical, with no `.frame(minHeight:)` anywhere on either control. At the
-/// default (Large) Dynamic Type size that renders a tappable height of
-/// roughly 20 + 2×8.4 = 36.8pt — about 7pt (16%) short of Apple's documented
-/// 44×44pt minimum touch target, and of `TeesLayout.minTapTarget`, the exact
-/// standard this codebase already enforces on the visually near-identical
-/// `TeesFilterChip` (`.frame(minHeight: TeesLayout.minTapTarget)`) and on
-/// `AlertFromSearchButton`'s own buttons.
+/// The regression this guards: the six filter chips across the top of
+/// `SearchScreen` and the `Clear` button both meet Apple's documented 44×44pt
+/// minimum touch target. `FilterBar` now builds its chips from
+/// `TeesFilterChip`, which declares `.frame(minHeight: TeesLayout
+/// .minTapTarget)` itself — this test proves that integration, not
+/// `TeesFilterChip` in isolation, so a future change to `FilterBar`'s own
+/// padding or frame around the chip cannot silently shrink it back down. The
+/// `Clear` button has no equivalent design-system component (`docs/style.css`
+/// `button#reset-filters` is its own one-off look), so it is measured
+/// directly.
 ///
 /// `ios/project.yml` is frozen — no ViewInspector, no snapshot library — so
 /// this measures the real, un-mocked view exactly the way
@@ -37,16 +37,20 @@ final class FilterBarLayoutTests: XCTestCase {
     }
 
     /// One of the six chips across the top of `SearchScreen` — the control a
-    /// golfer touches most in the app.
+    /// golfer touches most in the app. Built the same way `FilterBar.body`
+    /// builds one, not reconstructed by hand, so a change to that call site
+    /// is what this test actually watches.
     func testEachFilterChipMeetsAppleMinimumTapTarget() {
-        let chip = FilterChip(title: "Day", isSelected: false, spokenValue: "Any day", name: "Day") {}
+        let chip = TeesFilterChip(
+            model: .selector(label: "Day", value: "Any day", isSelected: false),
+            style: .selector
+        ) {}
         let height = measuredHeight(chip)
 
         XCTAssertGreaterThanOrEqual(
             height, 44,
             "a filter chip measured \(height)pt tall at the default text size — under Apple's "
-                + "44pt minimum tap target (TeesLayout.minTapTarget), the standard this codebase "
-                + "already enforces on TeesFilterChip.")
+                + "44pt minimum tap target (TeesLayout.minTapTarget).")
     }
 
     /// Sits on the same row, styled with the exact same padding math as a chip.

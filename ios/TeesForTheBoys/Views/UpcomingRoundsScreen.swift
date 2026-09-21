@@ -88,8 +88,11 @@ public struct UpcomingRoundsScreen: View {
             } else {
                 List(rounds) { booking in
                     UpcomingRoundRow(booking: booking, today: today)
+                        .listRowBackground(TeesColor.surface)
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(TeesColor.background)
             }
         }
         .navigationTitle(UpcomingRoundCopy.navigationTitle)
@@ -107,21 +110,22 @@ struct UpcomingRoundRow: View {
     let today: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: TeesSpacing.xxs) {
             Text(UpcomingRoundCopy.when(booking, today: today))
-                .font(.headline)
+                .font(TeesFont.slotTime)
+                .foregroundStyle(TeesColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(booking.courseName)
-                .font(.subheadline)
+                .font(TeesFont.courseName)
+                .foregroundStyle(TeesColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(UpcomingRoundCopy.detail(booking))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .teesMeta()
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, TeesSpacing.xs)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(UpcomingRoundCopy.accessibilityLabel(booking))
     }

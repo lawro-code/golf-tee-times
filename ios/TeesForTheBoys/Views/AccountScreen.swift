@@ -1,4 +1,5 @@
 import SwiftUI
+import TeesDesign
 
 /// The account tab: who you are, and what you are watching.
 ///
@@ -94,12 +95,13 @@ public struct AccountScreen: View {
     private func signedIn(_ email: String) -> some View {
         List {
             Section {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: TeesSpacing.xxs) {
                     Text("Signed in as")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(TeesFont.caption)
+                        .foregroundStyle(TeesColor.muted)
                     Text(email)
-                        .font(.body)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .accessibilityElement(children: .combine)
@@ -107,37 +109,41 @@ public struct AccountScreen: View {
                 Button(role: .destructive) {
                     signOut()
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: TeesSpacing.sm) {
                         if isSigningOut {
                             ProgressView().accessibilityHidden(true)
                         }
                         Text("Sign out")
+                            .font(TeesFont.body)
                     }
-                    .frame(minHeight: 44)
+                    .frame(minHeight: TeesLayout.minTapTarget)
                 }
+                .tint(TeesColor.alert)
                 .disabled(isSigningOut)
 
                 if let signOutError {
                     Text(signOutError)
-                        .font(.subheadline)
-                        .foregroundStyle(.red)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.alert)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
             Section {
                 if alerts.isEmpty && alertsLoadFailed {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: TeesSpacing.sm) {
                         Text("Couldn't load your alerts. Check your connection and try again.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(TeesFont.body)
+                            .foregroundStyle(TeesColor.muted)
                             .fixedSize(horizontal: false, vertical: true)
                         Button("Try again", action: onRetryAlerts)
+                            .font(TeesFont.bodyStrong)
+                            .foregroundStyle(TeesColor.green)
                     }
                 } else if alerts.isEmpty {
                     Text("No alerts yet. Search for a tee time you want and tap the alert button.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(alerts) { alert in
@@ -151,18 +157,23 @@ public struct AccountScreen: View {
                 }
             } header: {
                 Text("Your alerts")
+                    .foregroundStyle(TeesColor.muted)
             } footer: {
                 Text("We check every 20 minutes for the next three days, and twice a day after that.")
+                    .foregroundStyle(TeesColor.muted)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(TeesColor.background)
     }
 
     private func row(_ alert: WatchDraft) -> some View {
         Text(alert.sentence)
-            .font(.subheadline)
+            .font(TeesFont.body)
+            .foregroundStyle(TeesColor.ink)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.vertical, 4)
+            .padding(.vertical, TeesSpacing.xs)
             // Swiping is not discoverable with VoiceOver on, so the same delete
             // is offered as a rotor action carrying the sentence it removes.
             .accessibilityLabel(Text(alert.sentence))

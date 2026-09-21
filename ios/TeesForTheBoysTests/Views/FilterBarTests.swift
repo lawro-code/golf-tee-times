@@ -490,17 +490,10 @@ final class FilterSheetControlTests: XCTestCase {
         XCTAssertEqual(FilterField.allCases, [.day, .time, .players, .holes, .price, .drive])
     }
 
-    /// A chip states its value in text and its state in colour. If the two
-    /// backgrounds were the same colour, "selected" would exist only for
-    /// VoiceOver and the row would look identical filtered and unfiltered.
-    func testASelectedChipDoesNotLookLikeAnUnselectedOne() {
-        XCTAssertNotEqual(
-            SearchStyle.chipBackground(isSelected: true),
-            SearchStyle.chipBackground(isSelected: false))
-        XCTAssertNotEqual(
-            SearchStyle.chipBorder(isSelected: true),
-            SearchStyle.chipBorder(isSelected: false))
-    }
+    // A chip states its value in text and its state in colour — `FilterBar`
+    // now builds every chip from `TeesFilterChip`, whose own test suite
+    // (`TeesFilterChipTests`) measures the selected/unselected contrast in
+    // both colour schemes directly, so that assertion is not repeated here.
 
     // MARK: - Fabricated data
 

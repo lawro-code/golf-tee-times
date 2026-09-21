@@ -112,14 +112,13 @@ final class SlotRowTests: XCTestCase {
 
     // MARK: - Construction
 
-    func testRowConstructsFromEitherASlotOrAResult() throws {
+    /// `SearchScreen.resultsList` builds a row straight from `SlotResult`'s
+    /// own `.slot` — `TeesSlotRow` (the on-brand card this list actually
+    /// renders, `DesignSystem/Components/TeesSlotRow.swift`) takes a `Slot`,
+    /// not a `SlotResult`, so this is the seam that has to keep agreeing.
+    func testAResultUnwrapsToTheSameSlotItWasBuiltFrom() throws {
         let slot = try slot("the-coast:2026-10-03:0800:1st-tee")
-
-        let fromSlot: any View = SlotRow(slot: slot)
-        XCTAssertTrue(fromSlot is SlotRow)
-
-        let fromResult: any View = SlotRow(result: SlotResult(slot: slot))
-        XCTAssertTrue(fromResult is SlotRow)
+        XCTAssertEqual(SlotResult(slot: slot).slot, slot)
     }
 }
 

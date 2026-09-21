@@ -1,5 +1,6 @@
 import SwiftUI
 import TeesContract
+import TeesDesign
 
 /// The optional detour off the one-tap path.
 ///
@@ -55,7 +56,8 @@ public struct AlertAdjustSheet: View {
             Form {
                 Section {
                     Text(preview.sentence)
-                        .font(.headline)
+                        .font(TeesFont.bodyStrong)
+                        .foregroundStyle(TeesColor.ink)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityLabel(Text(preview.sentence))
@@ -69,6 +71,7 @@ public struct AlertAdjustSheet: View {
                 limitsSection
                 clubsSection
             }
+            .tint(TeesColor.green)
             .navigationTitle("Adjust alert")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -137,11 +140,11 @@ public struct AlertAdjustSheet: View {
         Section {
             ForEach(SearchFilters.TimeOfDay.allCases, id: \.self) { bucket in
                 Toggle(isOn: binding(contains: bucket, in: \.timesOfDay)) {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: TeesSpacing.xxs) {
                         Text(bucket.title)
                         Text(bucket.subtitle)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .font(TeesFont.caption)
+                            .foregroundStyle(TeesColor.muted)
                     }
                 }
                 .accessibilityLabel(Text("\(bucket.title), \(bucket.subtitle)"))
@@ -174,9 +177,10 @@ public struct AlertAdjustSheet: View {
         Section {
             Toggle("Limit the price", isOn: priceLimitBinding)
             if filters.maxPrice != nil {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: TeesSpacing.xs) {
                     Text("Under \(SlotFormatting.money(priceCeiling))")
-                        .font(.subheadline)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.ink)
                     Slider(value: priceBinding, in: 20...200, step: 5) {
                         Text("Maximum price")
                     }

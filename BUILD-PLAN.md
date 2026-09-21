@@ -9,17 +9,36 @@ Readable version of this plan, with tables: https://claude.ai/artifact/KPFSWAJ5o
 in that 43 — sign-out never told `PushRegistrar` to give back the device's
 token, so a second golfer sharing a phone kept getting the first golfer's
 alerts — fixed the same way, with a regression test
-(`AppSessionPushRetireOnSignOutTests`). Two things the red team could not
-actually prove are being carried forward rather than blocking: `alert-dispatch`
-has never been invoked against anything real (only mocks and sequential SQL),
-so "no duplicate push in a replay" is proven on paper, not live; and every
-accessibility fix is verified by formula/unit test, never a live VoiceOver or
-Accessibility Inspector pass. Will's call, 20 September 2026: leave both for
-now, move to the UI sweep next. Migrations are live on `ipzhqvsyxyjndpbmpibw`;
-the app and website both connect to it for real and correctly show empty
-results, because the scraper has never written to it — that needs
+(`AppSessionPushRetireOnSignOutTests`). One of the two gaps the red team
+flagged as unverified live has since been checked and fixed: running the app
+in the simulator at the largest accessibility text size found
+`TeesEmptyState`'s headline and message truncating and overlapping — missing
+the same `.fixedSize` every sibling state view already had. Fixed 22
+September 2026, with regression tests (`TeesEmptyStateTests`). The other gap
+still stands: `alert-dispatch` has never been invoked against anything real
+(only mocks and sequential SQL), so "no duplicate push in a replay" is proven
+on paper, not live. Migrations are live on `ipzhqvsyxyjndpbmpibw`; the app
+and website both connect to it for real and correctly show empty results,
+because the scraper has never written to it — that needs
 `SUPABASE_SERVICE_ROLE_KEY` from the project dashboard, which nothing here has
 access to.
+
+**Found 22 September 2026, not yet fixed:** the `TeesForTheBoys` scheme's
+generated test action only ever runs `TeesForTheBoysAppTests` (17 tests).
+`project.yml`'s top-level `schemes.TeesForTheBoys.test.targets` lists all six
+test targets, but the `TeesForTheBoys` target's own `scheme.testTargets`
+block wins when XcodeGen regenerates the project — both declare a scheme
+named `TeesForTheBoys`, and the target-level one is what actually gets
+written. `TeesContractTests`, `TeesDesignTests`, `TeesDataTests`,
+`TeesViewsTests` and `TeesPushTests` have never run via
+`./scripts/build.sh TeesForTheBoys test` or the go-prompt's `xcodebuild test`
+gate — only via each module's own scheme (`./scripts/build.sh TeesViews
+test`, etc.). This is how a pre-existing failure sat uncaught in
+`TeesDesignTests`
+(`TeesPriceTierBadgeTests.testTheContractDecoderReallyCanHandTheBadgeAnInfinitePrice`)
+through every prior stage's "full suite green" report. Every historical gate
+report in this file that cited `xcodebuild test` verified only
+`TeesForTheBoysAppTests`, not the full suite the go-prompt asked for.
 
 Read `CONTRACT.md` before anything else — it is what Stage 0 froze and what the
 five tracks build on.

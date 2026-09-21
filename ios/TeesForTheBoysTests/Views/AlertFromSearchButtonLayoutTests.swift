@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import XCTest
 import TeesContract
+import TeesDesign
 @testable import TeesViews
 
 /// The regression this guards: `SearchScreen` pins `AlertFromSearchButton`
@@ -48,8 +49,8 @@ final class AlertFromSearchButtonLayoutTests: XCTestCase {
             isSignedIn: true,
             onCreate: { _ in true },
             onRequireSignIn: {})
-            .padding(.horizontal, SearchStyle.gutter)
-            .padding(.vertical, SearchStyle.chipSpacing)
+            .padding(.horizontal, TeesSpacing.lg)
+            .padding(.vertical, TeesSpacing.sm)
             .dynamicTypeSize(dynamicTypeSize)
 
         let controller = UIHostingController(rootView: bar)

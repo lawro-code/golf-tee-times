@@ -1,5 +1,6 @@
 import SwiftUI
 import TeesContract
+import TeesDesign
 
 /// The sheet behind one filter chip.
 ///
@@ -31,7 +32,7 @@ public struct FilterSheet: View {
     public var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: SearchStyle.sectionSpacing) {
+                VStack(alignment: .leading, spacing: TeesSpacing.xl) {
                     switch field {
                     case .day: daySection
                     case .time: timeSection
@@ -42,8 +43,9 @@ public struct FilterSheet: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(SearchStyle.gutter)
+                .padding(TeesSpacing.lg)
             }
+            .background(TeesColor.background)
             .navigationTitle(field.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -72,12 +74,11 @@ public struct FilterSheet: View {
                 .frame(maxWidth: .infinity)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .buttonStyle(.teesPrimary)
         // Deliberately still tappable at zero. Dismissing onto the empty state
         // is the right outcome — that screen's primary action is the alert,
         // which is exactly what a search matching nothing needs next.
-        .padding(SearchStyle.gutter)
+        .padding(TeesSpacing.lg)
         .background(.bar)
     }
 
@@ -119,7 +120,7 @@ public struct FilterSheet: View {
     }
 
     private var daySection: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             sectionHint(Self.dayHint(availableDays: availableDays))
 
             ForEach(availableDays, id: \.self) { date in
@@ -137,7 +138,7 @@ public struct FilterSheet: View {
     // MARK: - Time of day
 
     private var timeSection: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             sectionHint("No time chosen means any time of day.")
 
             ForEach(SearchFilters.TimeOfDay.allCases, id: \.self) { slot in
@@ -155,7 +156,7 @@ public struct FilterSheet: View {
     // MARK: - Players
 
     private var playersSection: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             sectionHint("Only shows tee times with at least this many spots free.")
 
             FilterOptionGroup(
@@ -169,7 +170,7 @@ public struct FilterSheet: View {
     // MARK: - Holes
 
     private var holesSection: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             // CONTRACT.md §2. Bankstown, Beverley Park and Brighton Lakes are
             // 18-hole clubs that also sell 9-hole rounds, so this is a real
             // choice and 18 is a real default rather than an absence of one.
@@ -186,9 +187,9 @@ public struct FilterSheet: View {
     // MARK: - Price
 
     private var priceSection: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             Text(FilterMutation.priceLabel(store.filters.maxPrice))
-                .searchTitleText()
+                .font(TeesFont.bodyStrong).foregroundStyle(TeesColor.ink)
 
             Slider(
                 value: priceBinding(bounds: bounds),
@@ -197,9 +198,9 @@ public struct FilterSheet: View {
             ) {
                 Text("Maximum price")
             } minimumValueLabel: {
-                Text(SlotFormatting.money(bounds.minPrice)).searchCaptionText()
+                Text(SlotFormatting.money(bounds.minPrice)).font(TeesFont.caption).foregroundStyle(TeesColor.muted)
             } maximumValueLabel: {
-                Text("Any").searchCaptionText()
+                Text("Any").font(TeesFont.caption).foregroundStyle(TeesColor.muted)
             }
             .accessibilityValue(FilterMutation.priceLabel(store.filters.maxPrice))
 
@@ -219,9 +220,9 @@ public struct FilterSheet: View {
     // MARK: - Drive
 
     private var driveSection: some View {
-        VStack(alignment: .leading, spacing: SearchStyle.rowSpacing) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             Text(FilterMutation.driveLabel(store.filters.maxDriveMinutes))
-                .searchTitleText()
+                .font(TeesFont.bodyStrong).foregroundStyle(TeesColor.ink)
 
             Slider(
                 value: driveBinding(bounds: bounds),
@@ -230,9 +231,9 @@ public struct FilterSheet: View {
             ) {
                 Text("Maximum drive")
             } minimumValueLabel: {
-                Text("\(bounds.minDriveMinutes)m").searchCaptionText()
+                Text("\(bounds.minDriveMinutes)m").font(TeesFont.caption).foregroundStyle(TeesColor.muted)
             } maximumValueLabel: {
-                Text("Any").searchCaptionText()
+                Text("Any").font(TeesFont.caption).foregroundStyle(TeesColor.muted)
             }
             .accessibilityValue(FilterMutation.driveLabel(store.filters.maxDriveMinutes))
 
@@ -253,9 +254,12 @@ public struct FilterSheet: View {
 
     // MARK: - Chrome
 
+    /// `.form-field .hint` — italic, muted, small: an explanatory aside, not a
+    /// label.
     private func sectionHint(_ text: String) -> some View {
         Text(text)
-            .searchCaptionText()
+            .font(TeesFont.caption.italic())
+            .foregroundStyle(TeesColor.muted)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -275,11 +279,11 @@ struct FilterOptionRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .firstTextBaseline, spacing: SearchStyle.gutter) {
+            HStack(alignment: .firstTextBaseline, spacing: TeesSpacing.lg) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).searchBodyText()
+                    Text(title).font(TeesFont.body).foregroundStyle(TeesColor.ink)
                     if let subtitle {
-                        Text(subtitle).searchCaptionText()
+                        Text(subtitle).font(TeesFont.caption).foregroundStyle(TeesColor.muted)
                     }
                 }
                 .fixedSize(horizontal: false, vertical: true)
@@ -288,10 +292,10 @@ struct FilterOptionRow: View {
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .imageScale(.large)
-                    .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
+                    .foregroundStyle(isSelected ? TeesColor.accent : TeesColor.hairlineStrong)
             }
             .contentShape(Rectangle())
-            .padding(.vertical, SearchStyle.rowSpacing)
+            .padding(.vertical, TeesSpacing.sm)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
@@ -310,31 +314,19 @@ struct FilterOptionGroup<Option: Hashable>: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: SearchStyle.chipSpacing) { capsules }
-            VStack(alignment: .leading, spacing: SearchStyle.chipSpacing) { capsules }
+            HStack(spacing: TeesSpacing.sm) { capsules }
+            VStack(alignment: .leading, spacing: TeesSpacing.sm) { capsules }
         }
     }
 
     @ViewBuilder private var capsules: some View {
         ForEach(options, id: \.self) { option in
-            let selected = isSelected(option)
-            Button {
+            TeesFilterChip(
+                model: .toggle(label: label(option), isOn: isSelected(option)),
+                style: .toggle
+            ) {
                 select(option)
-            } label: {
-                Text(label(option))
-                    .searchChipText()
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, SearchStyle.chipPadding)
-                    .padding(.vertical, SearchStyle.chipPadding * 0.6)
-                    .background(SearchStyle.chipBackground(isSelected: selected), in: Capsule())
-                    .overlay(
-                        Capsule().strokeBorder(
-                            SearchStyle.chipBorder(isSelected: selected),
-                            lineWidth: selected ? 1.5 : 1))
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(label(option))
-            .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         }
     }
 }

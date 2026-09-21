@@ -373,7 +373,12 @@ final class SlotQueryTests: XCTestCase {
         id: String,
         teeTime: String = "07:00:00",
         spotsAvailable: Int = 4,
-        teeAt: Date = Date(timeIntervalSince1970: 1_790_000_000)
+        // `apply(_:to:now:)` defaults `now` to the real wall clock, and a test
+        // that does not pass `now:` explicitly (most of the ones below) is
+        // comparing this against whatever day it actually runs on. `2026
+        // -10-03` looked comfortably future when this was written; a fixed
+        // epoch decades out is what actually stays future.
+        teeAt: Date = Date(timeIntervalSince1970: 4_000_000_000)
     ) -> Slot {
         Slot(
             id: id,
@@ -410,7 +415,10 @@ final class SlotQueryTests: XCTestCase {
             requiresRegistration: false,
             teeDate: "2026-10-03",
             teeTime: "07:00:00",
-            teeAt: Date(timeIntervalSince1970: 1_790_000_000),
+            // Same reasoning as `row(id:teeTime:spotsAvailable:teeAt:)`'s own
+            // default: this has to outlive real wall-clock time, not just
+            // look future when written.
+            teeAt: Date(timeIntervalSince1970: 4_000_000_000),
             spotsAvailable: 4,
             totalSpots: 4,
             holes: 18,

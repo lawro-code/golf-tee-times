@@ -172,18 +172,44 @@ public struct SearchScreen: View {
         List {
             ForEach(sections) { section in
                 Section {
-                    ForEach(section.results) { result in
-                        NavigationLink(value: result) {
-                            SlotRow(result: result)
-                        }
+                    // `docs/app.js`'s `.course-block`: nearest club first,
+                    // its own slots grouped under one `TeesCourseHeader`
+                    // rather than repeating the club's name on every row.
+                    ForEach(SlotQuery.courseGroups(section.results)) { group in
+                        courseBlock(group)
                     }
                 } header: {
                     Self.dayHeader(for: section)
                 }
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)
         .refreshable { onRetry() }
+    }
+
+    /// One `.course-block`: a `TeesCourseHeader` naming the club, then its
+    /// slots as `TeesSlotRow` cards. Grouped as one `@ViewBuilder` (not a
+    /// nested `List` `Section` — `List` sections do not nest) so the header
+    /// and its rows stay adjacent inside the day's own `Section`.
+    @ViewBuilder
+    private func courseBlock(_ group: SlotCourseGroup) -> some View {
+        if let first = group.results.first {
+            TeesCourseHeader(slot: first.slot)
+                .padding(.horizontal, TeesSpacing.lg)
+                .padding(.top, TeesSpacing.md)
+                .padding(.bottom, TeesSpacing.xs)
+
+            ForEach(group.results) { result in
+                NavigationLink(value: result) {
+                    TeesSlotRow(slot: result.slot)
+                }
+                .padding(.horizontal, TeesSpacing.lg)
+                .padding(.vertical, TeesSpacing.xxs)
+            }
+        }
     }
 
     // MARK: - Chrome
@@ -211,8 +237,8 @@ public struct SearchScreen: View {
             isSignedIn: isSignedIn,
             onCreate: onCreateWatch,
             onRequireSignIn: onRequireSignIn)
-            .padding(.horizontal, SearchStyle.gutter)
-            .padding(.vertical, SearchStyle.chipSpacing)
+            .padding(.horizontal, TeesSpacing.lg)
+            .padding(.vertical, TeesSpacing.sm)
             .background(.bar)
     }
 
@@ -291,17 +317,18 @@ public struct SearchScreen: View {
     /// regardless of what traits are set — so this is the only piece small
     /// enough to inspect directly and prove the trait is really there.
     static func dayHeader(for section: SlotDaySection) -> some View {
-        Text(section.title)
-            .searchSectionHeaderText()
-            // The relative heading is a shorthand; VoiceOver gets the day it
-            // actually means.
-            .accessibilityLabel(SlotFormatting.spokenDayTitle(for: section.date))
-            // The plain `Section("Title")` string initialiser gets this trait
-            // for free; this custom header (needed for the font and the
-            // label split above) opts out of that, so it has to be added
-            // back by hand — otherwise VoiceOver's rotor "Headings"
-            // navigation has no day sections to jump between.
+        TeesDayHeading(model: .init(title: section.title))
+            .padding(.horizontal, TeesSpacing.lg)
+            // `TeesDayHeading` already marks itself `.isHeader` and combines
+            // its flag, title and rule into one accessibility element inside
+            // its own `body` — invisible to `SearchScreenSectionHeaderAccessibilityTests`'s
+            // `Mirror` walk, which only sees this call site's own modifier
+            // chain, not a nested view's internals. Restating both here is
+            // redundant at runtime (SwiftUI unions repeated traits) but is
+            // what keeps that test a real assertion rather than one that
+            // happens to pass.
             .accessibilityAddTraits(.isHeader)
+            .accessibilityLabel(SlotFormatting.spokenDayTitle(for: section.date))
     }
 }
 
@@ -359,89 +386,6 @@ private struct MeasuredHeightKey: PreferenceKey {
     static var defaultValue: CGFloat?
     static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) {
         value = nextValue() ?? value
-    }
-}
-
-// MARK: - Style seam
-
-/// Every measurement and colour the C2 screens use, in one place.
-///
-/// Track D is writing the real token layer concurrently and today `TeesDesign`
-/// contains only `TeesDesignModule.version`, so referencing anything else from
-/// it would not compile. Everything below is therefore a SwiftUI semantic role
-/// or a system text style — both already adapt to light and dark and to
-/// Dynamic Type — held behind names so Stage 2 swaps D's tokens in by editing
-/// this one section rather than by touching five screens.
-///
-/// Nothing here is a fixed height, and nothing ever should be: at AX5 a club
-/// name is three lines and a box sized for one clips it.
-enum SearchStyle {
-    static let gutter: CGFloat = 16
-    static let sectionSpacing: CGFloat = 20
-    static let rowSpacing: CGFloat = 6
-    static let chipSpacing: CGFloat = 8
-    static let chipPadding: CGFloat = 14
-
-    static let calloutShape = RoundedRectangle(cornerRadius: 12, style: .continuous)
-    static let calloutBackground = Color.orange.opacity(0.14)
-
-    /// The registration warning's text colour on the results row.
-    /// `.primary` rather than orange: plain `Color.orange` text on this row's
-    /// background (no tint behind it) came out at ~1.8–2.2:1 in light mode,
-    /// far under WCAG's 4.5:1 floor for footnote-sized text. `.primary`
-    /// already adapts to any background the app draws, which is why the same
-    /// warning one screen later — `SlotDetailScreen.registrationCallout`, via
-    /// `searchCalloutText()` — was already using it instead of a coloured
-    /// label.
-    static let warningTextColor = Color.primary
-
-    static func chipBackground(isSelected: Bool) -> Color {
-        isSelected ? Color.accentColor.opacity(0.16) : Color.secondary.opacity(0.10)
-    }
-
-    static func chipBorder(isSelected: Bool) -> Color {
-        isSelected ? Color.accentColor : Color.secondary.opacity(0.28)
-    }
-}
-
-extension View {
-    func searchTitleText() -> some View {
-        font(.headline).foregroundStyle(.primary)
-    }
-
-    func searchBodyText() -> some View {
-        font(.body).foregroundStyle(.primary)
-    }
-
-    func searchSecondaryText() -> some View {
-        font(.subheadline).foregroundStyle(.secondary)
-    }
-
-    func searchCaptionText() -> some View {
-        font(.footnote).foregroundStyle(.secondary)
-    }
-
-    func searchSectionHeaderText() -> some View {
-        font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-    }
-
-    func searchChipText() -> some View {
-        font(.subheadline.weight(.medium)).foregroundStyle(.primary)
-    }
-
-    func searchCalloutText() -> some View {
-        font(.subheadline).foregroundStyle(.primary)
-    }
-
-    func searchWarningText() -> some View {
-        font(.footnote).foregroundStyle(SearchStyle.warningTextColor)
-    }
-
-    /// An unknown price is stated quietly rather than dressed up as a number:
-    /// "Price at course" is information, not a placeholder.
-    func searchPriceText(isKnown: Bool) -> some View {
-        font(isKnown ? .headline : .footnote)
-            .foregroundStyle(isKnown ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
     }
 }
 

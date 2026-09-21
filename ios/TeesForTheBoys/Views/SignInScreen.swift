@@ -1,5 +1,6 @@
 import Combine
 import SwiftUI
+import TeesDesign
 import UIKit
 
 // MARK: - The seam
@@ -292,8 +293,9 @@ public struct SignInScreen: View {
             footer: {
                 if let onCreateAccount {
                     Button("New here? Create an account", action: onCreateAccount)
-                        .font(.subheadline)
-                        .frame(minHeight: 44)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.green)
+                        .frame(minHeight: TeesLayout.minTapTarget)
                 }
             }
         )
@@ -334,14 +336,15 @@ struct AuthForm<Footer: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: TeesSpacing.xl) {
+                VStack(alignment: .leading, spacing: TeesSpacing.sm) {
                     Text(title)
-                        .font(.largeTitle.weight(.semibold))
+                        .font(TeesFont.title)
+                        .foregroundStyle(TeesColor.greenDeep)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(explanation)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .accessibilityElement(children: .combine)
@@ -378,32 +381,32 @@ struct AuthForm<Footer: View>: View {
 
                 if let errorText = model.errorText {
                     Label(errorText, systemImage: "exclamationmark.triangle.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(.red)
+                        .font(TeesFont.body)
+                        .foregroundStyle(TeesColor.alert)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityLabel(Text(errorText))
                 }
 
                 Button(action: submit) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: TeesSpacing.sm) {
                         if model.isWorking {
                             ProgressView()
                                 .accessibilityHidden(true)
                         }
                         Text(model.isWorking ? "One moment\u{2026}" : model.submitTitle)
-                            .font(.headline)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.teesPrimary)
                 .disabled(!model.canSubmit)
                 .accessibilityLabel(Text(model.submitTitle))
 
                 footer()
             }
-            .padding(20)
+            .padding(TeesSpacing.xl)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .background(TeesColor.background)
         .onAppear { focus = .email }
     }
 
@@ -428,17 +431,21 @@ struct AuthForm<Footer: View>: View {
         invalid: Bool,
         @ViewBuilder content: () -> some View
     ) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: TeesSpacing.xs) {
+            Text(label).teesMeta()
             content()
-                .textFieldStyle(.roundedBorder)
-                .frame(minHeight: 44)
+                .textFieldStyle(.plain)
+                .font(TeesFont.body)
+                .padding(.horizontal, TeesSpacing.md)
+                .frame(minHeight: TeesLayout.minTapTarget)
+                .background(
+                    RoundedRectangle(cornerRadius: TeesRadius.control, style: .continuous)
+                        .fill(TeesColor.surface))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(Color.red, lineWidth: invalid ? 1.5 : 0)
-                )
+                    RoundedRectangle(cornerRadius: TeesRadius.control, style: .continuous)
+                        .strokeBorder(
+                            invalid ? TeesColor.alert : TeesColor.hairlineStrong,
+                            lineWidth: invalid ? 1.5 : 1))
         }
     }
 }

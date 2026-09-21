@@ -1,5 +1,6 @@
 import SwiftUI
 import TeesContract
+import TeesDesign
 
 /// One tap turns the search you are already looking at into an alert.
 ///
@@ -190,12 +191,14 @@ public struct AlertFromSearchButton: View {
     }
 
     private var inlineLabel: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: TeesSpacing.sm) {
             Image(systemName: "bell.badge")
                 .imageScale(.medium)
+                .foregroundStyle(TeesColor.green)
                 .accessibilityHidden(true)
             Text(draft.sentence)
-                .font(.subheadline.weight(.semibold))
+                .font(TeesFont.bodyStrong)
+                .foregroundStyle(TeesColor.ink)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 // This bar is pinned over the results list
@@ -210,35 +213,38 @@ public struct AlertFromSearchButton: View {
                 .lineLimit(2)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(minHeight: 44)
+        .padding(.horizontal, TeesSpacing.lg)
+        .padding(.vertical, TeesSpacing.md)
+        .frame(minHeight: TeesLayout.minTapTarget)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.accentColor.opacity(0.12))
+            RoundedRectangle(cornerRadius: TeesRadius.control, style: .continuous)
+                .fill(TeesColor.green.opacity(0.12))
         )
         .contentShape(Rectangle())
     }
 
     private var primaryLabel: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: TeesSpacing.sm) {
             Text(draft.emptySentence)
-                .font(.headline)
+                .font(TeesFont.bodyStrong)
+                .foregroundStyle(TeesColor.ink)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 8) {
+            HStack(spacing: TeesSpacing.sm) {
                 Image(systemName: "bell.badge.fill")
+                    .foregroundStyle(TeesColor.green)
                     .accessibilityHidden(true)
                 Text("Create this alert")
-                    .font(.subheadline.weight(.semibold))
+                    .font(TeesFont.control)
+                    .foregroundStyle(TeesColor.green)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .frame(minHeight: 44)
+        .padding(TeesSpacing.lg)
+        .frame(minHeight: TeesLayout.minTapTarget)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.accentColor.opacity(0.12))
+            RoundedRectangle(cornerRadius: TeesRadius.control, style: .continuous)
+                .fill(TeesColor.green.opacity(0.12))
         )
         .contentShape(Rectangle())
     }
@@ -250,31 +256,33 @@ public struct AlertFromSearchButton: View {
     /// Deliberately not a sheet, a toast or a navigation push: the golfer is
     /// mid-search and the alert is now a fact, not a task.
     private func confirmation(_ watch: WatchDraft) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        HStack(alignment: .firstTextBaseline, spacing: TeesSpacing.md) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(TeesColor.green)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: TeesSpacing.xxs) {
                 Text("Alert saved")
-                    .font(.subheadline.weight(.semibold))
+                    .font(TeesFont.bodyStrong)
+                    .foregroundStyle(TeesColor.ink)
                 Text(watch.sentence)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(TeesFont.caption)
+                    .foregroundStyle(TeesColor.muted)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
             Button("Adjust") { isAdjusting = true }
-                .font(.subheadline.weight(.semibold))
+                .font(TeesFont.bodyStrong)
+                .foregroundStyle(TeesColor.green)
                 .buttonStyle(.plain)
-                .frame(minHeight: 44)
+                .frame(minHeight: TeesLayout.minTapTarget)
                 .accessibilityHint(Text("Change this alert before it starts watching"))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, TeesSpacing.lg)
+        .padding(.vertical, TeesSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.green.opacity(0.10))
+            RoundedRectangle(cornerRadius: TeesRadius.control, style: .continuous)
+                .fill(TeesColor.green.opacity(0.10))
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Alert saved. \(watch.sentence)"))

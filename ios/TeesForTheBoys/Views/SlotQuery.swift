@@ -39,6 +39,21 @@ public struct SlotDaySection: Identifiable, Hashable, Sendable {
     }
 }
 
+/// One course's slots within a single day, for `TeesCourseHeader` +
+/// `TeesSlotRow` to render as a block — `docs/app.js`'s `.course-block`.
+public struct SlotCourseGroup: Identifiable, Hashable, Sendable {
+    /// Also the group's identity: two different clubs never share a slug.
+    public let courseSlug: String
+    public let results: [SlotResult]
+
+    public var id: String { courseSlug }
+
+    public init(courseSlug: String, results: [SlotResult]) {
+        self.courseSlug = courseSlug
+        self.results = results
+    }
+}
+
 /// Filtering, ordering and day-grouping. Pure functions over value types, so
 /// every ordering decision below is asserted in `SlotQueryTests` instead of
 /// being eyeballed in a simulator.
@@ -163,5 +178,41 @@ public enum SlotQuery {
                 title: SlotFormatting.dayTitle(for: date, today: today),
                 results: ordered)
         }
+    }
+
+    /// Cluster one day's results into `.course-block`s, ordered the way
+    /// `docs/app.js`'s `render()` orders them: nearest course first
+    /// (`drive_minutes_from_bondi` ascending, unknown drive time last), each
+    /// course's own slots left in whatever order they arrived in.
+    ///
+    /// `results` is expected already ascending by tee time (`sections(_:
+    /// today:priceFilterActive:)`'s own `precedes` sort) — grouping by
+    /// first-seen course slug preserves that order inside each bucket, so
+    /// this never re-sorts within a course.
+    ///
+    /// A view-layer concern rather than folded into `sections(_:today:
+    /// priceFilterActive:)`: nothing else that reads `SlotDaySection.results`
+    /// (the price-filter sink-to-bottom rule, the section header
+    /// accessibility tests) needs slots clustered by course, and changing
+    /// that struct's shape would have moved every one of them for no reason.
+    public static func courseGroups(_ results: [SlotResult]) -> [SlotCourseGroup] {
+        var order: [String] = []
+        var buckets: [String: [SlotResult]] = [:]
+        for result in results {
+            let slug = result.slot.courseSlug
+            if buckets[slug] == nil { order.append(slug) }
+            buckets[slug, default: []].append(result)
+        }
+
+        return order
+            .map { SlotCourseGroup(courseSlug: $0, results: buckets[$0] ?? []) }
+            .sorted { lhs, rhs in
+                let leftDrive = lhs.results.first?.slot.driveMinutesFromBondi ?? Int.max
+                let rightDrive = rhs.results.first?.slot.driveMinutesFromBondi ?? Int.max
+                if leftDrive != rightDrive { return leftDrive < rightDrive }
+                // A tie — including "both unknown" — needs a deterministic
+                // order, or the block order changes between identical runs.
+                return lhs.courseSlug < rhs.courseSlug
+            }
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import TeesDesign
 
 /// Whether this device has already been through onboarding.
 ///
@@ -105,6 +106,7 @@ public struct OnboardingFlow: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(TeesColor.background)
         // Not `.overlay(alignment: .topTrailing)`: an overlay reserves no
         // space, so at larger accessibility text sizes the wrapped title in
         // `whatWeWatch` renders straight underneath the pinned button. A
@@ -116,18 +118,20 @@ public struct OnboardingFlow: View {
 
     private var whatWeWatch: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: TeesSpacing.xl) {
                 Text(OnboardingCopy.watchTitle)
-                    .font(.title2.weight(.semibold))
+                    .font(TeesFont.heading)
+                    .foregroundStyle(TeesColor.greenDeep)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(OnboardingCopy.watchBody)
-                    .font(.body)
+                    .font(TeesFont.body)
+                    .foregroundStyle(TeesColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(OnboardingCopy.watchDetail)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(TeesFont.body)
+                    .foregroundStyle(TeesColor.muted)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Button {
@@ -137,21 +141,22 @@ public struct OnboardingFlow: View {
                         .frame(maxWidth: .infinity)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .padding(.top, 8)
+                .buttonStyle(.teesPrimary)
+                .padding(.top, TeesSpacing.xs)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(24)
+            .padding(TeesSpacing.xxl)
         }
+        .background(TeesColor.background)
     }
 
     /// Present on every step, including the last. An onboarding sequence with no
     /// way out is a sequence people quit the app to escape.
     private var skipButton: some View {
         Button(OnboardingCopy.skipTitle) { finish(granted: false) }
-            .font(.subheadline)
-            .padding(16)
+            .font(TeesFont.body)
+            .foregroundStyle(TeesColor.green)
+            .padding(TeesSpacing.lg)
             .accessibilityHint("Skips the rest of the introduction")
     }
 

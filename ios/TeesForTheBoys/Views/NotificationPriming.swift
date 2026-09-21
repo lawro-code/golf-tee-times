@@ -1,4 +1,5 @@
 import SwiftUI
+import TeesDesign
 import UserNotifications
 
 /// Asking iOS for permission to send notifications.
@@ -123,52 +124,53 @@ public struct NotificationPrimingScreen: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: TeesSpacing.xl) {
                 Text(NotificationPrimingCopy.title)
-                    .font(.title2.weight(.semibold))
+                    .font(TeesFont.heading)
+                    .foregroundStyle(TeesColor.greenDeep)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(NotificationPrimingCopy.body)
-                    .font(.body)
+                    .font(TeesFont.body)
+                    .foregroundStyle(TeesColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(NotificationPrimingCopy.reassurance)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(TeesFont.body)
+                    .foregroundStyle(TeesColor.muted)
                     .fixedSize(horizontal: false, vertical: true)
 
                 buttons
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(24)
+            .padding(TeesSpacing.xxl)
         }
+        .background(TeesColor.background)
     }
 
     private var buttons: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: TeesSpacing.md) {
             Button(action: ask) {
                 Text(NotificationPrimingCopy.allowTitle)
                     .frame(maxWidth: .infinity)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(.teesPrimary)
             .disabled(isAsking)
 
             Button(NotificationPrimingCopy.skipTitle) { onDecision(false) }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                .buttonStyle(.teesSecondary)
                 .frame(maxWidth: .infinity)
                 .disabled(isAsking)
 
             Text(NotificationPrimingCopy.skipFooter)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(TeesFont.caption)
+                .foregroundStyle(TeesColor.muted)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 8)
+        .padding(.top, TeesSpacing.xs)
     }
 
     /// Disabled while in flight so a double tap cannot ask twice. The system
