@@ -23,6 +23,28 @@ because the scraper has never written to it — that needs
 `SUPABASE_SERVICE_ROLE_KEY` from the project dashboard, which nothing here has
 access to.
 
+**UI sweep done, 22 September 2026.** The real finding: no screen used
+`TeesColor`/`TeesFont` or any of `DesignSystem/Components` (`TeesSlotRow`,
+`TeesFilterChip`, `TeesCourseHeader`, `TeesDayHeading`, `TeesButtonStyle`) —
+every one of them was built and tested in Stage 1 and used only in its own
+`#Preview`. Every real screen used plain system fonts and colours behind a
+stand-in (`SearchScreen`'s `SearchStyle` enum, `StateViews.swift`'s
+"deliberately unstyled" comment) that Stage 2 was supposed to retire once
+Track D delivered and never did — the whole app rendered in default iOS
+blue/gray rather than the Augusta cream/green/gold. Fixed screen by screen:
+Search results now render as `TeesCourseHeader` + `TeesSlotRow` blocks
+grouped by club (matching `docs/app.js`'s nearest-club-first ordering,
+previously a flat time-ordered list repeating the club name on every row),
+filter chips are `TeesFilterChip`, every button, form, and state screen uses
+`TeesFont`/`TeesColor`/`.teesPrimary`. Verified: every module's test scheme
+green (except the pre-existing bug below), full app build clean, confirmed
+visually in the simulator. Two unrelated pre-existing bugs surfaced by
+actually running the full per-module suites while checking this — see below
+for the scheme bug, and separately a hardcoded "future" test timestamp in
+`SlotQueryTests` that real time had caught up to and quietly started
+excluding from four tests; bumped it forward since it was blocking clean
+verification of this same work.
+
 **Found 22 September 2026, not yet fixed:** the `TeesForTheBoys` scheme's
 generated test action only ever runs `TeesForTheBoysAppTests` (17 tests).
 `project.yml`'s top-level `schemes.TeesForTheBoys.test.targets` lists all six
@@ -166,13 +188,9 @@ five are written up properly in `CONTRACT.md`; the short version:
 
 ### Next up after Stage 3
 
-- **UI sweep.** Requested by Will, 20 September 2026. A separate visual/UX
-  pass over the built screens, after Stage 3's bug-hardening lands green and
-  before Stage 4's cost gate. Not part of Stage 3's fix scope.
-  **Goal, confirmed by Will: fidelity to the existing website, not new taste.**
-  Compare every app screen against `docs/style.css` and the live site —
-  colour, type, spacing, component shapes — and flag drift from that, not
-  from a generic design opinion.
+- ~~**UI sweep.**~~ **DONE, 22 September 2026** — see Status above. Requested
+  by Will, 20 September 2026, done after Stage 3's bug-hardening landed
+  green. Next up is Stage 4's cost gate.
 
 ### Decisions still open
 
