@@ -22,6 +22,10 @@
 	<string>1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>TeesSupabaseAnonKey</key>
+	<string>sb_publishable_hWDRhTPRgPBSgmHvuzlEWQ_P6TDcWiA</string>
+	<key>TeesSupabaseURL</key>
+	<string>https://ipzhqvsyxyjndpbmpibw.supabase.co</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

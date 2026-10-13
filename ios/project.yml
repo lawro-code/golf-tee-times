@@ -193,10 +193,20 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: false
+        # Same dev-project URL and anon (publishable) key as the `run` scheme's
+        # environment variables below — Xcode only sets those when it launches
+        # the app itself. A standalone install on a device (tap the icon, no
+        # cable) has no scheme env, so SupabaseConfiguration.resolve() falls
+        # through to these Info.plist keys instead. Not a secret: see the note
+        # on the scheme's environmentVariables below.
+        TeesSupabaseURL: https://ipzhqvsyxyjndpbmpibw.supabase.co
+        TeesSupabaseAnonKey: sb_publishable_hWDRhTPRgPBSgmHvuzlEWQ_P6TDcWiA
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: code.lawro.TeesForTheBoys
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: K2S7K79DZB
 
     scheme:
       testTargets:
