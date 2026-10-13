@@ -122,6 +122,14 @@ targets:
     dependencies:
       - target: TeesData
       - target: TeesContract
+      # The test files import Supabase's Auth/Helpers error types directly
+      # to build fixtures (AuthError, PostgrestError, HTTPError) — that
+      # requires its own link, not just TeesData's. Riding on TeesData's
+      # link worked by accident in the module-only TeesData scheme but
+      # broke once this bundle ran inside the combined TeesForTheBoys
+      # scheme, which doesn't happen to re-expose it the same way.
+      - package: Supabase
+        product: Supabase
 
   # --- Track C. Screens. Fixture-driven, no network. ------------------------
   TeesViews:
@@ -207,10 +215,6 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: K2S7K79DZB
-
-    scheme:
-      testTargets:
-        - TeesForTheBoysAppTests
 
   # The composition root's own tests. Every other target above tests a track
   # in isolation; nothing tested Stage 2 assembly itself — `AppSession`,

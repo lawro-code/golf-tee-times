@@ -24,12 +24,28 @@ final class SlotQueryTests: XCTestCase {
 
     private func ids(_ results: [SlotResult]) -> [String] { results.map(\.id) }
 
+    /// `minimal.json`'s own slots (unlike the hand-built `row`/`slot` helpers
+    /// below) carry real `tee_at` timestamps lifted from the fixture file —
+    /// "2026-10-03" and friends — with no far-future escape hatch. Every call
+    /// below that filters `slots` through `SlotQuery.apply` without pinning
+    /// `now` was comparing the fixture against the real wall clock, which is
+    /// exactly the bug this file's own comment on `row(...)` already names:
+    /// "looked comfortably future when this was written." It did, then
+    /// stopped. This anchors `now` before the fixture's earliest tee-off
+    /// (`2026-10-03T06:16:00+10:00`) so these tests stay true regardless of
+    /// which day they run on.
+    private static let fixtureNow = Date(timeIntervalSince1970: 1_790_812_800)
+
+    private func apply(_ filters: SearchFilters, to slots: [Slot]) -> [SlotResult] {
+        SlotQuery.apply(filters, to: slots, now: Self.fixtureNow)
+    }
+
     // MARK: - Holes
 
     /// CONTRACT.md §2. Bankstown is an 18-hole club that also sells 9-hole tee
     /// times, and the hole count that matters is the booking's.
     func testNineHoleBookingAtAnEighteenHoleClubIsExcludedByEighteen() {
-        let eighteen = SlotQuery.apply(SearchFilters(holes: .eighteen), to: slots)
+        let eighteen = apply(SearchFilters(holes: .eighteen), to: slots)
         XCTAssertFalse(
             ids(eighteen).contains("bankstown:2026-10-03:1120:social-play-9-holes-only"),
             "a 9-hole booking survived an 18-hole filter")
@@ -40,7 +56,7 @@ final class SlotQueryTests: XCTestCase {
     }
 
     func testNineHoleBookingAtAnEighteenHoleClubIsIncludedByNine() {
-        let nine = SlotQuery.apply(SearchFilters(holes: .nine), to: slots)
+        let nine = apply(SearchFilters(holes: .nine), to: slots)
         XCTAssertTrue(
             ids(nine).contains("bankstown:2026-10-03:1120:social-play-9-holes-only"))
         XCTAssertTrue(
@@ -50,7 +66,7 @@ final class SlotQueryTests: XCTestCase {
     }
 
     func testAnyHolesKeepsEverything() {
-        XCTAssertEqual(SlotQuery.apply(SearchFilters(holes: .any), to: slots).count, 9)
+        XCTAssertEqual(apply(SearchFilters(holes: .any), to: slots).count, 9)
     }
 
     // MARK: - The two-tee start
@@ -59,7 +75,7 @@ final class SlotQueryTests: XCTestCase {
     /// at 06:16 — two bookings, one minute. Keying on time alone collapsed 141
     /// of its 289 tee times once already.
     func testTwoTeeStartYieldsTwoDistinctRowsInAStableOrder() {
-        let results = SlotQuery.apply(
+        let results = apply(
             SearchFilters(days: [day1], holes: .any, courseSlugs: ["warringah"]),
             to: slots)
 
@@ -75,15 +91,15 @@ final class SlotQueryTests: XCTestCase {
     /// output. That is what makes the list stable across scrapes rather than
     /// stable-by-luck.
     func testOrderIsStableAcrossShuffledInput() {
-        let expected = ids(SlotQuery.apply(SearchFilters(holes: .any), to: slots))
+        let expected = ids(apply(SearchFilters(holes: .any), to: slots))
         for _ in 0..<20 {
-            let shuffled = SlotQuery.apply(SearchFilters(holes: .any), to: slots.shuffled())
+            let shuffled = apply(SearchFilters(holes: .any), to: slots.shuffled())
             XCTAssertEqual(ids(shuffled), expected)
         }
     }
 
     func testResultsAscendByTeeTime() {
-        let results = SlotQuery.apply(SearchFilters(holes: .any), to: slots)
+        let results = apply(SearchFilters(holes: .any), to: slots)
         for (a, b) in zip(results, results.dropFirst()) {
             XCTAssertLessThanOrEqual(a.slot.teeAt, b.slot.teeAt)
         }
@@ -95,7 +111,7 @@ final class SlotQueryTests: XCTestCase {
     /// is well under every priced slot in the fixture, and the unpriced ones
     /// must survive it anyway.
     func testAMaxPriceFilterKeepsUnpricedSlots() {
-        let results = SlotQuery.apply(
+        let results = apply(
             SearchFilters(holes: .any, maxPrice: 40), to: slots)
         let kept = ids(results)
         XCTAssertTrue(kept.contains("warringah:2026-10-03:0616:1st-tee-social"))
@@ -109,7 +125,7 @@ final class SlotQueryTests: XCTestCase {
     func testUnpricedSlotsSinkBelowPricedOnesWithinTheirDay() {
         let filters = SearchFilters(days: [day1], holes: .any, maxPrice: 60)
         let sections = SlotQuery.sections(
-            SlotQuery.apply(filters, to: slots),
+            apply(filters, to: slots),
             today: day1,
             priceFilterActive: filters.maxPrice != nil)
 
@@ -130,7 +146,7 @@ final class SlotQueryTests: XCTestCase {
     /// permanent demotion.
     func testUnpricedSlotsKeepTheirPlaceWhenNoPriceFilterIsActive() {
         let sections = SlotQuery.sections(
-            SlotQuery.apply(SearchFilters(days: [day1], holes: .any), to: slots),
+            apply(SearchFilters(days: [day1], holes: .any), to: slots),
             today: day1,
             priceFilterActive: false)
 
@@ -143,16 +159,16 @@ final class SlotQueryTests: XCTestCase {
     func testMaxPriceComparesAgainstPriceMin() {
         // The Coast publishes three tiers, $55 to $110. "Under $60" should
         // keep it: the cheapest way to play it is $55.
-        let kept = ids(SlotQuery.apply(SearchFilters(holes: .any, maxPrice: 60), to: slots))
+        let kept = ids(apply(SearchFilters(holes: .any, maxPrice: 60), to: slots))
         XCTAssertTrue(kept.contains("the-coast:2026-10-03:0800:1st-tee"))
 
-        let gone = ids(SlotQuery.apply(SearchFilters(holes: .any, maxPrice: 50), to: slots))
+        let gone = ids(apply(SearchFilters(holes: .any, maxPrice: 50), to: slots))
         XCTAssertFalse(gone.contains("the-coast:2026-10-03:0800:1st-tee"))
     }
 
     func testMaxPriceIsInclusive() {
         // Woollahra's 07:12 is exactly $45.
-        let kept = ids(SlotQuery.apply(SearchFilters(holes: .any, maxPrice: 45), to: slots))
+        let kept = ids(apply(SearchFilters(holes: .any, maxPrice: 45), to: slots))
         XCTAssertTrue(kept.contains("woollahra:2026-10-03:0712:public-play"))
     }
 
@@ -163,7 +179,7 @@ final class SlotQueryTests: XCTestCase {
         let unknown = Self.slot(id: "unknown:2026-10-03:0700:default", driveMinutes: nil)
         let far = Self.slot(id: "far:2026-10-03:0700:default", driveMinutes: 90)
 
-        let kept = ids(SlotQuery.apply(
+        let kept = ids(apply(
             SearchFilters(holes: .any, maxDriveMinutes: 20), to: [unknown, far]))
         XCTAssertEqual(kept, ["unknown:2026-10-03:0700:default"])
     }
@@ -171,34 +187,34 @@ final class SlotQueryTests: XCTestCase {
     func testMaxDriveMinutesIsInclusive() {
         let exact = Self.slot(id: "exact:2026-10-03:0700:default", driveMinutes: 20)
         XCTAssertEqual(
-            SlotQuery.apply(SearchFilters(holes: .any, maxDriveMinutes: 20), to: [exact]).count, 1)
+            apply(SearchFilters(holes: .any, maxDriveMinutes: 20), to: [exact]).count, 1)
     }
 
     // MARK: - The other facets
 
     func testPlayersMatchesWhenEnoughSpotsAreFree() {
-        let four = SlotQuery.apply(SearchFilters(players: 4, holes: .any), to: slots)
+        let four = apply(SearchFilters(players: 4, holes: .any), to: slots)
         XCTAssertEqual(four.count, 4)
         for result in four {
             XCTAssertGreaterThanOrEqual(result.slot.spotsAvailable, 4)
         }
 
-        let one = SlotQuery.apply(SearchFilters(players: 1, holes: .any), to: slots)
+        let one = apply(SearchFilters(players: 1, holes: .any), to: slots)
         XCTAssertEqual(one.count, 9, "one player fits every slot in the fixture")
     }
 
     func testDaysFilter() {
-        XCTAssertEqual(SlotQuery.apply(SearchFilters(days: [day1], holes: .any), to: slots).count, 5)
-        XCTAssertEqual(SlotQuery.apply(SearchFilters(days: [day2], holes: .any), to: slots).count, 2)
-        XCTAssertEqual(SlotQuery.apply(SearchFilters(days: [day3], holes: .any), to: slots).count, 2)
+        XCTAssertEqual(apply(SearchFilters(days: [day1], holes: .any), to: slots).count, 5)
+        XCTAssertEqual(apply(SearchFilters(days: [day2], holes: .any), to: slots).count, 2)
+        XCTAssertEqual(apply(SearchFilters(days: [day3], holes: .any), to: slots).count, 2)
         XCTAssertEqual(
-            SlotQuery.apply(SearchFilters(days: [day1, day3], holes: .any), to: slots).count, 7)
+            apply(SearchFilters(days: [day1, day3], holes: .any), to: slots).count, 7)
         XCTAssertEqual(
-            SlotQuery.apply(SearchFilters(days: ["2026-01-01"], holes: .any), to: slots).count, 0)
+            apply(SearchFilters(days: ["2026-01-01"], holes: .any), to: slots).count, 0)
     }
 
     func testTimeOfDayFilterUsesTheSecondsFormTeeTime() {
-        let early = SlotQuery.apply(SearchFilters(timesOfDay: [.earlyMorning], holes: .any), to: slots)
+        let early = apply(SearchFilters(timesOfDay: [.earlyMorning], holes: .any), to: slots)
         XCTAssertEqual(ids(early), [
             "warringah:2026-10-03:0616:10th-tee-social",
             "warringah:2026-10-03:0616:1st-tee-social"
@@ -206,23 +222,23 @@ final class SlotQueryTests: XCTestCase {
 
         // 16:30 is afternoon, not twilight — the boundary is 17:00 and the
         // fixture sits deliberately close to it.
-        let afternoon = SlotQuery.apply(SearchFilters(timesOfDay: [.afternoon], holes: .any), to: slots)
+        let afternoon = apply(SearchFilters(timesOfDay: [.afternoon], holes: .any), to: slots)
         XCTAssertEqual(ids(afternoon), ["woollahra:2026-10-04:1630:public-bookings"])
         XCTAssertTrue(
-            SlotQuery.apply(SearchFilters(timesOfDay: [.twilight], holes: .any), to: slots).isEmpty)
+            apply(SearchFilters(timesOfDay: [.twilight], holes: .any), to: slots).isEmpty)
     }
 
     func testCourseSlugsFilter() {
-        let woollahra = SlotQuery.apply(
+        let woollahra = apply(
             SearchFilters(holes: .any, courseSlugs: ["woollahra"]), to: slots)
         XCTAssertEqual(woollahra.count, 2)
         XCTAssertEqual(
-            SlotQuery.apply(SearchFilters(holes: .any, courseSlugs: []), to: slots).count, 9,
+            apply(SearchFilters(holes: .any, courseSlugs: []), to: slots).count, 9,
             "empty means all fifteen, not none")
     }
 
     func testFacetsCompose() {
-        let results = SlotQuery.apply(
+        let results = apply(
             SearchFilters(
                 days: [day1],
                 timesOfDay: [.morning, .midday],
@@ -250,9 +266,9 @@ final class SlotQueryTests: XCTestCase {
         let last = Self.row(id: "last:2026-10-03:0700:default", spotsAvailable: 1)
 
         XCTAssertEqual(
-            ids(SlotQuery.apply(SearchFilters(players: 1), to: [booked, last])),
+            ids(apply(SearchFilters(players: 1), to: [booked, last])),
             ["last:2026-10-03:0700:default"])
-        XCTAssertTrue(SlotQuery.apply(SearchFilters(players: 1), to: [booked]).isEmpty)
+        XCTAssertTrue(apply(SearchFilters(players: 1), to: [booked]).isEmpty)
     }
 
     /// A cached payload is only ever all-future at the moment it was written
@@ -282,7 +298,7 @@ final class SlotQueryTests: XCTestCase {
     /// kind of bug that shows up as "the filter returns nothing" rather than as
     /// a crash.
     func testSeveralTimeBucketsAreAUnionNotAnIntersection() {
-        let results = SlotQuery.apply(
+        let results = apply(
             SearchFilters(timesOfDay: [.earlyMorning, .afternoon], holes: .any), to: slots)
         XCTAssertEqual(ids(results), [
             "warringah:2026-10-03:0616:10th-tee-social",
@@ -301,13 +317,13 @@ final class SlotQueryTests: XCTestCase {
         let corrupt = Self.row(id: "corrupt:2026-10-03:0700:default", teeTime: "tee off at dawn")
 
         XCTAssertEqual(
-            ids(SlotQuery.apply(SearchFilters(), to: [corrupt])),
+            ids(apply(SearchFilters(), to: [corrupt])),
             ["corrupt:2026-10-03:0700:default"],
             "an unfiltered list must not silently lose a row it cannot read")
 
         for bucket in SearchFilters.TimeOfDay.allCases {
             XCTAssertTrue(
-                SlotQuery.apply(SearchFilters(timesOfDay: [bucket]), to: [corrupt]).isEmpty,
+                apply(SearchFilters(timesOfDay: [bucket]), to: [corrupt]).isEmpty,
                 "\(bucket) claimed a tee time it cannot parse")
         }
     }
@@ -316,7 +332,7 @@ final class SlotQueryTests: XCTestCase {
     /// leaves exactly the rows whose price we do not know — 17% of the real
     /// inventory — rather than an empty screen.
     func testAPriceCeilingNothingCanMeetStillShowsTheUnpricedRows() {
-        let results = SlotQuery.apply(SearchFilters(holes: .any, maxPrice: 0), to: slots)
+        let results = apply(SearchFilters(holes: .any, maxPrice: 0), to: slots)
         XCTAssertEqual(ids(results), [
             "warringah:2026-10-03:0616:10th-tee-social",
             "warringah:2026-10-03:0616:1st-tee-social"
@@ -327,7 +343,7 @@ final class SlotQueryTests: XCTestCase {
 
     func testSectionsAscendByDateAndCarryTheirTitle() {
         let sections = SlotQuery.sections(
-            SlotQuery.apply(SearchFilters(holes: .any), to: slots),
+            apply(SearchFilters(holes: .any), to: slots),
             today: day1,
             priceFilterActive: false)
 
@@ -338,7 +354,7 @@ final class SlotQueryTests: XCTestCase {
     }
 
     func testSectionsSortTheirOwnResultsEvenIfHandedThemBackwards() {
-        let backwards = SlotQuery.apply(SearchFilters(days: [day1], holes: .any), to: slots).reversed()
+        let backwards = apply(SearchFilters(days: [day1], holes: .any), to: slots).reversed()
         let sections = SlotQuery.sections(Array(backwards), today: day1, priceFilterActive: false)
         XCTAssertEqual(ids(sections[0].results), [
             "warringah:2026-10-03:0616:10th-tee-social",
