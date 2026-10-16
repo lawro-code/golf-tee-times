@@ -13,20 +13,20 @@ import TeesContract
 /// those and the body is thin enough to read.
 ///
 /// Everything runs against `minimal.json` on a fixed clock. The fixture's dates
-/// are constants — 3, 4 and 10 October 2026 — so "Today" and "Tomorrow" are
+/// are constants — 3, 4 and 10 October 2099 — so "Today" and "Tomorrow" are
 /// assertions rather than whatever day the CI machine thinks it is.
 @MainActor
 final class SearchScreenTests: XCTestCase {
 
-    /// Midnight on the fixture's first day, so `today` is 2026-10-03 and every
+    /// Midnight on the fixture's first day, so `today` is 2099-10-03 and every
     /// one of that day's tee times (earliest 06:16) is still ahead of the
     /// clock — `SlotQuery.apply` drops anything whose `tee_at` is not, so a
     /// later instant would quietly age fixture rows out of these assertions.
-    private let fixedNow = ContractDate.date(from: "2026-10-03T00:00:00+10:00")!
+    private let fixedNow = ContractDate.date(from: "2099-10-03T00:00:00+10:00")!
 
-    private let day1 = "2026-10-03"
-    private let day2 = "2026-10-04"
-    private let day3 = "2026-10-10"
+    private let day1 = "2099-10-03"
+    private let day2 = "2099-10-04"
+    private let day3 = "2099-10-10"
 
     private func loadedStore(_ filters: SearchFilters? = nil) -> SearchStore {
         let now = fixedNow
@@ -82,9 +82,9 @@ final class SearchScreenTests: XCTestCase {
         let firstDay = store.sections[0].results.map(\.id)
 
         XCTAssertEqual(firstDay, [
-            "warringah:2026-10-03:0616:10th-tee-social",
-            "warringah:2026-10-03:0616:1st-tee-social",
-            "the-coast:2026-10-03:0800:1st-tee"
+            "warringah:2099-10-03:0616:10th-tee-social",
+            "warringah:2099-10-03:0616:1st-tee-social",
+            "the-coast:2099-10-03:0800:1st-tee"
         ])
     }
 
@@ -96,8 +96,8 @@ final class SearchScreenTests: XCTestCase {
         let store = loadedStore(filters)
 
         let ids = store.sections.flatMap { $0.results.map(\.id) }
-        XCTAssertTrue(ids.contains("warringah:2026-10-03:0616:1st-tee-social"))
-        XCTAssertTrue(ids.contains("warringah:2026-10-03:0616:10th-tee-social"))
+        XCTAssertTrue(ids.contains("warringah:2099-10-03:0616:1st-tee-social"))
+        XCTAssertTrue(ids.contains("warringah:2099-10-03:0616:10th-tee-social"))
 
         // And they sink to the bottom of their own day rather than vanishing.
         // The Coast is $55 and both Warringah rows are unpriced, so the first
@@ -231,7 +231,7 @@ final class SearchScreenFailurePathTests: XCTestCase {
     /// Midnight on the fixture's first day — see `SearchScreenTests.fixedNow`
     /// for why it has to sit before that day's earliest tee time rather than,
     /// say, 8am.
-    private let fixedNow = ContractDate.date(from: "2026-10-03T00:00:00+10:00")!
+    private let fixedNow = ContractDate.date(from: "2099-10-03T00:00:00+10:00")!
 
     private func makeStore(fixture: String, filters: SearchFilters? = nil) -> SearchStore {
         let now = fixedNow
@@ -301,8 +301,8 @@ final class SearchScreenFailurePathTests: XCTestCase {
         XCTAssertEqual(
             store.sections.flatMap { $0.results.map(\.id) },
             [
-                "warringah:2026-10-03:0616:10th-tee-social",
-                "warringah:2026-10-03:0616:1st-tee-social"
+                "warringah:2099-10-03:0616:10th-tee-social",
+                "warringah:2099-10-03:0616:1st-tee-social"
             ])
         for result in store.sections.flatMap(\.results) {
             XCTAssertTrue(result.priceIsUnknown, "\(result.id) survived a $1 ceiling with a price")
@@ -395,15 +395,15 @@ final class SearchScreenFailurePathTests: XCTestCase {
         // Day one's last tee time is 11:20 on the 3rd; this instant is after
         // all of it and before day two's 09:45, so day one is gone and day two
         // is what "Today" now means.
-        let laterNow = ContractDate.date(from: "2026-10-04T00:00:00+10:00")!
+        let laterNow = ContractDate.date(from: "2099-10-04T00:00:00+10:00")!
         let store = SearchStore(
             preferences: InMemoryViewsStore(),
             fixture: "minimal",
             now: { laterNow })
         store.load()
 
-        XCTAssertEqual(store.today, "2026-10-04")
-        XCTAssertEqual(store.sections.map(\.date), ["2026-10-04", "2026-10-10"])
+        XCTAssertEqual(store.today, "2099-10-04")
+        XCTAssertEqual(store.sections.map(\.date), ["2099-10-04", "2099-10-10"])
         XCTAssertEqual(store.sections.map(\.title), ["Today", "Sat 10 Oct"])
     }
 }

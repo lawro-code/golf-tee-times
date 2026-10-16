@@ -15,7 +15,7 @@ import TeesContract
 final class SlotDetailScreenTests: XCTestCase {
 
     private var slots: [Slot] = []
-    private let fixedNow = ContractDate.date(from: "2026-10-01T07:30:00+10:00")!
+    private let fixedNow = ContractDate.date(from: "2099-10-01T07:30:00+10:00")!
 
     override func setUpWithError() throws {
         slots = try ContractLoader.fixture("minimal").slots
@@ -57,7 +57,7 @@ final class SlotDetailScreenTests: XCTestCase {
     // MARK: - The booking button
 
     func testAUsableLinkGivesAnEnabledButtonThatOpensIt() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         let url = try XCTUnwrap(coast.bookingURL)
 
         let action = SlotDetailScreen.BookingAction(slot: coast)
@@ -70,7 +70,7 @@ final class SlotDetailScreenTests: XCTestCase {
     /// The failure this screen exists to avoid: a live-looking button that does
     /// nothing when tapped.
     func testAMissingLinkDisablesTheButtonAndExplainsWhy() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         let linkless = withBookingURL("", coast)
 
         XCTAssertNil(linkless.bookingURL, "the empty string must not parse as a URL")
@@ -92,7 +92,7 @@ final class SlotDetailScreenTests: XCTestCase {
     /// The contract is explicit that a malformed one must not fail the decode,
     /// so the screen is where it has to be handled.
     func testAMalformedLinkIsTreatedAsAMissingOne() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         let broken = withBookingURL("http://example.com/a path with spaces", coast)
 
         if broken.bookingURL == nil {
@@ -120,7 +120,7 @@ final class SlotDetailScreenTests: XCTestCase {
     /// because once the app is backgrounded there is no later. This is the
     /// contract the screen depends on: record, come back, get asked.
     func testRecordingATapOutIsWhatMakesTheReturnPromptFire() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         let ledger = ledger()
 
         XCTAssertNil(ledger.pendingConfirmation)
@@ -137,7 +137,7 @@ final class SlotDetailScreenTests: XCTestCase {
     /// and collapsing them into a range throws away which one a golfer would
     /// actually pay.
     func testEveryPriceTierIsAvailableToTheScreen() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
 
         XCTAssertEqual(coast.priceTiers.count, 3)
         for tier in coast.priceTiers {
@@ -149,7 +149,7 @@ final class SlotDetailScreenTests: XCTestCase {
     /// CONTRACT.md §3 on the detail screen: no tiers is ordinary data, and the
     /// screen says so in words rather than showing an empty list.
     func testAnUnpricedSlotHasNoTiersToShow() throws {
-        let warringah = try slot("warringah:2026-10-03:0616:1st-tee-social")
+        let warringah = try slot("warringah:2099-10-03:0616:1st-tee-social")
         XCTAssertTrue(warringah.priceTiers.isEmpty)
         XCTAssertTrue(warringah.priceIsUnknown)
     }
@@ -157,8 +157,8 @@ final class SlotDetailScreenTests: XCTestCase {
     // MARK: - Construction
 
     func testScreenConstructsWithItsPublicInit() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
-        let view: any View = SlotDetailScreen(slot: coast, today: "2026-10-03", ledger: ledger())
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
+        let view: any View = SlotDetailScreen(slot: coast, today: "2099-10-03", ledger: ledger())
         XCTAssertTrue(view is SlotDetailScreen)
     }
 }
@@ -208,7 +208,7 @@ final class SlotDetailBookingActionTests: XCTestCase {
     /// a rebuilt or truncated one lands a golfer on the club's generic booking
     /// page with no sign of the 8am they tapped.
     func testTheActionCarriesTheWholeContractURLQueryAndAll() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
 
         guard case .open(let url) = SlotDetailScreen.BookingAction(slot: coast) else {
             return XCTFail("a slot with a usable link did not produce an open action")
@@ -216,14 +216,14 @@ final class SlotDetailBookingActionTests: XCTestCase {
 
         XCTAssertEqual(url.absoluteString, coast.bookingURLString)
         XCTAssertTrue(url.absoluteString.contains("feeGroupId="), url.absoluteString)
-        XCTAssertTrue(url.absoluteString.contains("selectedDate=2026-10-03"), url.absoluteString)
+        XCTAssertTrue(url.absoluteString.contains("selectedDate=2099-10-03"), url.absoluteString)
     }
 
     /// An enabled button leaves the app, and says so before it does. The
     /// difference between "Book" meaning booked and "Book" meaning a browser
     /// nobody asked for is one line of copy under the button.
     func testAnEnabledButtonSaysWhereTheTapGoes() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         let action = SlotDetailScreen.BookingAction(slot: coast)
 
         XCTAssertFalse(action.isDisabled)
@@ -239,7 +239,7 @@ final class SlotDetailBookingActionTests: XCTestCase {
     /// screen promises is a single one: the button is enabled exactly when
     /// there is a URL to open, and when it is not, it says why.
     func testEveryUnusableLinkStringDisablesTheButtonAndExplainsItself() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         var disabledCount = 0
 
         for raw in ["", " ", "   ", "\n", "not a url at all", "http://example.com/a path"] {
@@ -275,9 +275,9 @@ final class SlotDetailBookingActionTests: XCTestCase {
     /// expectation is strict, so it fails the day the behaviour changes and the
     /// note gets revisited instead of rotting.
     func testASchemelessLinkLooksBookableAndIsNot() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         let relative = withBookingURL(
-            "/guests/bookings/ViewPublicTimesheet.msp?feeGroupId=2&selectedDate=2026-10-03",
+            "/guests/bookings/ViewPublicTimesheet.msp?feeGroupId=2&selectedDate=2099-10-03",
             coast)
 
         let parsed = try XCTUnwrap(

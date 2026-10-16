@@ -30,7 +30,7 @@ final class SearchScreenPullToRefreshTests: XCTestCase {
     /// Same fixture and fixed clock `SearchScreenTests` uses, so the default
     /// search already has results on screen (`resultCount == 5`) and
     /// `resultsList`, not the empty state, is what actually renders.
-    private let fixedNow = ContractDate.date(from: "2026-10-03T00:00:00+10:00")!
+    private let fixedNow = ContractDate.date(from: "2099-10-03T00:00:00+10:00")!
 
     private func loadedStore() -> SearchStore {
         let now = fixedNow

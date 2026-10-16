@@ -47,7 +47,7 @@ final class SearchScreenSectionHeaderAccessibilityTests: XCTestCase {
     /// The three day sections `SearchScreenTests` also fixes its clock to,
     /// read by their spoken (VoiceOver) label — what `.accessibilityLabel`
     /// on the header replaces the short on-screen title with.
-    private let fixedNow = ContractDate.date(from: "2026-10-03T00:00:00+10:00")!
+    private let fixedNow = ContractDate.date(from: "2099-10-03T00:00:00+10:00")!
 
     private func sections() -> [SlotDaySection] {
         let now = fixedNow

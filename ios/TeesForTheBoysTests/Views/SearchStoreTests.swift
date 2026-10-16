@@ -9,11 +9,11 @@ import TeesContract
 @MainActor
 final class SearchStoreTests: XCTestCase {
 
-    /// 2026-10-03T00:00:00+10:00 — inside `minimal.json`'s first day, and
+    /// 2099-10-03T00:00:00+10:00 — inside `minimal.json`'s first day, and
     /// deliberately ahead of every one of that day's tee times (earliest is
     /// 06:16) so this fixed clock does not itself age a fixture slot into the
     /// past and filter it out of `SlotQuery.apply`.
-    private let day1Morning = Date(timeIntervalSince1970: 1_790_949_600)
+    private let day1Morning = Date(timeIntervalSince1970: 4_094_632_800)
 
     private func store(
         preferences: ViewsKeyValueStore = InMemoryViewsStore(),
@@ -45,7 +45,7 @@ final class SearchStoreTests: XCTestCase {
         XCTAssertEqual(s.courses.count, 15, "the roster is frozen at fifteen")
         // Default filters are 18 holes, so the four 9-hole bookings drop out.
         XCTAssertEqual(s.resultCount, 5)
-        XCTAssertEqual(s.sections.map(\.date), ["2026-10-03", "2026-10-04", "2026-10-10"])
+        XCTAssertEqual(s.sections.map(\.date), ["2099-10-03", "2099-10-04", "2099-10-10"])
         XCTAssertEqual(
             s.sections.reduce(0) { $0 + $1.results.count }, s.resultCount,
             "resultCount and the sections must agree")
@@ -130,7 +130,7 @@ final class SearchStoreTests: XCTestCase {
         s.load()
         XCTAssertTrue(spy.writes.isEmpty, "launching wrote to the store: \(spy.writes)")
 
-        s.filters.days = ["2026-10-10"]
+        s.filters.days = ["2099-10-10"]
         s.filters.players = 3
         s.filters.maxPrice = 60
         XCTAssertTrue(spy.writes.isEmpty, "a session filter was persisted: \(spy.writes)")
@@ -150,9 +150,9 @@ final class SearchStoreTests: XCTestCase {
         s.filters.holes = .any
         XCTAssertEqual(s.resultCount, 9)
 
-        s.filters.days = ["2026-10-10"]
+        s.filters.days = ["2099-10-10"]
         XCTAssertEqual(s.resultCount, 2)
-        XCTAssertEqual(s.sections.map(\.date), ["2026-10-10"])
+        XCTAssertEqual(s.sections.map(\.date), ["2099-10-10"])
     }
 
     /// The store is the only caller that knows whether a price filter is on, so
@@ -160,20 +160,20 @@ final class SearchStoreTests: XCTestCase {
     func testAPriceFilterSinksUnpricedSlotsWithoutDroppingThem() throws {
         let s = store()
         s.load()
-        s.filters = SearchFilters(days: ["2026-10-03"], holes: .any, maxPrice: 60)
+        s.filters = SearchFilters(days: ["2099-10-03"], holes: .any, maxPrice: 60)
 
         let day = try XCTUnwrap(s.sections.first)
         XCTAssertEqual(day.results.count, 5)
         XCTAssertEqual(day.results.suffix(2).map(\.id), [
-            "warringah:2026-10-03:0616:10th-tee-social",
-            "warringah:2026-10-03:0616:1st-tee-social"
+            "warringah:2099-10-03:0616:10th-tee-social",
+            "warringah:2099-10-03:0616:1st-tee-social"
         ])
     }
 
     func testResetGoesBackToStandard() {
         let s = store()
         s.load()
-        s.filters = SearchFilters(days: ["2026-10-10"], players: 4, holes: .nine, maxPrice: 40)
+        s.filters = SearchFilters(days: ["2099-10-10"], players: 4, holes: .nine, maxPrice: 40)
         XCTAssertNotEqual(s.resultCount, 5)
 
         s.resetFilters()
@@ -200,15 +200,15 @@ final class SearchStoreTests: XCTestCase {
     /// Sydney, not the device's zone. A golfer checking from a Melbourne
     /// lounge is still booking a Sydney morning.
     func testTodayIsSydneyWallClock() {
-        XCTAssertEqual(store(now: day1Morning).today, "2026-10-03")
+        XCTAssertEqual(store(now: day1Morning).today, "2099-10-03")
     }
 
-    /// The instant that separates the two zones: 2026-10-04T00:30 in Sydney is
-    /// 2026-10-03T14:30 in UTC. Sydney says the 4th, UTC says the 3rd, and a
+    /// The instant that separates the two zones: 2099-10-04T00:30 in Sydney is
+    /// 2099-10-03T14:30 in UTC. Sydney says the 4th, UTC says the 3rd, and a
     /// store formatting in UTC would put a golfer a day behind.
     func testTodayRollsOverOnSydneyMidnightNotUTCMidnight() {
-        let justAfterSydneyMidnight = Date(timeIntervalSince1970: 1_791_037_800)
-        XCTAssertEqual(store(now: justAfterSydneyMidnight).today, "2026-10-04")
+        let justAfterSydneyMidnight = Date(timeIntervalSince1970: 4_094_721_000)
+        XCTAssertEqual(store(now: justAfterSydneyMidnight).today, "2099-10-04")
     }
 
     func testSectionTitlesFollowTheInjectedClock() {
@@ -225,41 +225,41 @@ final class SearchStoreTests: XCTestCase {
     /// no filter touched, no reload, no relaunch — sailed through local
     /// midnight with yesterday's section titles frozen in place.
     ///
-    /// The clock starts at 23:58 on 2026-10-03 and moves two hours forward
+    /// The clock starts at 23:58 on 2099-10-03 and moves two hours forward
     /// with nothing else touched — exactly the shipped app between
     /// refreshes. No fixture slot's `tee_at` falls inside that two-hour
     /// window (`minimal.json`'s Oct-4 round is `bayview` at 09:45, hours
     /// later), so which rounds match must not change at all — isolating the
-    /// one thing that must: `today` moves from "2026-10-03" to "2026-10-04",
-    /// and the still-present, still-in-the-same-place 2026-10-04 section's
+    /// one thing that must: `today` moves from "2099-10-03" to "2099-10-04",
+    /// and the still-present, still-in-the-same-place 2099-10-04 section's
     /// title has to move with it, from "Tomorrow" to "Today".
     func testSectionsReflectTheClockEvenWithoutATouchedFilterOrReload() {
-        let clock = MutableClock(ContractDate.date(from: "2026-10-03T23:58:00+10:00")!)
+        let clock = MutableClock(ContractDate.date(from: "2099-10-03T23:58:00+10:00")!)
         let s = SearchStore(preferences: InMemoryViewsStore(), fixture: "minimal", now: { clock.date })
         s.load()
 
-        XCTAssertEqual(s.today, "2026-10-03")
-        XCTAssertEqual(s.sections.map(\.date), ["2026-10-04", "2026-10-10"])
-        XCTAssertEqual(s.sections.first(where: { $0.date == "2026-10-04" })?.title, "Tomorrow")
+        XCTAssertEqual(s.today, "2099-10-03")
+        XCTAssertEqual(s.sections.map(\.date), ["2099-10-04", "2099-10-10"])
+        XCTAssertEqual(s.sections.first(where: { $0.date == "2099-10-04" })?.title, "Tomorrow")
         XCTAssertEqual(s.resultCount, 2)
 
         // Two hours later. No filter touched, no `load()`/`apply()` call —
         // the only thing that changes is the clock.
         clock.date = clock.date.addingTimeInterval(2 * 3600)
 
-        XCTAssertEqual(s.today, "2026-10-04", "today was already computed fresh and never had this bug")
+        XCTAssertEqual(s.today, "2099-10-04", "today was already computed fresh and never had this bug")
         XCTAssertEqual(
             s.resultCount, 2,
             "no slot's tee_at falls inside the two hours that passed; only the day changed, not the matches")
         XCTAssertEqual(
-            s.sections.first(where: { $0.date == "2026-10-04" })?.title, "Today",
-            "2026-10-04 is today now; this section must not still read 'Tomorrow'")
+            s.sections.first(where: { $0.date == "2099-10-04" })?.title, "Today",
+            "2099-10-04 is today now; this section must not still read 'Tomorrow'")
     }
 
     // MARK: - Freshness
 
     func testFreshnessIsComputedFromTheLoadedPayload() {
-        // The fixture was scraped at 2026-10-01T07:30+10:00; the clock here is
+        // The fixture was scraped at 2099-10-01T07:30+10:00; the clock here is
         // two days later, so it is well past stale.
         let s = store()
         s.load()
@@ -270,7 +270,7 @@ final class SearchStoreTests: XCTestCase {
     }
 
     func testFreshnessIsQuietWhenTheClockSitsOnTheScrape() {
-        let s = store(now: Date(timeIntervalSince1970: 1_790_803_800 + 600))
+        let s = store(now: Date(timeIntervalSince1970: 4_094_487_000 + 600))
         s.load()
         XCTAssertFalse(s.freshness.isStale)
         XCTAssertEqual(s.freshness.bannerText, "Couldn't reach Castle Cove")
@@ -284,12 +284,12 @@ final class SearchStoreTests: XCTestCase {
     /// at. Before the fix, `freshness` was computed from the whole payload
     /// regardless of `filters.days`/`filters.courseSlugs`, so this failed.
     func testFreshnessReflectsTheSelectedDayNotTheWholePayload() {
-        let now = Date(timeIntervalSince1970: 1_790_949_600) // matches `day1Morning`
-        let freshDay = "2026-10-03"
-        let staleDay = "2026-10-07"
+        let now = Date(timeIntervalSince1970: 4_094_632_800) // matches `day1Morning`
+        let freshDay = "2099-10-03"
+        let staleDay = "2099-10-07"
 
         let payload = ContractPayload(
-            generatedAt: "2026-10-03T00:00:00+10:00",
+            generatedAt: "2099-10-03T00:00:00+10:00",
             courses: [],
             slots: [],
             courseDays: [

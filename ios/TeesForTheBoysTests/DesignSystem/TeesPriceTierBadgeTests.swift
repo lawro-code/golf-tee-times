@@ -298,31 +298,53 @@ final class TeesPriceTierBadgeTests: XCTestCase {
         }
     }
 
-    /// The decode path that produces one, end to end, so nobody has to take the
-    /// comment above on trust: this is `public.open_slots` sending a `numeric`
-    /// as a string, which the contract explicitly allows.
-    func testTheContractDecoderReallyCanHandTheBadgeAnInfinitePrice() throws {
+    /// The decode path that produces this, end to end, so nobody has to take
+    /// the comment above on trust: this is `public.open_slots` sending a
+    /// `numeric` as a string, which the contract explicitly allows —
+    /// `"1e400"` parses with Swift's `Double(_:)` and comes back `+inf`.
+    ///
+    /// `ContractDecoding.swift` (Stage 0, frozen — see `CONTRACT.md` §"Decoding
+    /// is lenient by design") treats that as a malformed row, not a
+    /// malformed-but-displayable price: `decodeNumberIfPresent` throws, so the
+    /// row never reaches `Slot` at all. The badge never gets handed an
+    /// infinite price on this path — the row is dropped before the badge (or
+    /// anything else) can see it, and the drop is recorded as an issue rather
+    /// than swallowed. `ContractTests.swift`
+    /// (`testNonFinitePriceStringsDropTheRowRatherThanRenderingAsGarbage`,
+    /// `testOverflowingPriceStringDropsTheRowRatherThanBecomingInfinity`)
+    /// proves the same thing against the decoder directly; this proves it at
+    /// payload granularity, the shape this badge's data actually arrives in.
+    func testTheContractDecoderDropsAnInfinitePriceRowRatherThanHandingItToTheBadge() throws {
         let json = """
         {
-          "id": "warringah:2026-09-18:0616:1st-tee-social",
-          "course_slug": "warringah", "course_name": "Warringah Golf Club",
-          "region": "Northern Beaches", "drive_minutes_from_bondi": 32,
-          "par": 70, "length_metres": null, "requires_registration": false,
-          "tee_date": "2026-09-18", "tee_time": "06:16:00",
-          "tee_at": "2026-09-18T06:16:00+10:00",
-          "spots_available": 2, "total_spots": 4, "holes": 18,
-          "price_min": "1e400", "price_max": "1e400", "price_tiers": [],
-          "booking_type": "1st Tee Social",
-          "booking_url": "https://warringah.miclub.com.au/guests/bookings/x"
+          "contract_version": "1.0.0",
+          "generated_at": "2026-10-01T07:30:00+10:00",
+          "mode": "full",
+          "days": 5,
+          "courses": [],
+          "course_days": [],
+          "slots": [
+            {
+              "id": "warringah:2026-09-18:0616:1st-tee-social",
+              "course_slug": "warringah", "course_name": "Warringah Golf Club",
+              "region": "Northern Beaches", "drive_minutes_from_bondi": 32,
+              "par": 70, "length_metres": null, "requires_registration": false,
+              "tee_date": "2026-09-18", "tee_time": "06:16:00",
+              "tee_at": "2026-09-18T06:16:00+10:00",
+              "spots_available": 2, "total_spots": 4, "holes": 18,
+              "price_min": "1e400", "price_max": "1e400", "price_tiers": [],
+              "booking_type": "1st Tee Social",
+              "booking_url": "https://warringah.miclub.com.au/guests/bookings/x"
+            }
+          ]
         }
         """
 
-        let slot = try JSONDecoder().decode(Slot.self, from: Data(json.utf8))
-        XCTAssertEqual(slot.priceMin?.isFinite, false, "a numeric sent as a string is how this gets in")
+        let payload = try ContractLoader.decode(Data(json.utf8))
 
-        let model = TeesPriceTierBadge.Model(slot: slot)
-        XCTAssertEqual(model.headline, TeesPriceTierBadge.Model.unknownHeadline)
-        XCTAssertFalse(model.headline.contains("$"))
+        XCTAssertTrue(payload.slots.isEmpty, "a numeric sent as a string is how this gets in, and it must not decode as a real slot")
+        XCTAssertEqual(payload.issues.count, 1, "the dropped row must be recorded, not silently swallowed")
+        XCTAssertEqual(payload.issues.first?.collection, "slots")
     }
 
     // MARK: - Zero is a price

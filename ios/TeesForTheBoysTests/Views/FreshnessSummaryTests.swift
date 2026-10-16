@@ -11,8 +11,8 @@ final class FreshnessSummaryTests: XCTestCase {
     private var payload: ContractPayload!
 
     /// The fixture's own timestamp: every `last_success_at` in `minimal.json`
-    /// is 2026-10-01T07:30:00+10:00.
-    private let scrapedAt = Date(timeIntervalSince1970: 1_790_803_800)
+    /// is 2099-10-01T07:30:00+10:00.
+    private let scrapedAt = Date(timeIntervalSince1970: 4_094_487_000)
 
     override func setUpWithError() throws {
         payload = try ContractLoader.fixture("minimal")
@@ -338,7 +338,7 @@ final class FreshnessSummaryTests: XCTestCase {
             ok: ok,
             slotCount: slots,
             error: ok ? nil : "boom",
-            lastAttemptAt: Date(timeIntervalSince1970: 1_790_803_800),
+            lastAttemptAt: Date(timeIntervalSince1970: 4_094_487_000),
             lastSuccessAt: success)
     }
 }

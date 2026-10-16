@@ -1,6 +1,6 @@
 {
   "contract_version": "1.0.0",
-  "generated_at": "2026-10-01T07:30:00+10:00",
+  "generated_at": "2099-10-01T07:30:00+10:00",
   "mode": "full",
   "days": 5,
   "courses": [
@@ -232,7 +232,7 @@
   ],
   "slots": [
     {
-      "id": "warringah:2026-10-03:0616:1st-tee-social",
+      "id": "warringah:2099-10-03:0616:1st-tee-social",
       "course_slug": "warringah",
       "course_name": "Warringah Golf Club",
       "region": "Northern Beaches",
@@ -240,9 +240,9 @@
       "par": 70,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "tee_time": "06:16:00",
-      "tee_at": "2026-10-03T06:16:00+10:00",
+      "tee_at": "2099-10-03T06:16:00+10:00",
       "spots_available": 2,
       "total_spots": 4,
       "holes": 18,
@@ -250,10 +250,10 @@
       "price_max": null,
       "price_tiers": [],
       "booking_type": "1st Tee Social",
-      "booking_url": "https://warringah.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=108003&selectedDate=2026-10-03"
+      "booking_url": "https://warringah.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=108003&selectedDate=2099-10-03"
     },
     {
-      "id": "warringah:2026-10-03:0616:10th-tee-social",
+      "id": "warringah:2099-10-03:0616:10th-tee-social",
       "course_slug": "warringah",
       "course_name": "Warringah Golf Club",
       "region": "Northern Beaches",
@@ -261,9 +261,9 @@
       "par": 70,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "tee_time": "06:16:00",
-      "tee_at": "2026-10-03T06:16:00+10:00",
+      "tee_at": "2099-10-03T06:16:00+10:00",
       "spots_available": 4,
       "total_spots": 4,
       "holes": 18,
@@ -271,10 +271,10 @@
       "price_max": null,
       "price_tiers": [],
       "booking_type": "10th Tee Social",
-      "booking_url": "https://warringah.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=108003&selectedDate=2026-10-03"
+      "booking_url": "https://warringah.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=108003&selectedDate=2099-10-03"
     },
     {
-      "id": "woollahra:2026-10-03:0712:public-play",
+      "id": "woollahra:2099-10-03:0712:public-play",
       "course_slug": "woollahra",
       "course_name": "Woollahra Golf Club",
       "region": "Eastern Suburbs",
@@ -282,9 +282,9 @@
       "par": 34,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "tee_time": "07:12:00",
-      "tee_at": "2026-10-03T07:12:00+10:00",
+      "tee_at": "2099-10-03T07:12:00+10:00",
       "spots_available": 1,
       "total_spots": 4,
       "holes": 9,
@@ -297,10 +297,10 @@
         }
       ],
       "booking_type": "Public Play",
-      "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-10-03"
+      "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2099-10-03"
     },
     {
-      "id": "the-coast:2026-10-03:0800:1st-tee",
+      "id": "the-coast:2099-10-03:0800:1st-tee",
       "course_slug": "the-coast",
       "course_name": "The Coast Golf Club",
       "region": "Eastern Suburbs",
@@ -308,9 +308,9 @@
       "par": 71,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "tee_time": "08:00:00",
-      "tee_at": "2026-10-03T08:00:00+10:00",
+      "tee_at": "2099-10-03T08:00:00+10:00",
       "spots_available": 4,
       "total_spots": 4,
       "holes": 18,
@@ -331,10 +331,10 @@
         }
       ],
       "booking_type": "1st Tee",
-      "booking_url": "https://www.coastgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1508176600&selectedDate=2026-10-03"
+      "booking_url": "https://www.coastgolf.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1508176600&selectedDate=2099-10-03"
     },
     {
-      "id": "bankstown:2026-10-03:1120:social-play-9-holes-only",
+      "id": "bankstown:2099-10-03:1120:social-play-9-holes-only",
       "course_slug": "bankstown",
       "course_name": "Bankstown Golf Club",
       "region": "South West",
@@ -342,9 +342,9 @@
       "par": 71,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "tee_time": "11:20:00",
-      "tee_at": "2026-10-03T11:20:00+10:00",
+      "tee_at": "2099-10-03T11:20:00+10:00",
       "spots_available": 3,
       "total_spots": 4,
       "holes": 9,
@@ -357,10 +357,10 @@
         }
       ],
       "booking_type": "Social Play 9 Holes Only",
-      "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-10-03"
+      "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2099-10-03"
     },
     {
-      "id": "bayview:2026-10-04:0945:1st-tee-social-play",
+      "id": "bayview:2099-10-04:0945:1st-tee-social-play",
       "course_slug": "bayview",
       "course_name": "Bayview Golf Club",
       "region": "Northern Beaches",
@@ -368,9 +368,9 @@
       "par": 71,
       "length_metres": null,
       "requires_registration": true,
-      "tee_date": "2026-10-04",
+      "tee_date": "2099-10-04",
       "tee_time": "09:45:00",
-      "tee_at": "2026-10-04T09:45:00+11:00",
+      "tee_at": "2099-10-04T09:45:00+11:00",
       "spots_available": 2,
       "total_spots": 4,
       "holes": 18,
@@ -383,10 +383,10 @@
         }
       ],
       "booking_type": "1st Tee - Social Play",
-      "booking_url": "https://bayviewgolfclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=2&selectedDate=2026-10-04"
+      "booking_url": "https://bayviewgolfclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=2&selectedDate=2099-10-04"
     },
     {
-      "id": "woollahra:2026-10-04:1630:public-bookings",
+      "id": "woollahra:2099-10-04:1630:public-bookings",
       "course_slug": "woollahra",
       "course_name": "Woollahra Golf Club",
       "region": "Eastern Suburbs",
@@ -394,9 +394,9 @@
       "par": 34,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-04",
+      "tee_date": "2099-10-04",
       "tee_time": "16:30:00",
-      "tee_at": "2026-10-04T16:30:00+11:00",
+      "tee_at": "2099-10-04T16:30:00+11:00",
       "spots_available": 4,
       "total_spots": 4,
       "holes": 9,
@@ -409,10 +409,10 @@
         }
       ],
       "booking_type": "Public Bookings",
-      "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2026-10-04"
+      "booking_url": "https://woollahra.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=3050666&selectedDate=2099-10-04"
     },
     {
-      "id": "bankstown:2026-10-10:0800:social-play",
+      "id": "bankstown:2099-10-10:0800:social-play",
       "course_slug": "bankstown",
       "course_name": "Bankstown Golf Club",
       "region": "South West",
@@ -420,9 +420,9 @@
       "par": 71,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-10",
+      "tee_date": "2099-10-10",
       "tee_time": "08:00:00",
-      "tee_at": "2026-10-10T08:00:00+11:00",
+      "tee_at": "2099-10-10T08:00:00+11:00",
       "spots_available": 4,
       "total_spots": 4,
       "holes": 18,
@@ -435,10 +435,10 @@
         }
       ],
       "booking_type": "Social Play",
-      "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2026-10-10"
+      "booking_url": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=1509794765&selectedDate=2099-10-10"
     },
     {
-      "id": "brighton-lakes:2026-10-10:1307:1st-tee-social",
+      "id": "brighton-lakes:2099-10-10:1307:1st-tee-social",
       "course_slug": "brighton-lakes",
       "course_name": "Brighton Lakes Recreation Club",
       "region": "South West",
@@ -446,9 +446,9 @@
       "par": 72,
       "length_metres": null,
       "requires_registration": false,
-      "tee_date": "2026-10-10",
+      "tee_date": "2099-10-10",
       "tee_time": "13:07:00",
-      "tee_at": "2026-10-10T13:07:00+11:00",
+      "tee_at": "2099-10-10T13:07:00+11:00",
       "spots_available": 1,
       "total_spots": 4,
       "holes": 9,
@@ -461,99 +461,99 @@
         }
       ],
       "booking_type": "1st Tee Social",
-      "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2026-10-10"
+      "booking_url": "https://brightonlakes.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=3000000&feeGroupId=4328836&selectedDate=2099-10-10"
     }
   ],
   "course_days": [
     {
       "course_slug": "bankstown",
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "ok": true,
       "slot_count": 1,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "bankstown",
-      "tee_date": "2026-10-10",
+      "tee_date": "2099-10-10",
       "ok": true,
       "slot_count": 1,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "bayview",
-      "tee_date": "2026-10-04",
+      "tee_date": "2099-10-04",
       "ok": true,
       "slot_count": 1,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "brighton-lakes",
-      "tee_date": "2026-10-10",
+      "tee_date": "2099-10-10",
       "ok": true,
       "slot_count": 1,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "castle-cove",
-      "tee_date": "2026-10-01",
+      "tee_date": "2099-10-01",
       "ok": false,
       "slot_count": 0,
       "error": "all 2 day(s) failed to scrape",
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
       "last_success_at": null
     },
     {
       "course_slug": "long-reef",
-      "tee_date": "2026-10-01",
+      "tee_date": "2099-10-01",
       "ok": true,
       "slot_count": 0,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "the-coast",
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "ok": true,
       "slot_count": 1,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "warringah",
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "ok": true,
       "slot_count": 2,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "woollahra",
-      "tee_date": "2026-10-03",
+      "tee_date": "2099-10-03",
       "ok": true,
       "slot_count": 1,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     },
     {
       "course_slug": "woollahra",
-      "tee_date": "2026-10-04",
+      "tee_date": "2099-10-04",
       "ok": true,
       "slot_count": 1,
       "error": null,
-      "last_attempt_at": "2026-10-01T07:30:00+10:00",
-      "last_success_at": "2026-10-01T07:30:00+10:00"
+      "last_attempt_at": "2099-10-01T07:30:00+10:00",
+      "last_success_at": "2099-10-01T07:30:00+10:00"
     }
   ]
 }

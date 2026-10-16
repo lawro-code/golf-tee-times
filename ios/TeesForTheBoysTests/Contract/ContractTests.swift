@@ -50,7 +50,7 @@ final class ContractTests: XCTestCase {
     func testTwoTeeStartsAreTwoDistinctSlots() throws {
         let payload = try ContractLoader.fixture("minimal")
         let sameMinute = payload.slots.filter {
-            $0.courseSlug == "warringah" && $0.teeDate == "2026-10-03" && $0.teeTime == "06:16:00"
+            $0.courseSlug == "warringah" && $0.teeDate == "2099-10-03" && $0.teeTime == "06:16:00"
         }
         XCTAssertEqual(sameMinute.count, 2)
         XCTAssertEqual(Set(sameMinute.map(\.id)).count, 2)
@@ -83,8 +83,8 @@ final class ContractTests: XCTestCase {
     /// a slot on the 4th are an hour apart in offset, and both have to be right.
     func testDaylightSavingBoundary() throws {
         let payload = try ContractLoader.fixture("minimal")
-        let before = try XCTUnwrap(payload.slots.first { $0.id == "woollahra:2026-10-03:0712:public-play" })
-        let after = try XCTUnwrap(payload.slots.first { $0.id == "woollahra:2026-10-04:1630:public-bookings" })
+        let before = try XCTUnwrap(payload.slots.first { $0.id == "woollahra:2099-10-03:0712:public-play" })
+        let after = try XCTUnwrap(payload.slots.first { $0.id == "woollahra:2099-10-04:1630:public-bookings" })
 
         XCTAssertEqual(sydney.secondsFromGMT(for: before.teeAt), 10 * 3600, "3 October is AEST, +10")
         XCTAssertEqual(sydney.secondsFromGMT(for: after.teeAt), 11 * 3600, "4 October is AEDT, +11")
@@ -98,8 +98,8 @@ final class ContractTests: XCTestCase {
     /// they asked for 18.
     func testNineHoleBookingOnAnEighteenHoleCourse() throws {
         let payload = try ContractLoader.fixture("minimal")
-        let nine = try XCTUnwrap(payload.slots.first { $0.id == "bankstown:2026-10-03:1120:social-play-9-holes-only" })
-        let eighteen = try XCTUnwrap(payload.slots.first { $0.id == "bankstown:2026-10-10:0800:social-play" })
+        let nine = try XCTUnwrap(payload.slots.first { $0.id == "bankstown:2099-10-03:1120:social-play-9-holes-only" })
+        let eighteen = try XCTUnwrap(payload.slots.first { $0.id == "bankstown:2099-10-10:0800:social-play" })
         let course = try XCTUnwrap(payload.courses.first { $0.slug == "bankstown" })
 
         XCTAssertEqual(course.holes, 18)

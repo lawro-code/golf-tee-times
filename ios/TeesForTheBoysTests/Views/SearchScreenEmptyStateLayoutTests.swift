@@ -27,7 +27,7 @@ import TeesContract
 @MainActor
 final class SearchScreenEmptyStateLayoutTests: XCTestCase {
 
-    private let fixedNow = ContractDate.date(from: "2026-10-03T00:00:00+10:00")!
+    private let fixedNow = ContractDate.date(from: "2099-10-03T00:00:00+10:00")!
 
     private func screen() -> SearchScreen {
         let now = fixedNow

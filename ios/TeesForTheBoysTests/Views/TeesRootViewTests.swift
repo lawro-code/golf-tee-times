@@ -13,7 +13,7 @@ import TeesContract
 @MainActor
 final class TeesRootViewTests: XCTestCase {
 
-    private let fixedNow = ContractDate.date(from: "2026-10-01T07:30:00+10:00")!
+    private let fixedNow = ContractDate.date(from: "2099-10-01T07:30:00+10:00")!
 
     private func store() -> SearchStore {
         let now = fixedNow

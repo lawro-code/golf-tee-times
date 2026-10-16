@@ -22,11 +22,11 @@ final class SlotFormattingTests: XCTestCase {
 
     func testTimeIsTwelveHourWithNoLeadingZero() throws {
         XCTAssertEqual(
-            SlotFormatting.time(try slot("warringah:2026-10-03:0616:1st-tee-social")), "6:16 am")
+            SlotFormatting.time(try slot("warringah:2099-10-03:0616:1st-tee-social")), "6:16 am")
         XCTAssertEqual(
-            SlotFormatting.time(try slot("brighton-lakes:2026-10-10:1307:1st-tee-social")), "1:07 pm")
+            SlotFormatting.time(try slot("brighton-lakes:2099-10-10:1307:1st-tee-social")), "1:07 pm")
         XCTAssertEqual(
-            SlotFormatting.time(try slot("woollahra:2026-10-04:1630:public-bookings")), "4:30 pm")
+            SlotFormatting.time(try slot("woollahra:2099-10-04:1630:public-bookings")), "4:30 pm")
     }
 
     /// The two that a naive `hour % 12` gets wrong.
@@ -56,16 +56,16 @@ final class SlotFormattingTests: XCTestCase {
     // MARK: - Price
 
     func testSinglePriceIsOneNumber() throws {
-        XCTAssertEqual(SlotFormatting.price(try slot("woollahra:2026-10-03:0712:public-play")), "$45")
+        XCTAssertEqual(SlotFormatting.price(try slot("woollahra:2099-10-03:0712:public-play")), "$45")
         XCTAssertEqual(
-            SlotFormatting.price(try slot("bankstown:2026-10-03:1120:social-play-9-holes-only")),
+            SlotFormatting.price(try slot("bankstown:2099-10-03:1120:social-play-9-holes-only")),
             "$32")
     }
 
     /// The Coast publishes three tiers, $55 to $110.
     func testPriceRangeUsesAnEnDash() throws {
         XCTAssertEqual(
-            SlotFormatting.price(try slot("the-coast:2026-10-03:0800:1st-tee")),
+            SlotFormatting.price(try slot("the-coast:2099-10-03:0800:1st-tee")),
             "$55\u{2013}$110")
     }
 
@@ -73,7 +73,7 @@ final class SlotFormattingTests: XCTestCase {
     /// so the label is plain rather than an error.
     func testUnpricedSlotSaysPriceAtCourse() throws {
         XCTAssertEqual(
-            SlotFormatting.price(try slot("warringah:2026-10-03:0616:1st-tee-social")),
+            SlotFormatting.price(try slot("warringah:2099-10-03:0616:1st-tee-social")),
             SlotFormatting.priceAtCourse)
         XCTAssertEqual(SlotFormatting.priceAtCourse, "Price at course")
     }
@@ -98,7 +98,7 @@ final class SlotFormattingTests: XCTestCase {
         XCTAssertEqual(SlotFormatting.money(.nan), SlotFormatting.priceAtCourse)
         XCTAssertEqual(SlotFormatting.money(.infinity), SlotFormatting.priceAtCourse)
 
-        let huge = Self.priced(try slot("the-coast:2026-10-03:0800:1st-tee"), min: 1e20, max: nil)
+        let huge = Self.priced(try slot("the-coast:2099-10-03:0800:1st-tee"), min: 1e20, max: nil)
         XCTAssertEqual(SlotFormatting.price(huge), SlotFormatting.priceAtCourse)
     }
 
@@ -106,10 +106,10 @@ final class SlotFormattingTests: XCTestCase {
     /// skipped, so the spoken form spells the range out.
     func testSpokenPriceAvoidsTheEnDash() throws {
         XCTAssertEqual(
-            SlotFormatting.priceSpoken(try slot("the-coast:2026-10-03:0800:1st-tee")),
+            SlotFormatting.priceSpoken(try slot("the-coast:2099-10-03:0800:1st-tee")),
             "from $55 to $110")
         XCTAssertEqual(
-            SlotFormatting.priceSpoken(try slot("warringah:2026-10-03:0616:1st-tee-social")),
+            SlotFormatting.priceSpoken(try slot("warringah:2099-10-03:0616:1st-tee-social")),
             "price at course")
     }
 
@@ -117,11 +117,11 @@ final class SlotFormattingTests: XCTestCase {
     /// not something to render as `"$110–$55"`. One number beats a backwards
     /// range, and the spoken form must not invent a "from … to …" either.
     func testABackwardsPriceRangeShowsOneNumberRatherThanAnInvertedRange() throws {
-        let backwards = Self.priced(try slot("the-coast:2026-10-03:0800:1st-tee"), min: 110, max: 55)
+        let backwards = Self.priced(try slot("the-coast:2099-10-03:0800:1st-tee"), min: 110, max: 55)
         XCTAssertEqual(SlotFormatting.price(backwards), "$110")
         XCTAssertEqual(SlotFormatting.priceSpoken(backwards), "$110")
 
-        let equal = Self.priced(try slot("the-coast:2026-10-03:0800:1st-tee"), min: 55, max: 55)
+        let equal = Self.priced(try slot("the-coast:2099-10-03:0800:1st-tee"), min: 55, max: 55)
         XCTAssertEqual(SlotFormatting.price(equal), "$55")
     }
 
@@ -129,7 +129,7 @@ final class SlotFormattingTests: XCTestCase {
     /// filter and the label both key on, so it is an unpriced slot — never
     /// `"$–$110"`.
     func testAMaxWithNoMinIsJustAnUnpricedSlot() throws {
-        let halfPriced = Self.priced(try slot("the-coast:2026-10-03:0800:1st-tee"), min: nil, max: 110)
+        let halfPriced = Self.priced(try slot("the-coast:2099-10-03:0800:1st-tee"), min: nil, max: 110)
         XCTAssertEqual(SlotFormatting.price(halfPriced), SlotFormatting.priceAtCourse)
         XCTAssertTrue(SlotResult(slot: halfPriced).priceIsUnknown)
     }
@@ -138,10 +138,10 @@ final class SlotFormattingTests: XCTestCase {
 
     func testPlayers() throws {
         XCTAssertEqual(
-            SlotFormatting.players(try slot("warringah:2026-10-03:0616:1st-tee-social")),
+            SlotFormatting.players(try slot("warringah:2099-10-03:0616:1st-tee-social")),
             "2 of 4 spots")
         XCTAssertEqual(
-            SlotFormatting.players(try slot("woollahra:2026-10-03:0712:public-play")),
+            SlotFormatting.players(try slot("woollahra:2099-10-03:0712:public-play")),
             "1 of 4 spots")
     }
 
@@ -149,21 +149,21 @@ final class SlotFormattingTests: XCTestCase {
     /// par of 71 selling a 9-hole tee time: "9 holes · par 71".
     func testHolesAndParUsesTheBookingsHoleCount() throws {
         XCTAssertEqual(
-            SlotFormatting.holesAndPar(try slot("warringah:2026-10-03:0616:1st-tee-social")),
+            SlotFormatting.holesAndPar(try slot("warringah:2099-10-03:0616:1st-tee-social")),
             "18 holes \u{00B7} par 70")
         XCTAssertEqual(
-            SlotFormatting.holesAndPar(try slot("bankstown:2026-10-03:1120:social-play-9-holes-only")),
+            SlotFormatting.holesAndPar(try slot("bankstown:2099-10-03:1120:social-play-9-holes-only")),
             "9 holes \u{00B7} par 71")
     }
 
     func testParClauseIsDroppedWhenParIsUnknown() throws {
-        let base = try slot("warringah:2026-10-03:0616:1st-tee-social")
+        let base = try slot("warringah:2099-10-03:0616:1st-tee-social")
         let noPar = Self.copy(base, par: nil, driveMinutes: base.driveMinutesFromBondi)
         XCTAssertEqual(SlotFormatting.holesAndPar(noPar), "18 holes")
     }
 
     func testDrive() throws {
-        let base = try slot("warringah:2026-10-03:0616:1st-tee-social")
+        let base = try slot("warringah:2099-10-03:0616:1st-tee-social")
         XCTAssertEqual(SlotFormatting.drive(base), "32 min from Bondi")
         XCTAssertNil(
             SlotFormatting.drive(Self.copy(base, par: base.par, driveMinutes: nil)),
@@ -173,10 +173,10 @@ final class SlotFormattingTests: XCTestCase {
     // MARK: - Days
 
     func testTodayAndTomorrow() {
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "2026-10-03", today: "2026-10-03"), "Today")
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "2026-10-04", today: "2026-10-03"), "Tomorrow")
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "2026-10-10", today: "2026-10-03"), "Sat 10 Oct")
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "2026-10-02", today: "2026-10-03"), "Fri 2 Oct")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "2099-10-03", today: "2099-10-03"), "Today")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "2099-10-04", today: "2099-10-03"), "Tomorrow")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "2099-10-10", today: "2099-10-03"), "Sat 10 Oct")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "2099-10-02", today: "2099-10-03"), "Fri 2 Oct")
     }
 
     /// Sydney puts the clocks forward on 4 October 2026 — 02:00 becomes 03:00,
@@ -184,8 +184,8 @@ final class SlotFormattingTests: XCTestCase {
     /// calendar day, which is why this is calendar arithmetic in Sydney and not
     /// `addingTimeInterval(86_400)`.
     func testTomorrowSurvivesTheOctoberClockChange() {
-        XCTAssertEqual(SlotFormatting.dayAfter("2026-10-03"), "2026-10-04")
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "2026-10-04", today: "2026-10-03"), "Tomorrow")
+        XCTAssertEqual(SlotFormatting.dayAfter("2099-10-03"), "2099-10-04")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "2099-10-04", today: "2099-10-03"), "Tomorrow")
     }
 
     /// And the April change, where a day is 25 hours long.
@@ -203,17 +203,17 @@ final class SlotFormattingTests: XCTestCase {
     /// through to the absolute date is right; calling the next day "Tomorrow"
     /// off a date we could not parse would be worse than saying nothing.
     func testAnUnreadableTodayDegradesToAbsoluteDatesRatherThanGuessing() {
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "2026-10-04", today: "not a date"), "Sun 4 Oct")
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "2026-10-03", today: ""), "Sat 3 Oct")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "2099-10-04", today: "not a date"), "Sun 4 Oct")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "2099-10-03", today: ""), "Sat 3 Oct")
     }
 
     func testUnparseableDateFallsBackToTheRawValue() {
-        XCTAssertEqual(SlotFormatting.dayTitle(for: "yesterday", today: "2026-10-03"), "yesterday")
+        XCTAssertEqual(SlotFormatting.dayTitle(for: "yesterday", today: "2099-10-03"), "yesterday")
         XCTAssertEqual(SlotFormatting.spokenDayTitle(for: "yesterday"), "yesterday")
     }
 
     func testSpokenDayIsAbsoluteAndLong() {
-        XCTAssertEqual(SlotFormatting.spokenDayTitle(for: "2026-10-03"), "Saturday 3 October")
+        XCTAssertEqual(SlotFormatting.spokenDayTitle(for: "2099-10-03"), "Saturday 3 October")
         XCTAssertEqual(SlotFormatting.spokenDayTitle(for: "2026-09-19"), "Saturday 19 September")
     }
 
@@ -233,10 +233,10 @@ final class SlotFormattingTests: XCTestCase {
     /// The surprise lands here rather than on the club's payment page.
     func testRegistrationNoteOnlyForClubsThatNeedOne() throws {
         XCTAssertEqual(
-            SlotFormatting.registrationNote(for: try slot("bayview:2026-10-04:0945:1st-tee-social-play")),
+            SlotFormatting.registrationNote(for: try slot("bayview:2099-10-04:0945:1st-tee-social-play")),
             "Bayview needs a free club account before you can book")
         XCTAssertNil(
-            SlotFormatting.registrationNote(for: try slot("woollahra:2026-10-03:0712:public-play")))
+            SlotFormatting.registrationNote(for: try slot("woollahra:2099-10-03:0712:public-play")))
     }
 
     // MARK: - Accessibility
@@ -245,7 +245,7 @@ final class SlotFormattingTests: XCTestCase {
     /// sentence carries the lot.
     func testAccessibilityLabelCarriesTheWholeRow() throws {
         XCTAssertEqual(
-            SlotFormatting.accessibilityLabel(for: try slot("the-coast:2026-10-03:0800:1st-tee")),
+            SlotFormatting.accessibilityLabel(for: try slot("the-coast:2099-10-03:0800:1st-tee")),
             "The Coast Golf Club, 8:00 am, Saturday 3 October, 18 holes, par 71, "
             + "from $55 to $110, 4 of 4 spots.")
     }
@@ -253,7 +253,7 @@ final class SlotFormattingTests: XCTestCase {
     func testAccessibilityLabelKeepsTheUnpricedWording() throws {
         XCTAssertEqual(
             SlotFormatting.accessibilityLabel(
-                for: try slot("warringah:2026-10-03:0616:1st-tee-social")),
+                for: try slot("warringah:2099-10-03:0616:1st-tee-social")),
             "Warringah Golf Club, 6:16 am, Saturday 3 October, 18 holes, par 70, "
             + "price at course, 2 of 4 spots.")
     }
@@ -262,7 +262,7 @@ final class SlotFormattingTests: XCTestCase {
     /// a tap is worth making, so it is appended rather than dropped.
     func testAccessibilityLabelAppendsTheRegistrationWarning() throws {
         let spoken = SlotFormatting.accessibilityLabel(
-            for: try slot("bayview:2026-10-04:0945:1st-tee-social-play"))
+            for: try slot("bayview:2099-10-04:0945:1st-tee-social-play"))
         XCTAssertTrue(
             spoken.hasSuffix("Bayview needs a free club account before you can book."),
             spoken)

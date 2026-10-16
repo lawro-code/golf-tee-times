@@ -35,7 +35,7 @@ final class SlotRowTests: XCTestCase {
     // MARK: - Everything the row shows reaches the label
 
     func testTheLabelCarriesClubTimeHolesParPriceAndSpots() throws {
-        let bayview = try slot("bayview:2026-10-04:0945:1st-tee-social-play")
+        let bayview = try slot("bayview:2099-10-04:0945:1st-tee-social-play")
         let spoken = label(bayview)
 
         XCTAssertTrue(spoken.contains("Bayview Golf Club"), spoken)
@@ -50,7 +50,7 @@ final class SlotRowTests: XCTestCase {
     /// the number in the row is the booking's, not the club's. Getting this
     /// wrong sends someone to nine holes when they asked for eighteen.
     func testANineHoleBookingAtAnEighteenHoleClubSaysNine() throws {
-        let bankstown = try slot("bankstown:2026-10-03:1120:social-play-9-holes-only")
+        let bankstown = try slot("bankstown:2099-10-03:1120:social-play-9-holes-only")
         XCTAssertEqual(bankstown.holes, 9)
 
         let spoken = label(bankstown)
@@ -61,7 +61,7 @@ final class SlotRowTests: XCTestCase {
     /// CONTRACT.md §3. One slot in six publishes no fee. The row says so rather
     /// than showing a blank where a number goes, and never disappears.
     func testAnUnpricedSlotSaysPriceAtCourse() throws {
-        let warringah = try slot("warringah:2026-10-03:0616:1st-tee-social")
+        let warringah = try slot("warringah:2099-10-03:0616:1st-tee-social")
         XCTAssertTrue(warringah.priceIsUnknown)
 
         XCTAssertEqual(SlotFormatting.price(warringah), "Price at course")
@@ -72,7 +72,7 @@ final class SlotRowTests: XCTestCase {
     /// tap is worth making, so it is appended to the sentence rather than left
     /// as a visual-only badge.
     func testAClubNeedingAFreeAccountSaysSoInTheLabel() throws {
-        let bayview = try slot("bayview:2026-10-04:0945:1st-tee-social-play")
+        let bayview = try slot("bayview:2099-10-04:0945:1st-tee-social-play")
         let note = try XCTUnwrap(SlotFormatting.registrationNote(for: bayview))
 
         XCTAssertTrue(note.contains("Bayview"), note)
@@ -80,7 +80,7 @@ final class SlotRowTests: XCTestCase {
     }
 
     func testAClubNeedingNothingCarriesNoRegistrationNote() throws {
-        let coast = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let coast = try slot("the-coast:2099-10-03:0800:1st-tee")
         XCTAssertNil(SlotFormatting.registrationNote(for: coast))
     }
 
@@ -88,8 +88,8 @@ final class SlotRowTests: XCTestCase {
     /// `ForEach`. If the ids collided the list would drop one of Warringah's
     /// two 06:16 bookings on the floor.
     func testATwoTeeStartGivesTwoRowsWithDistinctIdentities() throws {
-        let first = try slot("warringah:2026-10-03:0616:1st-tee-social")
-        let tenth = try slot("warringah:2026-10-03:0616:10th-tee-social")
+        let first = try slot("warringah:2099-10-03:0616:1st-tee-social")
+        let tenth = try slot("warringah:2099-10-03:0616:10th-tee-social")
 
         XCTAssertEqual(SlotResult(slot: first).id, first.id)
         XCTAssertNotEqual(SlotResult(slot: first).id, SlotResult(slot: tenth).id)
@@ -117,7 +117,7 @@ final class SlotRowTests: XCTestCase {
     /// renders, `DesignSystem/Components/TeesSlotRow.swift`) takes a `Slot`,
     /// not a `SlotResult`, so this is the seam that has to keep agreeing.
     func testAResultUnwrapsToTheSameSlotItWasBuiltFrom() throws {
-        let slot = try slot("the-coast:2026-10-03:0800:1st-tee")
+        let slot = try slot("the-coast:2099-10-03:0800:1st-tee")
         XCTAssertEqual(SlotResult(slot: slot).slot, slot)
     }
 }
@@ -166,16 +166,16 @@ final class SlotRowEdgeCaseTests: XCTestCase {
 
     private func slotWithNoPublishedPar() -> Slot {
         Slot(
-            id: "riverbank:2026-10-03:0800:1st-tee",
+            id: "riverbank:2099-10-03:0800:1st-tee",
             courseSlug: "riverbank",
             courseName: "Riverbank Golf Club",
             region: "Test",
             driveMinutesFromBondi: 20,
             par: nil,
             requiresRegistration: false,
-            teeDate: "2026-10-03",
+            teeDate: "2099-10-03",
             teeTime: "08:00:00",
-            teeAt: ContractDate.date(from: "2026-10-03T08:00:00+10:00")!,
+            teeAt: ContractDate.date(from: "2099-10-03T08:00:00+10:00")!,
             spotsAvailable: 2,
             totalSpots: 4,
             holes: 18,
