@@ -212,6 +212,64 @@ class PerDayStatusTests(unittest.TestCase):
             self.assertIn(f"selectedDate={tee_date}", url)
             self.assertTrue(url.startswith("https://woollahra.miclub.com.au/"))
 
+    def test_a_zero_row_day_is_reclassified_clean_when_another_day_has_real_rows(self):
+        """The regression this fixes: several clubs genuinely publish nothing
+        for a given date (a Saturday competition locking out guest play) and
+        the resulting page is byte-for-byte what a dead feeGroupId produces —
+        no HTML marker tells the two apart (see the comment in
+        scrape_course). A day that landed on this page in the same run as a
+        day that plainly worked must read as clean, not failed."""
+        with mock.patch.object(
+            scrape, "parse_timesheet",
+            side_effect=[scrape.TimesheetStructureError("0 rows matched"), [{"date": "x"}]],
+        ):
+            result, _ = self.scrape([ok("<html></html>"), ok(TWO_SLOTS)], days=2)
+
+        days = result["days"]
+        self.assertTrue(days[0]["ok"], "confirmed by day 1's real rows, so day 0 is a clean empty day")
+        self.assertIsNone(days[0]["error"])
+        self.assertEqual(days[0]["slot_count"], 0)
+        self.assertTrue(days[1]["ok"])
+        self.assertIsNone(result["error"])
+
+    def test_a_zero_row_day_stays_failed_when_no_day_ever_confirms_the_club(self):
+        """The opposite case: every requested day comes back with zero rows.
+        Nothing in this run confirms the feeGroupId still works, so the
+        ambiguity is never resolved and every day stays a real failure —
+        exactly the dead-feeGroupId case this whole mechanism exists to keep
+        catching."""
+        with mock.patch.object(scrape, "parse_timesheet", side_effect=scrape.TimesheetStructureError("0 rows matched")):
+            result, _ = self.scrape([ok("<html></html>"), ok("<html></html>")], days=2)
+
+        self.assertEqual([d["ok"] for d in result["days"]], [False, False])
+        self.assertIsNotNone(result["error"])
+
+    def test_a_multi_band_course_merges_slots_from_every_fee_group(self):
+        """Eastlake split its day into time-banded fee groups, each its own
+        URL — courses.json carries this as `feeGroupIds` (a list) instead of
+        `feeGroupId`. One day's slots are the union of every band."""
+        banded = dict(WOOLLAHRA, feeGroupIds=["111", "222"])
+        del banded["feeGroupId"]
+        result, fetcher = self.scrape([ok(TWO_SLOTS), ok(TWO_SLOTS)], days=1, course=banded)
+
+        self.assertEqual(len(fetcher.urls), 2, "one request per band, not per day")
+        self.assertIn("feeGroupId=111", fetcher.urls[0])
+        self.assertIn("feeGroupId=222", fetcher.urls[1])
+        self.assertEqual(result["days"][0]["slot_count"], 4, "both bands' two slots survive")
+        self.assertTrue(result["days"][0]["ok"])
+
+    def test_a_multi_band_course_survives_one_dead_band(self):
+        """One band erroring (a club closing the sundowner fee group on a
+        short winter day, say) must not blank out the bands that answered —
+        the same per-club isolation principle applied within one course."""
+        banded = dict(WOOLLAHRA, feeGroupIds=["111", "222"])
+        del banded["feeGroupId"]
+        result, _ = self.scrape([fail("http 500"), ok(TWO_SLOTS)], days=1, course=banded)
+
+        self.assertTrue(result["days"][0]["ok"])
+        self.assertEqual(result["days"][0]["slot_count"], 2)
+        self.assertIsNone(result["days"][0]["error"])
+
 
 class MidnightBoundaryTests(unittest.TestCase):
     """The regression this ticket fixes: a run's course loop can straddle
@@ -245,14 +303,14 @@ class MidnightBoundaryTests(unittest.TestCase):
                     mock.patch.object(scrape, "polite_sleep", lambda *a: None), \
                     contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 scrape.main([
-                    "--course", "woollahra", "--course", "eastlake",
+                    "--course", "woollahra", "--course", "bexley",
                     "--days", "1", "--out", str(out_path),
                 ])
             payload = json.loads(out_path.read_text())
 
         by_course = {d["course_slug"]: d["tee_date"] for d in payload["course_days"]}
         self.assertEqual(
-            by_course["woollahra"], by_course["eastlake"],
+            by_course["woollahra"], by_course["bexley"],
             "two courses in the same run disagreed about which date 'today' "
             "is, purely because the loop crossed local midnight between them",
         )
@@ -430,21 +488,21 @@ class RunIsolationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out_path = Path(tmp) / "payload.json"
             code, stdout, _ = self.run_main(
-                ["--course", "woollahra", "--course", "eastlake", "--days", "1",
+                ["--course", "woollahra", "--course", "bexley", "--days", "1",
                  "--validate", "--out", str(out_path)],
                 side_effect,
             )
             self.assertEqual(code, 0, stdout)
             payload = json.loads(out_path.read_text())
 
-        self.assertEqual({s["course_slug"] for s in payload["slots"]}, {"eastlake"})
+        self.assertEqual({s["course_slug"] for s in payload["slots"]}, {"bexley"})
 
         by_slug = {d["course_slug"]: d for d in payload["course_days"]}
         self.assertFalse(by_slug["woollahra"]["ok"])
         self.assertIn("KeyError", by_slug["woollahra"]["error"])
         self.assertIsNone(by_slug["woollahra"]["last_success_at"])
-        self.assertTrue(by_slug["eastlake"]["ok"])
-        self.assertIsNone(by_slug["eastlake"]["error"])
+        self.assertTrue(by_slug["bexley"]["ok"])
+        self.assertIsNone(by_slug["bexley"]["error"])
         self.assertIn("CONTRACT OK", stdout)
 
     def test_a_course_that_raises_is_failed_on_every_requested_day(self):
@@ -461,7 +519,7 @@ class RunIsolationTests(unittest.TestCase):
                 raise RuntimeError("boom")
             return good_result(course, days)
 
-        code, _, _ = self.run_main(["--course", "woollahra", "--course", "eastlake", "--days", "1"], side_effect)
+        code, _, _ = self.run_main(["--course", "woollahra", "--course", "bexley", "--days", "1"], side_effect)
         self.assertEqual(code, 0)
 
     def test_an_unknown_course_slug_is_refused(self):
@@ -631,15 +689,15 @@ class RunOutcomeTests(unittest.TestCase):
             return good_result(course, days)
 
         code, payload, _, _ = self.run_main(
-            ["--course", "woollahra", "--course", "eastlake", "--days", "2"], side_effect)
+            ["--course", "woollahra", "--course", "bexley", "--days", "2"], side_effect)
 
         self.assertEqual(code, 0, "fourteen good courses are not a failed run")
         by_slug = {}
         for row in payload["course_days"]:
             by_slug.setdefault(row["course_slug"], []).append(row)
         self.assertEqual([r["ok"] for r in by_slug["woollahra"]], [False, False])
-        self.assertEqual([r["ok"] for r in by_slug["eastlake"]], [True, True])
-        self.assertEqual({s["course_slug"] for s in payload["slots"]}, {"eastlake"})
+        self.assertEqual([r["ok"] for r in by_slug["bexley"]], [True, True])
+        self.assertEqual({s["course_slug"] for s in payload["slots"]}, {"bexley"})
 
     def test_a_raising_course_is_failed_on_every_requested_day_with_its_reason(self):
         def side_effect(course, days, today=None):
@@ -648,7 +706,7 @@ class RunOutcomeTests(unittest.TestCase):
             return good_result(course, days)
 
         code, payload, _, _ = self.run_main(
-            ["--course", "woollahra", "--course", "eastlake", "--days", "5"], side_effect)
+            ["--course", "woollahra", "--course", "bexley", "--days", "5"], side_effect)
 
         self.assertEqual(code, 0)
         dead = [r for r in payload["course_days"] if r["course_slug"] == "woollahra"]
@@ -657,7 +715,7 @@ class RunOutcomeTests(unittest.TestCase):
         self.assertTrue(all(not r["ok"] for r in dead))
         self.assertTrue(all("RuntimeError: kaboom" in r["error"] for r in dead))
         self.assertTrue(all(r["last_success_at"] is None for r in dead))
-        alive = [r for r in payload["course_days"] if r["course_slug"] == "eastlake"]
+        alive = [r for r in payload["course_days"] if r["course_slug"] == "bexley"]
         self.assertEqual(len(alive), 5)
         self.assertTrue(all(r["ok"] for r in alive))
 

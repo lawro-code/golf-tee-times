@@ -341,40 +341,114 @@ def scrape_course(course: dict, days: int, today: Optional[date] = None) -> dict
     all_slots: list = []
     day_records: list = []
 
+    # Most clubs sell every tee time off one fee group and one URL covers a
+    # whole day. A few (Eastlake first) now split the day into time bands —
+    # MON-FRI before 3pm, weekend after 3pm, etc — each billed under its own
+    # feeGroupId, so no single URL returns the whole day any more. Those
+    # clubs carry `feeGroupIds` (a list) in courses.json instead of
+    # `feeGroupId`; everyone else keeps the single-URL path unchanged.
+    fee_group_ids = course.get("feeGroupIds") or [course["feeGroupId"]]
+
+    # Fetched but not yet turned into day_records: a day with zero rows on
+    # every band is ambiguous until every day for this course has been
+    # fetched — see the comment below.
+    pending: list = []
+
     for offset in range(days):
         target = today + timedelta(days=offset)
         tee_date = target.isoformat()
-        url = timesheet_url(host, course["feeGroupId"], target)
         attempted_at = now_iso()
-        print(f"  {course['slug']} {tee_date} -> ", end="", flush=True)
 
-        result = _fetch(url)
-        if not getattr(result, "ok", False):
-            reason = (getattr(result, "error", None) or "fetch failed").strip()
-            print(f"FAIL ({reason})")
-            day_records.append(day_record(tee_date, False, error=reason, attempted_at=attempted_at))
-            continue
+        day_slots: list = []
+        band_errors: list = []
+        structure_empty = True  # stays True only if every band's failure was
+        # specifically "zero div.row-time rows matched" — never a fetch
+        # failure or any other parse exception.
+        for fee_group_id in fee_group_ids:
+            url = timesheet_url(host, fee_group_id, target)
+            result = _fetch(url)
+            if not getattr(result, "ok", False):
+                reason = (getattr(result, "error", None) or "fetch failed").strip()
+                band_errors.append(reason)
+                structure_empty = False
+                continue
 
-        html = getattr(result, "html", None) or ""
-        try:
-            slots = parse_timesheet(html, url, target)
-        except Exception as e:
-            reason = f"parse error: {type(e).__name__}: {e}"
-            print(f"PARSE ERROR ({type(e).__name__}: {e})")
+            html = getattr(result, "html", None) or ""
             try:
-                DEBUG_DIR.mkdir(parents=True, exist_ok=True)
-                (DEBUG_DIR / f"{course['slug']}_{tee_date}.html").write_text(html)
-            except OSError:
-                pass
-            day_records.append(day_record(tee_date, False, error=reason, attempted_at=attempted_at))
-            continue
+                day_slots.extend(parse_timesheet(html, url, target))
+            except TimesheetStructureError as e:
+                band_errors.append(f"parse error: {type(e).__name__}: {e}")
+                continue
+            except Exception as e:
+                reason = f"parse error: {type(e).__name__}: {e}"
+                band_errors.append(reason)
+                structure_empty = False
+                try:
+                    DEBUG_DIR.mkdir(parents=True, exist_ok=True)
+                    suffix = f"_{fee_group_id}" if len(fee_group_ids) > 1 else ""
+                    (DEBUG_DIR / f"{course['slug']}_{tee_date}{suffix}.html").write_text(html)
+                except OSError:
+                    pass
+                continue
+            if len(fee_group_ids) > 1:
+                _polite_sleep(host)
 
-        print(f"{len(slots)} slot(s)")
-        all_slots.extend(slots)
-        day_records.append(day_record(
-            tee_date, True, slot_count=len(slots), attempted_at=attempted_at, succeeded_at=now_iso(),
-        ))
+        pending.append({
+            "tee_date": tee_date,
+            "attempted_at": attempted_at,
+            "slots": day_slots,
+            "band_errors": band_errors,
+            "structure_empty": structure_empty and not day_slots,
+        })
         _polite_sleep(host)
+
+    # A day where every band comes back with zero div.row-time rows
+    # (TimesheetStructureError) is genuinely ambiguous on its own: it is
+    # what a dead feeGroupId looks like (Eastlake, Long Reef both did this
+    # before their IDs were fixed) AND what a club's own "nothing public
+    # published for this date" page looks like (a Saturday competition
+    # locking out guest play, say) — both render byte-for-byte the same
+    # zero-row shell, with no HTML marker that tells the two apart; MiClub's
+    # own "#no-rows" placeholder and hidden error template sit in both
+    # equally. Another day in THIS SAME RUN for THIS SAME COURSE settles it:
+    # if any other requested day actually produced real rows, the
+    # feeGroupId plainly still works, so a zero-row day is the club's own
+    # choice, not a broken scraper, and is recorded as a clean, empty day.
+    # Only when EVERY requested day comes back empty does the ambiguity
+    # stay unresolved, and the day is reported failed — exactly as before.
+    saw_real_rows = any(d["slots"] for d in pending)
+
+    for d in pending:
+        tee_date = d["tee_date"]
+        print(f"  {course['slug']} {tee_date} -> ", end="", flush=True)
+        if d["slots"]:
+            print(f"{len(d['slots'])} slot(s)")
+            all_slots.extend(d["slots"])
+            day_records.append(day_record(
+                tee_date, True, slot_count=len(d["slots"]),
+                attempted_at=d["attempted_at"], succeeded_at=now_iso(),
+            ))
+        elif not d["band_errors"]:
+            # Every band ran clean and simply found no available spots on a
+            # page that otherwise parsed fine (parse_timesheet's ordinary,
+            # unambiguous "ok" result) — no reclassification needed, this
+            # was never in question.
+            print("0 slot(s)")
+            day_records.append(day_record(
+                tee_date, True, slot_count=0,
+                attempted_at=d["attempted_at"], succeeded_at=now_iso(),
+            ))
+        elif d["structure_empty"] and saw_real_rows:
+            print("0 slot(s) (nothing published for this date)")
+            day_records.append(day_record(
+                tee_date, True, slot_count=0,
+                attempted_at=d["attempted_at"], succeeded_at=now_iso(),
+            ))
+        else:
+            reason = "; ".join(d["band_errors"]) or "unknown failure"
+            label = "PARSE ERROR" if "parse error" in reason else "FAIL"
+            print(f"{label} ({reason})")
+            day_records.append(day_record(tee_date, False, error=reason, attempted_at=d["attempted_at"]))
 
     return {
         "slug": course["slug"],

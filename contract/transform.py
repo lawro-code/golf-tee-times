@@ -107,7 +107,12 @@ def course_row(course: dict, sort_order: int) -> dict:
         "name": course["name"],
         "region": course.get("region", ""),
         "host": host,
-        "fee_group_id": str(course["feeGroupId"]),
+        # A club with one fee group per time band (feeGroupIds, a list —
+        # see scrape.scrape_course) has no single ID for the whole day. The
+        # course-level field is unused by any client (grep finds no reader
+        # beyond test fixtures); each slot carries its own real fee group
+        # via booking_url, so the first band is a fine representative here.
+        "fee_group_id": str(course["feeGroupIds"][0] if course.get("feeGroupIds") else course["feeGroupId"]),
         "holes": course["holes"],
         "par": course.get("par"),
         # MiClub does not publish course length. Null, deliberately.
